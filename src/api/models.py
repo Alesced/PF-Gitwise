@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Boolean, Date
 from sqlalchemy.orm import Mapped, mapped_column
 import datetime
+from datetime import date, datetime
 db = SQLAlchemy()
 
 
@@ -17,7 +18,7 @@ class User(db.Model):
         String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
-    member_since: Mapped[datetime] = mapped_column(Date(), nullable=False)
+    # member_since: Mapped[date] = mapped_column(Date(), nullable=False)
 
     def serialize(self):
         return {
@@ -28,7 +29,7 @@ class User(db.Model):
             "gh_login": self.gh_login,
             "username": self.username,
             "is_active": self.is_active,
-            "member_since": self.member_since,
+            # "member_since": self.member_since,
             # do not serialize the password, its a security breach
         }
         print('hello world')
