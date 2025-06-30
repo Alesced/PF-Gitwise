@@ -57,3 +57,68 @@ class User(db.Model):
         }
         print('hello world')
 
+
+class Post(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
+    title: Mapped[str] = mapped_column(String(40), nullable=True)
+    image_URL: Mapped[str] = mapped_column(String(2083), nullable=True)
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    repo_URL: Mapped[str] = mapped_column(String(2083), nullable=False)
+
+    def serialize(self):
+        return {
+            "id": self. id,
+            "user_id": self.user_id,
+            "title": self.title,
+            "image_URL": self.image_URL,
+            "desciption": self.description,
+            "repo_URL": self.repo_URL
+        }
+
+
+class Favorites(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
+    post_id: Mapped[int] = mapped_column(ForeignKey(Post.id))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "post_id": self.post_id,
+        }
+
+
+class Comments(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
+    post_id: Mapped[int] = mapped_column(ForeignKey(Post.id))
+    title: Mapped[str] = mapped_column(String(40), nullable=True)
+    text: Mapped[str] = mapped_column(String(120), nullable=False)
+    date_added: Mapped[date] = mapped_column(
+        # cambiar a que muestre hora (datetime en los corchetes no funcionó)
+        Date(), nullable=False, default=datetime.now(UTC))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "post_id": self.post_id,
+            "title": self.title,
+            "text": self.text,
+            "date_added": self.date_added,
+        }
+
+
+class Likes(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
+    post_id: Mapped[int] = mapped_column(ForeignKey(Post.id))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "post_id": self.post_id,
+        }
