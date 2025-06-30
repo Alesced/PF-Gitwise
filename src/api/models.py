@@ -98,7 +98,7 @@ class Comments(db.Model):
     text: Mapped[str] = mapped_column(String(120), nullable=False)
     date_added: Mapped[date] = mapped_column(
         # cambiar a que muestre hora (datetime en los corchetes no funcionó)
-        Date(), nullable=False, default=datetime.now(UTC))
+        nullable=False, default=datetime.now(UTC))
 
     def serialize(self):
         return {
