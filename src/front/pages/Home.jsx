@@ -16,7 +16,7 @@ import { faUser, faProjectDiagram, faUsers, faSearch } from '@fortawesome/free-s
 // - priceAnnual: precio total anual
 const plans = [
 	{
-		title: "Pro",
+		title: "Free",
 		features: [
 			"2 dispositivos a la vez",
 			"Resolución Full HD"
@@ -34,17 +34,7 @@ const plans = [
 		priceMonthly: 5.99,
 		priceAnnual: 71.88
 	},
-	{
-		title: "Business",
-		features: [
-			"4 dispositivos a la vez",
-			"Resolución 4K Ultra HD",
-			"Audio Dolby Atmos",
-			"100 descargas para disfrutar offline"
-		],
-		priceMonthly: 7.99,
-		priceAnnual: 95.88
-	}
+	
 ];
 
 // Este componente es la vista principal (landing page)
@@ -52,28 +42,41 @@ const plans = [
 export const Home = () => {
 	return (
 		<>
+		<div id="body">
+		<div className="container gap-2 pt-3">
+				<div className="d-flex gap-2 align-items-center justify-content-center">
+					<button className="btn btn-outline-light btn-sm">Contact</button>
+					<button className="btn btn-outline-light btn-sm">Sing up</button>
+					<button className="btn btn-outline-light btn-sm">Sing in</button>
+					
+				</div>
+			</div>
 			{/* Sección superior con título, descripción e imagen */}
-			<div className="d-flex pt-5">
-				<img
-					src='https://img.freepik.com/vector-premium/grupo-empresarios-ilustracion-trabajo-equipo-portafolio_1073071-40362.jpg'
+			<div className="pt-3" >
+				
+				<div className="d-flex justify-content-center ">
+					<img
+					src='https://i.postimg.cc/Bvr7RNzP/8258-A8-D3-2-FD8-45-C4-9528-90586-F20-ED6-C-Photoroom.png'
 					border='0'
 					alt='Imagen ilustrativa'
+					style={{ maxWidth: "80%", height: "auto" }}
 				/>
+				</div>
 				<div>
-					<div className="container my-5">
-						<h2 className="text-center fw-bold mb-4">Don’t Search. Ask. Find. Code.</h2>
+					<div className="container py-5">
+						<h2 className="text-center fw-bold mb-4 text-light">Don’t Search. Ask. Find. Code.</h2>
 
-						<p className="lead">
+						<p className="lead text-light">
 							<strong>A social network for developers inspired by GitHub</strong>, where you can share projects, collaborate with other programmers, and engage in technical discussions.
 						</p>
 
-						<p className="text-muted">
+						<p className="text-light">
 							What makes it unique is its <strong>AI-powered search engine</strong>, capable of understanding natural language and returning smart, contextualized results.
 							You don’t need to know the exact repository name anymore—just ask like you’re talking to another developer and find what you need.
 						</p>
 
-						<div className="mt-4">
-							<ul className="list-unstyled">
+						<div className="mt-4 text-center">
+							<ul className="list-unstyled text-light">
 								<li>
 									<FontAwesomeIcon icon={faUser} className="me-2 text-primary" />
 									<strong>Create and manage technical profiles</strong>
@@ -95,17 +98,6 @@ export const Home = () => {
 
 					</div>
 
-					{/* Input centrado para búsqueda o interacción futura */}
-					<div className="d-flex justify-content-center mt-3">
-
-						<input
-							type="text"
-							className="form-control"
-							id="exampleInputEmail1"
-							aria-describedby="emailHelp"
-							style={{ width: "800px" }}
-						/>
-					</div>
 				</div>
 
 			</div>
@@ -113,11 +105,11 @@ export const Home = () => {
 
 
 			{/* Sección de planes premium */}
-			<div className="container my-5">
+			<div id="premium" className="container py-5">
 				{/* Título de la sección */}
 				<div className="text-center mb-4">
-					<h2 className="fw-bold">CHOOSE THE BEST PLAN FOR YOU</h2>
-					<p className="text-muted">SAVE UP TO 30%</p>
+					<h2 className="fw-bold text-light">CHOOSE THE BEST PLAN FOR YOU</h2>
+					<p className="text-light">SAVE UP TO 30%</p>
 				</div>
 
 				{/* Aquí renderizamos las cards usando Bootstrap Grid */}
@@ -160,6 +152,8 @@ export const Home = () => {
 					))}
 				</div>
 			</div>
+			</div>
 		</>
 	);
 };
+
