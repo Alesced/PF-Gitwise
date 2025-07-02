@@ -18,8 +18,11 @@ const plans = [
 	{
 		title: "Free",
 		features: [
-			"2 dispositivos a la vez",
-			"Resolución Full HD"
+			"Unlimited repositories (basic public or private)",
+			"Community and collaborative support",
+			"Up to 2,000 minutes of CI/CD per month",
+			"Basic AI search (limited)",
+			
 		],
 		priceMonthly: 3.99,
 		priceAnnual: 47.88
@@ -27,9 +30,11 @@ const plans = [
 	{
 		title: "Premium",
 		features: [
-			"2 dispositivos a la vez",
-			"Resolución Full HD",
-			"30 descargas para disfrutar offline"
+			"Everything in the Free plan, plus:",
+			"Unlimited CI/CD or with increased minutes",
+			"Advanced AI-powered search, expanded responses (GPT-4 or Claude)",
+			"Advanced insights and metrics: repository insights, code analyzers, required reviewers",
+			"Priority support and email chat"
 		],
 		priceMonthly: 5.99,
 		priceAnnual: 71.88
@@ -42,12 +47,12 @@ const plans = [
 export const Home = () => {
 	return (
 		<>
-		<div id="body">
+		<div className="bg-dark">
 		<div className="container gap-2 pt-3">
 				<div className="d-flex gap-2 align-items-center justify-content-center">
-					<button className="btn btn-outline-light btn-sm">Contact</button>
-					<button className="btn btn-outline-light btn-sm">Sing up</button>
-					<button className="btn btn-outline-light btn-sm">Sing in</button>
+					<button className="btn btn-gitwise btn-sm">Contact</button>
+					<button className="btn btn-gitwise btn-sm">Sing up</button>
+					<button className="btn btn-gitwise btn-sm">Sing in</button>
 					
 				</div>
 			</div>
@@ -56,14 +61,14 @@ export const Home = () => {
 				
 				<div className="d-flex justify-content-center ">
 					<img
-					src='https://i.postimg.cc/Bvr7RNzP/8258-A8-D3-2-FD8-45-C4-9528-90586-F20-ED6-C-Photoroom.png'
+					src='https://i.postimg.cc/tJg1Kmbq/isotipo.png'
 					border='0'
 					alt='Imagen ilustrativa'
-					style={{ maxWidth: "80%", height: "auto" }}
+					style={{ maxWidth: "30%", height: "auto" }}
 				/>
 				</div>
 				<div>
-					<div className="container py-5">
+					<div className="container py-3">
 						<h2 className="text-center fw-bold mb-4 text-light">Don’t Search. Ask. Find. Code.</h2>
 
 						<p className="lead text-light">
@@ -76,25 +81,25 @@ export const Home = () => {
 						</p>
 
 						<div className="mt-4 text-center">
-							<ul className="list-unstyled text-light">
-								<li>
-									<FontAwesomeIcon icon={faUser} className="me-2 text-primary" />
-									<strong>Create and manage technical profiles</strong>
-								</li>
-								<li>
-									<FontAwesomeIcon icon={faProjectDiagram} className="me-2 text-success" />
-									<strong>Publish and explore community projects</strong>
-								</li>
-								<li>
-									<FontAwesomeIcon icon={faUsers} className="me-2 text-warning" />
-									<strong>Follow developers and discover trends</strong>
-								</li>
-								<li>
-									<FontAwesomeIcon icon={faSearch} className="me-2 text-info" />
-									<strong>Search for projects, technologies, or collaborators using AI</strong>
-								</li>
-							</ul>
-						</div>
+  <ul className="list-unstyled text-light d-flex justify-content-center gap-4 flex-wrap">
+    <li className="d-flex flex-column align-items-center text-center" style={{ maxWidth: "200px" }}>
+      <img src="https://cdn-icons-png.flaticon.com/512/6840/6840478.png" alt="" style={{ width: "80px", height: "auto" }} />
+      <strong className="mt-2">Create and manage technical profiles</strong>
+    </li>
+    <li className="d-flex flex-column align-items-center text-center" style={{ maxWidth: "200px" }}>
+      <img src="https://cdn-icons-png.flaticon.com/512/5072/5072860.png" alt="" style={{ width: "80px", height: "auto" }} />
+      <strong className="mt-2">Publish and explore community projects</strong>
+    </li>
+    <li className="d-flex flex-column align-items-center text-center" style={{ maxWidth: "200px" }}>
+      <img src="https://cdn-icons-png.flaticon.com/512/10169/10169718.png" alt="" style={{ width: "80px", height: "auto" }} />
+      <strong className="mt-2">Follow developers and discover trends</strong>
+    </li>
+    <li className="d-flex flex-column align-items-center text-center" style={{ maxWidth: "200px" }}>
+      <img src="https://sdmntpreastus2.oaiusercontent.com/files/00000000-f2e0-61f6-8c75-e01400d516e0/raw?se=2025-07-02T21%3A52%3A08Z&sp=r&sv=2024-08-04&sr=b&scid=cdf12429-6dca-5318-8cba-4c3719dea646&skoid=a3412ad4-1a13-47ce-91a5-c07730964f35&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-07-02T15%3A11%3A03Z&ske=2025-07-03T15%3A11%3A03Z&sks=b&skv=2024-08-04&sig=3M%2BEZkWQSvCV73/5p8SJQed2U6/nQHijggkXCmPADlQ%3D" alt="" style={{ width: "80px", height: "auto" }} />
+      <strong className="mt-2">Search for projects, technologies, or collaborators using AI</strong>
+    </li>
+  </ul>
+</div>
 
 					</div>
 
@@ -105,7 +110,7 @@ export const Home = () => {
 
 
 			{/* Sección de planes premium */}
-			<div id="premium" className="container py-5">
+			<div className="container py-5 ">
 				{/* Título de la sección */}
 				<div className="text-center mb-4">
 					<h2 className="fw-bold text-light">CHOOSE THE BEST PLAN FOR YOU</h2>
@@ -113,7 +118,7 @@ export const Home = () => {
 				</div>
 
 				{/* Aquí renderizamos las cards usando Bootstrap Grid */}
-				<div className="row">
+				<div className="row d-flex justify-content-center">
 					{/* Recorremos el array `plans` con map para generar una card por cada plan */}
 					{plans.map((plan, index) => (
 						// Cada card ocupa 12 columnas en pantallas pequeñas, y 4 en pantallas medianas o más
@@ -128,7 +133,7 @@ export const Home = () => {
 									{/* Lista de características */}
 									<ul className="list-unstyled mt-3 mb-4">
 										{plan.features.map((feature, i) => (
-											<li key={i}>✔ <strong>{feature}</strong></li>
+											<li key={i}>• <strong>{feature}</strong></li>
 										))}
 									</ul>
 
@@ -143,7 +148,7 @@ export const Home = () => {
 									</p>
 
 									{/* Botón para elegir el plan */}
-									<button className="btn btn-dark mt-3">
+									<button className="btn btn-gitwise  mt-3">
 										CHOOSE THIS PLAN
 									</button>
 								</div>
