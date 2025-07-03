@@ -1,10 +1,11 @@
+// File: src/front/pages/Posts.jsx
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const mockPosts = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1,
-  title: `Proyecto ${i + 1}`,
-  description: "Descripción del proyecto",
+  title: `Project ${i + 1}`,
+  description: "Project description",
   stack: ["HTML", "JavaScript", "React", "Python", "SQL"][i % 5],
   level: ["STUDENT", "JUNIOR_DEV", "MID_DEV", "SENIOR_DEV"][i % 4],
   github: "https://github.com/example/project"
@@ -35,7 +36,7 @@ export const Posts = () => {
 
   return (
     <div className="min-vh-100 p-5" style={{ backgroundColor: "#0d0d0d" }}>
-      <h2 className="text-white mb-4">Proyectos Publicados</h2>
+      <h2 className="text-white mb-4">Published Projects</h2>
 
       <div className="d-flex gap-3 mb-4">
         <select
@@ -43,7 +44,7 @@ export const Posts = () => {
           value={stackFilter}
           onChange={e => setStackFilter(e.target.value)}
         >
-          <option value="">Todos los Stacks</option>
+          <option value="">All Stacks</option>
           {[...new Set(mockPosts.map(p => p.stack))].map(stack => (
             <option key={stack} value={stack}>{stack}</option>
           ))}
@@ -53,7 +54,7 @@ export const Posts = () => {
           value={levelFilter}
           onChange={e => setLevelFilter(e.target.value)}
         >
-          <option value="">Todos los Niveles</option>
+          <option value="">All Levels</option>
           {[...new Set(mockPosts.map(p => p.level))].map(level => (
             <option key={level} value={level}>{level}</option>
           ))}
@@ -84,7 +85,7 @@ export const Posts = () => {
                   className="btn btn-sm"
                   style={{ backgroundColor: "#2563eb", color: "white" }}
                 >
-                  Ver GitHub
+                  View GitHub
                 </a>
               </div>
             </div>
