@@ -1,10 +1,12 @@
+// File: src/front/pages/AdminPosts.jsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const mockPosts = Array.from({ length: 20 }, (_, i) => ({
+const mockPosts = Array.from({ length: 25 }, (_, i) => ({
   id: i + 1,
-  title: `Proyecto ${i + 1}`,
-  description: "Descripción del proyecto",
+  title: `Project ${i + 1}`,
+  description: "Project description",
   stack: ["HTML", "JavaScript", "React", "Python", "SQL"][i % 5],
   level: ["STUDENT", "JUNIOR_DEV", "MID_DEV", "SENIOR_DEV"][i % 4],
   github: "https://github.com/example/project"
@@ -12,59 +14,94 @@ const mockPosts = Array.from({ length: 20 }, (_, i) => ({
 
 export const AdminPosts = () => {
   const [posts, setPosts] = useState([]);
+  const [stackFilter, setStackFilter] = useState("");
+  const [levelFilter, setLevelFilter] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [postToDelete, setPostToDelete] = useState(null);
-  const navigate = useNavigate();
 
-  const postsPerPage = 6;
+  const navigate = useNavigate();
+  const postsPerPage = 7;
 
   useEffect(() => {
     setPosts(mockPosts);
   }, []);
 
-  const filteredPosts = posts.filter(post =>
-    post.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = posts.filter(post => {
+    return (
+      (stackFilter ? post.stack === stackFilter : true) &&
+      (levelFilter ? post.level === levelFilter : true) &&
+      (search ? post.title.toLowerCase().includes(search.toLowerCase()) : true)
+    );
+  });
 
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-  const currentPosts = filteredPosts.slice(
+  const totalPages = Math.ceil(filtered.length / postsPerPage);
+  const current = filtered.slice(
     (currentPage - 1) * postsPerPage,
     currentPage * postsPerPage
   );
 
   const handleDelete = () => {
-    setPosts(prev => prev.filter(p => p.id !== postToDelete.id));
+    setPosts(prev => prev.filter(p => p.id !== postToDelete));
     setPostToDelete(null);
   };
 
   return (
-    <div className="min-vh-100 bg-black text-white p-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 style={{ color: "#2563eb" }}>Panel de Proyectos</h4>
-        <input
-          type="text"
-          className="form-control w-25 bg-dark text-white border-secondary"
-          placeholder="Buscar por título..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+    <div className="p-5 bg-black min-vh-100 text-white">
+      <h4 className="mb-4" style={{ color: "white" }}>
+        Project Management
+      </h4>
+
+      <div className="row mb-3">
+        <div className="col-md-3">
+          <input
+            type="text"
+            placeholder="Search by title"
+            className="form-control bg-dark text-white border-secondary"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="col-md-3">
+          <select
+            className="form-select bg-dark text-white border-secondary"
+            value={stackFilter}
+            onChange={e => setStackFilter(e.target.value)}
+          >
+            <option value="">All Stacks</option>
+            {[...new Set(posts.map(p => p.stack))].map(stack => (
+              <option key={stack} value={stack}>{stack}</option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-3">
+          <select
+            className="form-select bg-dark text-white border-secondary"
+            value={levelFilter}
+            onChange={e => setLevelFilter(e.target.value)}
+          >
+            <option value="">All Levels</option>
+            {[...new Set(posts.map(p => p.level))].map(level => (
+              <option key={level} value={level}>{level}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="table-responsive">
-        <table className="table table-dark table-striped table-hover">
+        <table className="table table-dark table-hover table-bordered align-middle">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Título</th>
+              <th>ID</th>
+              <th>Title</th>
               <th>Stack</th>
-              <th>Nivel</th>
+              <th>Level</th>
               <th>GitHub</th>
-              <th>Acciones</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {currentPosts.map(post => (
+            {current.map(post => (
               <tr key={post.id}>
                 <td>{post.id}</td>
                 <td>{post.title}</td>
@@ -75,39 +112,43 @@ export const AdminPosts = () => {
                     href={post.github}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-decoration-none text-info"
+                    className="text-primary"
                   >
-                    Ver repo
+                    View
                   </a>
                 </td>
                 <td>
                   <button
-                    className="btn btn-sm btn-outline-light me-2"
+                    className="btn btn-sm btn-outline-primary me-2"
                     onClick={() => navigate("/post-form", { state: post })}
                   >
-                    Editar
+                    Edit
                   </button>
                   <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => setPostToDelete(post)}
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => setPostToDelete(post.id)}
                   >
-                    Eliminar
+                    Delete
                   </button>
                 </td>
               </tr>
             ))}
+            {current.length === 0 && (
+              <tr>
+                <td colSpan="6" className="text-center text-secondary">
+                  No projects found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Paginación */}
-      <div className="d-flex justify-content-center mt-3 gap-2">
+      <div className="d-flex justify-content-center gap-2 mt-4">
         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
           <button
             key={page}
-            className={`btn btn-sm ${
-              page === currentPage ? "btn-primary" : "btn-outline-secondary"
-            }`}
+            className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`}
             onClick={() => setCurrentPage(page)}
           >
             {page}
@@ -115,36 +156,28 @@ export const AdminPosts = () => {
         ))}
       </div>
 
-      {/* Modal de Confirmación */}
+      {/* Delete confirmation modal */}
       {postToDelete && (
-        <div
-          className="modal fade show d-block"
-          tabIndex="-1"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
+        <div className="modal show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content bg-dark text-white">
               <div className="modal-header">
-                <h5 className="modal-title">¿Eliminar proyecto?</h5>
+                <h5 className="modal-title">Delete project?</h5>
                 <button
                   type="button"
-                  className="btn-close btn-close-white"
+                  className="btn-close"
                   onClick={() => setPostToDelete(null)}
-                ></button>
+                />
               </div>
               <div className="modal-body">
-                ¿Estás seguro de que quieres eliminar{" "}
-                <strong>{postToDelete.title}</strong>?
+                <p>This action cannot be undone.</p>
               </div>
               <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setPostToDelete(null)}
-                >
-                  Cancelar
+                <button className="btn btn-secondary" onClick={() => setPostToDelete(null)}>
+                  Cancel
                 </button>
                 <button className="btn btn-danger" onClick={handleDelete}>
-                  Eliminar
+                  Delete
                 </button>
               </div>
             </div>
