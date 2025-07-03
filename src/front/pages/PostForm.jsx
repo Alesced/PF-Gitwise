@@ -1,7 +1,11 @@
 // File: src/front/pages/PostForm.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export const PostForm = () => {
+  const location = useLocation();
+  const editingPost = location.state || null;
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -10,14 +14,25 @@ export const PostForm = () => {
     github: ""
   });
 
+  useEffect(() => {
+    if (editingPost) {
+      setForm(editingPost);
+    }
+  }, [editingPost]);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Formulario enviado:", form);
-    alert("Proyecto guardado correctamente.");
+    if (editingPost) {
+      console.log("Updating project:", form);
+      alert("Project updated successfully.");
+    } else {
+      console.log("Creating new project:", form);
+      alert("Project created successfully.");
+    }
   };
 
   return (
@@ -28,13 +43,13 @@ export const PostForm = () => {
         onSubmit={handleSubmit}
       >
         <h4 className="mb-4" style={{ color: "#2563eb" }}>
-          Crear / Editar Proyecto
+          {editingPost ? "Edit Project" : "Create Project"}
         </h4>
 
         <input
           type="text"
           name="title"
-          placeholder="Título"
+          placeholder="Title"
           className="form-control mb-3 bg-light border-0"
           value={form.title}
           onChange={handleChange}
@@ -43,7 +58,7 @@ export const PostForm = () => {
 
         <textarea
           name="description"
-          placeholder="Descripción"
+          placeholder="Description"
           className="form-control mb-3 bg-light border-0"
           rows="3"
           value={form.description}
@@ -58,7 +73,7 @@ export const PostForm = () => {
           onChange={handleChange}
           required
         >
-          <option value="">Tecnología principal</option>
+          <option value="">Main Technology</option>
           <option value="HTML">HTML</option>
           <option value="JavaScript">JavaScript</option>
           <option value="React">React</option>
@@ -73,7 +88,7 @@ export const PostForm = () => {
           onChange={handleChange}
           required
         >
-          <option value="">Nivel de desarrollador</option>
+          <option value="">Developer Level</option>
           <option value="STUDENT">STUDENT</option>
           <option value="JUNIOR_DEV">JUNIOR_DEV</option>
           <option value="MID_DEV">MID_DEV</option>
@@ -83,7 +98,7 @@ export const PostForm = () => {
         <input
           type="url"
           name="github"
-          placeholder="Link GitHub"
+          placeholder="GitHub Link"
           className="form-control mb-3 bg-light border-0"
           value={form.github}
           onChange={handleChange}
@@ -91,7 +106,7 @@ export const PostForm = () => {
         />
 
         <button type="submit" className="btn w-100" style={{ backgroundColor: "#2563eb", color: "white" }}>
-          Guardar Proyecto
+          {editingPost ? "Update" : "Save"} Project
         </button>
       </form>
     </div>
