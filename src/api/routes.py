@@ -6,7 +6,7 @@ from api.models import db, User
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 api = Blueprint('api', __name__)
 bcrypt = Bcrypt()
@@ -78,4 +78,46 @@ def login_user():
     # Generate JWT token
     access_token = create_access_token(identity=user.id)
     return jsonify({"message": "Login successful", "token": access_token}), 200
+
+#------------------------Routes for New Post------------------------
+@api.route('/post', methods=['POST'])
+@jwt_required()
+def handle_new_post():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    title = data.get('title')
+    imagen_URL = data.get('image_URL')
+    description = data.get('description')
+    repo_URL = data.get('repo_URL')
+
+    if not description or not title or not repo_URL:
+        return jsonify({"msg": "Description, title and repo_URL are required"}), 400
+    
+    post = Post(
+        user_id=user_id,
+        title=title,
+        image_URL=imagen_URL,
+        description=description,
+        repo_URL=repo_URL
+    )
+    db.session.add(post)
+    db.session.commit()
+
+    return jsonify({"msg": "Post created successfully", "post": post.serialize()}), 201
+
+#------------------------Routes for Search-IA------------------------
+@api.route('/search-ia', methods=['POST'])
+@jwt_required()
+def handle_search_ia():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    query = data.get('query')
+
+#here we need to implement the api call to the IA service
+    # For now, we will just return the query as a response
+    if not query:
+        return jsonify({"msg": "Query is required"}), 400
+
+
+
 
