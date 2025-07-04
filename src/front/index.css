@@ -1,0 +1,11 @@
+.btn-gitwise {
+  background-color: #706DFE;
+  color: white;
+  border: none;
+  transition: 0.3s;
+}
+
+.btn-gitwise:hover {
+  background-color: #5c58d6;
+  color: white;
+}

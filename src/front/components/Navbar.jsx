@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import logo from "../assets/img/logocompleto.png";
 
 export const Navbar = () => {
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
       <div className="container-fluid">
@@ -37,3 +38,4 @@ export const Navbar = () => {
     </nav>
   );
 };
+
