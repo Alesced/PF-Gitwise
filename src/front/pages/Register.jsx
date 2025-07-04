@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import isotipo from "../assets/img/isotipo.png";
 
-const bannerImg = "https://images.unsplash.com/photo-1581093588401-0505aedd9f85";
+import bannerImg from "../assets/img/mohammad-rahmani-_Fx34KeqIEw-unsplash.jpg";
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export const Register = () => {
       });
       if (res.ok) {
         alert("Account created successfully.");
-        navigate("/profile"); // ✅ Redirección al perfil
+        navigate("/profile");
       } else {
         alert("Error creating account.");
       }
@@ -41,7 +41,6 @@ export const Register = () => {
 
   return (
     <div className="vh-100 vw-100 d-flex overflow-hidden">
-      {/* Left banner image */}
       <div className="d-none d-md-block w-50">
         <img
           src={bannerImg}
@@ -51,7 +50,6 @@ export const Register = () => {
         />
       </div>
 
-      {/* Right form section */}
       <div className="w-100 w-md-50 bg-dark text-white d-flex align-items-center justify-content-center">
         <div className="p-5" style={{ width: "100%", maxWidth: "500px" }}>
           <div className="text-center mb-4">

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import isotipo from "../assets/img/isotipo.png";
 
-const bannerImg = "https://images.unsplash.com/photo-1581093588401-0505aedd9f85";
+import bannerImg from "../assets/img/ferenc-almasi-oCm8nPkE40k-unsplash.jpg";
 
 export const Login = () => {
   const { dispatch } = useGlobalReducer();
@@ -26,7 +26,7 @@ export const Login = () => {
         const data = await res.json();
         dispatch({ type: "set_user", payload: data });
         alert("Login successful!");
-        navigate("/profile"); // ✅ redirección al perfil
+        navigate("/profile");
       } else {
         alert("Invalid email or password.");
       }
@@ -37,7 +37,6 @@ export const Login = () => {
 
   return (
     <div className="vh-100 vw-100 d-flex overflow-hidden">
-      {/* Banner image (hidden on small screens) */}
       <div className="d-none d-md-block w-50">
         <img
           src={bannerImg}
@@ -47,7 +46,6 @@ export const Login = () => {
         />
       </div>
 
-      {/* Login form */}
       <div className="w-100 w-md-50 bg-dark text-white d-flex align-items-center justify-content-center">
         <div className="p-5" style={{ width: "100%", maxWidth: "400px" }}>
           <div className="text-center mb-4">
