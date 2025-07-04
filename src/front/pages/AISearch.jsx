@@ -1,11 +1,15 @@
-// File: src/front/pages/AISearch.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import useGlobalReducer from "../hooks/useGlobalReducer";
+import { useNavigate } from "react-router-dom";
 
 export const AISearch = () => {
+  const { store } = useGlobalReducer();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const mockAIResults = [
     {
@@ -35,26 +39,40 @@ export const AISearch = () => {
       description: "Real-time chat server built with Node.js and Socket.io.",
       reason: "Great for real-time messaging experience.",
       github: "https://github.com/example/node-chat-server"
-    },
-    {
-      id: 5,
-      title: "E-commerce UI",
-      description: "A sleek e-commerce user interface using React.",
-      reason: "Perfect for designing product pages and checkout flows.",
-      github: "https://github.com/example/ecommerce-ui"
     }
   ];
+
+  useEffect(() => {
+    if (!store.user || store.user.subscription !== "premium") {
+      setShowModal(true);
+    }
+  }, [store.user]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulación de llamada IA
     setTimeout(() => {
-      setResults(mockAIResults.slice(0, 4)); // solo 4 resultados
+      setResults(mockAIResults);
       setLoading(false);
     }, 1500);
   };
+
+  const redirectToPlans = () => navigate("/#plans");
+
+  if (showModal) {
+    return (
+      <div className="bg-black text-white min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="bg-dark p-5 rounded shadow-lg text-center">
+          <h2 className="text-danger">Access Denied</h2>
+          <p className="text-secondary">AI Search is available for <strong>Premium</strong> users only.</p>
+          <button className="btn btn-primary mt-3" onClick={redirectToPlans}>
+            View Subscription Plans
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black text-white min-vh-100 p-5">

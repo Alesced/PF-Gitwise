@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
 import { FaUserTie, FaProjectDiagram, FaUsers, FaSearch } from "react-icons/fa";
 
@@ -31,6 +32,13 @@ export const Home = () => {
         <p className="text-secondary">
           What makes it unique? An <strong>AI-powered search engine</strong> that understands natural language and gives contextual suggestions.
         </p>
+
+        {!store.user && (
+          <div className="mt-4 d-flex justify-content-center gap-3">
+            <Link to="/login" className="btn btn-outline-primary px-4">Login</Link>
+            <Link to="/register" className="btn btn-primary px-4">Sign Up</Link>
+          </div>
+        )}
       </section>
 
       <section className="container py-4">
