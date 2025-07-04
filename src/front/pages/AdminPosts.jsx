@@ -48,9 +48,21 @@ export const AdminPosts = () => {
 
   return (
     <div className="p-5 bg-black min-vh-100 text-white">
-      <h4 className="mb-4" style={{ color: "white" }}>
-        Project Management
-      </h4>
+      <h2 className="mb-3" style={{ color: "#2563eb" }}>
+        Project Management Dashboard
+      </h2>
+      <p className="text-secondary mb-4">
+        Review, filter, edit, or delete any project registered in the platform.
+      </p>
+
+      <div className="d-flex justify-content-end mb-3">
+        <button
+          className="btn btn-success"
+          onClick={() => navigate("/post-form")}
+        >
+          + Create New Project
+        </button>
+      </div>
 
       <div className="row mb-3">
         <div className="col-md-3">
@@ -122,13 +134,13 @@ export const AdminPosts = () => {
                     className="btn btn-sm btn-outline-primary me-2"
                     onClick={() => navigate("/post-form", { state: post })}
                   >
-                    Edit
+                    ✏️ Edit
                   </button>
                   <button
                     className="btn btn-sm btn-outline-danger"
                     onClick={() => setPostToDelete(post.id)}
                   >
-                    Delete
+                    🗑️ Delete
                   </button>
                 </td>
               </tr>
@@ -144,6 +156,10 @@ export const AdminPosts = () => {
         </table>
       </div>
 
+      <p className="text-secondary text-end">
+        Showing {current.length} of {filtered.length} filtered projects
+      </p>
+
       <div className="d-flex justify-content-center gap-2 mt-4">
         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
           <button
@@ -156,7 +172,6 @@ export const AdminPosts = () => {
         ))}
       </div>
 
-      {/* Delete confirmation modal */}
       {postToDelete && (
         <div className="modal show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">

@@ -25,10 +25,16 @@ export const Navbar = () => {
               <Link className="nav-link" to="/posts">Projects</Link>
             </li>
             <li className="nav-item">
+              <Link className="nav-link" to="/AI-search">AI Search</Link>
+            </li>
+            <li className="nav-item">
               <Link className="nav-link" to="/admin">Admin</Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/contact">Contact</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/profile">Profile</Link>
             </li>
           </ul>
           <div className="d-flex">

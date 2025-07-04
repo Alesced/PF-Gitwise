@@ -14,6 +14,9 @@ import { Register } from "./pages/Register";
 import { Posts } from "./pages/Posts";
 import { PostForm } from "./pages/PostForm";
 import { AdminPosts } from "./pages/AdminPosts";
+import { UserProfile } from "./pages/UserProfile";
+import { AISearch } from "./pages/AISearch";
+
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
@@ -26,6 +29,8 @@ export const router = createBrowserRouter(
         <Route path="/posts" element={<Posts />} />
         <Route path="/post-form" element={<PostForm />} />
         <Route path="/admin" element={<AdminPosts />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/AI-search" element={<AISearch />} />
       </Route>
     )
 );

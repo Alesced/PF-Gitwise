@@ -1,16 +1,17 @@
 import { Link, useParams } from "react-router-dom";
 import PropTypes from "prop-types";
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { CommentSection } from "../components/CommentSection"; // 🆕 Importación
+import { CommentSection } from "../components/CommentSection";
 
 export const Single = props => {
   const { store } = useGlobalReducer();
   const { theId } = useParams();
   const singleTodo = store.todos.find(todo => todo.id === parseInt(theId));
 
+  const currentUser = store?.user?.username || "guest"; // <- Asume que tienes `user` en el store
+
   return (
-    <div className="container text-center">
+    <div className="container text-center text-white">
       <h1 className="display-4">Todo: {singleTodo?.title}</h1>
       <hr className="my-4" />
 
@@ -20,9 +21,9 @@ export const Single = props => {
         </span>
       </Link>
 
-      {/* 🗨️ Sección de comentarios */}
+      {/* 🗨️ Comment section */}
       <div className="mt-5">
-        <CommentSection postId={theId} />
+        <CommentSection postId={theId} currentUser={currentUser} />
       </div>
     </div>
   );
