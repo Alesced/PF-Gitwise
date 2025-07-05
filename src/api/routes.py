@@ -76,17 +76,19 @@ def login_user():
         return jsonify({"error": "Invalid email or password"}), 401
 
     # Generate JWT token
-    access_token = create_access_token(identity=user.id)
-    return jsonify({"message": "Login successful", "token": access_token}), 200
+    access_token = create_access_token(identity=str(user.id))
+    return jsonify({"message": "Login successful", "token": access_token, "id": user.id}), 200
 
 #------------------------Routes for New Post------------------------
 @api.route('/post', methods=['POST'])
 @jwt_required()
 def handle_new_post():
-    user_id = get_jwt_identity()
+    user_id_row= get_jwt_identity()
+    user_id = str(user_id_row)
+    print("este es el id del usuario recuperado", user_id)
     data = request.get_json()
     title = data.get('title')
-    imagen_URL = data.get('image_URL')
+    image_URL = data.get('image_URL')
     description = data.get('description')
     repo_URL = data.get('repo_URL')
 
@@ -96,7 +98,7 @@ def handle_new_post():
     post = Post(
         user_id=user_id,
         title=title,
-        image_URL=imagen_URL,
+        image_URL=image_URL,
         description=description,
         repo_URL=repo_URL
     )
@@ -114,6 +116,19 @@ def handle_search_ia():
     }
 
     return jsonify(response_body), 200
+
+#------------------------Routes for User Profile------------------------
+@api.route('/users/profile/user_id:', methods=['GET'])
+@jwt_required()
+def handle_user_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    return jsonify(user.serialize()), 200
+
 
 
 
