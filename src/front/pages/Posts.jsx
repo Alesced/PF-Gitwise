@@ -1,6 +1,8 @@
 // File: src/front/pages/Posts.jsx
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { LikeButton } from "../components/LikeButton";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 const mockPosts = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1,
@@ -77,7 +79,7 @@ export const Posts = () => {
                 <span className="badge bg-secondary me-2">{post.stack}</span>
                 <span className="badge bg-info">{post.level}</span>
               </div>
-              <div className="card-footer bg-transparent border-0">
+              <div className="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
                 <a
                   href={post.github}
                   target="_blank"
@@ -87,6 +89,7 @@ export const Posts = () => {
                 >
                   View GitHub
                 </a>
+                <LikeButton postId={post.id} />
               </div>
             </div>
           </motion.div>
