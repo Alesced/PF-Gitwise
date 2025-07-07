@@ -5,17 +5,6 @@
 import { useState } from "react"
 import isotipo from "../assets/img/isotipo.png";
 export const Contact = () => {
-    // const { store, dispatch } = useGlobalReducer();
-    // const {
-    //     register,
-    //     handleSubmit,
-    //     watch,
-    //     formState: { errors },
-    // } = useForm();
-
-    // const onSubmit = (data) => console.log(data);
-
-    // console.log(watch("example"));
     const [formData, setFormData] = useState({
         fullname: "",
         email: "",
