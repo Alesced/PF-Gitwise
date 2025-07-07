@@ -22,16 +22,19 @@ export const Navbar = () => {
         </button>
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-              <Link className="nav-link" to="/posts">Proyectos</Link>
-            </li>
-            <li className="nav-item">
+            {/*<li className="nav-item">
+              <Link className="nav-link" to="/posts">Proyects</Link>
+            </li>*/}
+            {/*<li className="nav-item">
               <Link className="nav-link" to="/admin">Admin</Link>
+            </li>*/}
+            <li className="nav-item">
+              <Link className="nav-link" to="/admin">Contact</Link>
             </li>
           </ul>
           <div className="d-flex">
             <Link to="/login" className="btn btn-outline-primary me-2">Login</Link>
-            <Link to="/register" className="btn btn-primary">Registro</Link>
+            <Link to="/register" className="btn btn-primary">Register</Link>
           </div>
         </div>
       </div>

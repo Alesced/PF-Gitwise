@@ -42,13 +42,13 @@ export const Register = () => {
             <form className="bg-black p-5 rounded shadow" onSubmit={handleSubmit}>
                 <div className="text-center mb-4">
                     <img src={isotipo} alt="GitWise logo" width="50" />
-                    <h4 className="text-light mt-3">Crea tu cuenta <strong>GitWise</strong></h4>
+                    <h4 className="text-light mt-3">Create your account <strong>GitWise</strong></h4>
                 </div>
 
                 <input
                     type="text"
                     name="first_name"
-                    placeholder="Nombre"
+                    placeholder="Name"
                     className="form-control my-2 bg-light border-0"
                     onChange={handleChange}
                     required
@@ -56,7 +56,7 @@ export const Register = () => {
                 <input
                     type="text"
                     name="last_name"
-                    placeholder="Apellido"
+                    placeholder="Lastname"
                     className="form-control my-2 bg-light border-0"
                     onChange={handleChange}
                     required
@@ -92,7 +92,7 @@ export const Register = () => {
                     onChange={handleChange}
                     required
                 >
-                    <option value="">Stack preferido</option>
+                    <option value="">Preferred stack</option>
                     <option value="frontend">Frontend</option>
                     <option value="backend">Backend</option>
                     <option value="fullstack">Fullstack</option>
@@ -104,14 +104,14 @@ export const Register = () => {
                     onChange={handleChange}
                     required
                 >
-                    <option value="">Nivel</option>
+                    <option value="">Level</option>
                     <option value="junior">Junior</option>
                     <option value="semi-senior">Semi-Senior</option>
                     <option value="senior">Senior</option>
                 </select>
 
                 <button type="submit" className="btn btn-primary w-100 mt-3">
-                    Crear cuenta
+                    Create account
                 </button>
             </form>
         </div>
