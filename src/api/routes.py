@@ -58,6 +58,24 @@ def register_user():
 
     return jsonify({"message": "User registered successfully", "token": access_token}), 201
 
+#------------------------Routes for Contacts us------------------------
+@api.route('/contact', methods=['POST'])
+def handle_contact():
+    data = request.get_json()
+    name = data.get('name')
+    email = data.get('email')
+    message = data.get('message')
+
+    if not all([name, email, message]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    # Here you would typically send an email or save the contact message to the database
+    response_body = {
+        "message": "Thank you for contacting us! We will get back to you soon."
+    }
+
+    return jsonify(response_body), 200
+
 #------------------------Routes for user login------------------------
 @api.route('/login', methods=['POST'])
 def login_user():
@@ -107,6 +125,16 @@ def handle_new_post():
 
     return jsonify({"msg": "Post created successfully", "post": post.serialize()}), 201
 
+#------------------------Routes for Get Posts by Id------------------------
+@api.route('/post/<int:post_id>', methods=['GET, PUT, DELETE'])
+@jwt_required()
+def handle_get_post_by_id(post_id):
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({"msg": "Post not found"}), 404
+    
+    return jsonify(post.serialize()), 200
+
 #------------------------Routes for Search-IA------------------------
 @api.route('/search-ia', methods=['POST'])
 @jwt_required()
@@ -117,8 +145,8 @@ def handle_search_ia():
 
     return jsonify(response_body), 200
 
-#------------------------Routes for User Profile------------------------
-@api.route('/users/profile/user_id:', methods=['GET'])
+#------------------------Routes for User Profile by Id------------------------
+@api.route('/users/profile/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def handle_user_profile():
     user_id = get_jwt_identity()
@@ -128,6 +156,36 @@ def handle_user_profile():
         return jsonify({"msg": "User not found"}), 404
     
     return jsonify(user.serialize()), 200
+
+#------------------------Routes for comments a post------------------------
+@api.route('/post/<int:post_id>/comments', methods=['POST'])
+@jwt_required()
+def handle_comments(post_id):
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    title = data.get('title')
+    text = data.get('text')
+
+    if not text:
+        return jsonify({"msg": "Text is required"}), 400
+    
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({"msg": "Post not found"}), 404
+    
+    comments = Comments(
+        user_id=user_id,
+        post_id=post_id,
+        title=title,
+        text=text
+    )
+    db.session.add(comments)
+    db.session.commit()
+
+    return jsonify({"msg": "Comment added successfully", "comment": comments.serialize()}), 201
+
+
+
 
 
 
