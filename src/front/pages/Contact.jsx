@@ -1,7 +1,3 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
-// import useGlobalReducer from "../hooks/useGlobalReducer"; // Custom hook for accessing the global state.
-// import { useForm } from "react-hook-form";
 import { useState } from "react"
 import isotipo from "../assets/img/isotipo.png";
 export const Contact = () => {
