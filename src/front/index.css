@@ -1,0 +1,35 @@
+/* Botón base común */
+.btn-action {
+  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
+/* View Details - Outline azul con efecto hover */
+.btn-view-details {
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background-color: transparent;
+}
+.btn-view-details:hover {
+  background-color: #2563eb;
+  color: white;
+}
+
+/* Like / Favorite Buttons - íconos */
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 6px;
+  transition: transform 0.2s ease;
+}
+.btn-icon:hover {
+  transform: scale(1.15);
+}
+
+/* Heart and Star icons when active */
+.btn-icon .text-danger,
+.btn-icon .text-warning {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+}

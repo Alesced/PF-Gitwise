@@ -3,7 +3,8 @@ export const initialStore = () => {
     message: null,
     user: {
       username: "guest", // o null si se carga luego
-      likes: [] // aquí se almacenan los postId que ha dado like
+      likes: [],         // IDs de posts con like
+      favorites: []      // IDs de posts favoritos
     },
     todos: [
       {
@@ -44,10 +45,9 @@ export default function storeReducer(store, action = {}) {
       };
 
     case 'toggle_like':
-      if (!store.user) return store; // seguridad si no hay user
+      if (!store.user) return store;
 
       const currentLikes = store.user.likes || [];
-
       const updatedLikes = currentLikes.includes(action.payload)
         ? currentLikes.filter(id => id !== action.payload)
         : [...currentLikes, action.payload];
@@ -57,6 +57,22 @@ export default function storeReducer(store, action = {}) {
         user: {
           ...store.user,
           likes: updatedLikes
+        }
+      };
+
+    case 'toggle_favorite':
+      if (!store.user) return store;
+
+      const currentFavorites = store.user.favorites || [];
+      const updatedFavorites = currentFavorites.includes(action.payload)
+        ? currentFavorites.filter(id => id !== action.payload)
+        : [...currentFavorites, action.payload];
+
+      return {
+        ...store,
+        user: {
+          ...store.user,
+          favorites: updatedFavorites
         }
       };
 

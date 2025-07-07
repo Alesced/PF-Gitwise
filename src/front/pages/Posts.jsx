@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { LikeButton } from "../components/LikeButton";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 const mockPosts = Array.from({ length: 20 }, (_, i) => ({
@@ -73,12 +75,19 @@ export const Posts = () => {
             transition={{ duration: 0.4 }}
           >
             <div className="card bg-black text-white h-100 shadow">
-              <div className="card-body">
-                <h5 className="card-title" style={{ color: "#2563eb" }}>{post.title}</h5>
-                <p className="card-text">{post.description}</p>
-                <span className="badge bg-secondary me-2">{post.stack}</span>
-                <span className="badge bg-info">{post.level}</span>
+              <div className="card-body d-flex flex-column justify-content-between">
+                <div>
+                  <h5 className="card-title" style={{ color: "#2563eb" }}>{post.title}</h5>
+                  <p className="card-text">{post.description}</p>
+                  <span className="badge bg-secondary me-2">{post.stack}</span>
+                  <span className="badge bg-info">{post.level}</span>
+                </div>
+
+                <Link to={`/post/${post.id}`} className="btn btn-outline-light btn-sm mt-3 w-100">
+                  View details
+                </Link>
               </div>
+
               <div className="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
                 <a
                   href={post.github}
@@ -89,7 +98,10 @@ export const Posts = () => {
                 >
                   View GitHub
                 </a>
-                <LikeButton postId={post.id} />
+                <div className="d-flex gap-2">
+                  <LikeButton postId={post.id} />
+                  <FavoriteButton postId={post.id} />
+                </div>
               </div>
             </div>
           </motion.div>

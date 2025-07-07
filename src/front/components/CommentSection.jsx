@@ -47,7 +47,7 @@ export const CommentSection = ({ postId, currentUser = "albertdcm" }) => {
   };
 
   return (
-    <div className="bg-dark text-white p-4 rounded mt-5">
+    <div className="p-4 rounded" style={{ backgroundColor: "#0d0d0d", color: "#fff" }}>
       <h5 style={{ color: "#2563eb" }}>Comments</h5>
 
       <div className="mb-3">
@@ -72,7 +72,7 @@ export const CommentSection = ({ postId, currentUser = "albertdcm" }) => {
       ) : (
         <ul className="list-unstyled">
           {comments.map((comment) => (
-            <li key={comment.id} className="mb-3 border-bottom pb-2">
+            <li key={comment.id} className="mb-3 border-bottom border-secondary pb-2">
               <p className="mb-1">
                 <strong>{comment.author}</strong>:{" "}
                 {editingId === comment.id ? (
