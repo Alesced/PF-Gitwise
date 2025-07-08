@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Post
+from api.models import db, User, Post, Comments
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -56,7 +56,7 @@ def register_user():
     # Generate JWT token
     access_token = create_access_token(identity=new_user.id)
 
-    return jsonify({"message": "User registered successfully", "token": access_token}), 201
+    return jsonify({"message": "User registered successfully", "token": access_token, "id": new_user.id}), 201
 
 #------------------------Routes for Contacts us------------------------
 @api.route('/contact', methods=['POST'])
@@ -103,7 +103,6 @@ def login_user():
 def handle_new_post():
     user_id_row= get_jwt_identity()
     user_id = str(user_id_row)
-    print("este es el id del usuario recuperado", user_id)
     data = request.get_json()
     title = data.get('title')
     image_URL = data.get('image_URL')
@@ -125,16 +124,6 @@ def handle_new_post():
 
     return jsonify({"msg": "Post created successfully", "post": post.serialize()}), 201
 
-#------------------------Routes for Get Posts by Id------------------------
-@api.route('/post/<int:post_id>', methods=['GET, PUT, DELETE'])
-@jwt_required()
-def handle_get_post_by_id(post_id):
-    post = Post.query.get(post_id)
-    if not post:
-        return jsonify({"msg": "Post not found"}), 404
-    
-    return jsonify(post.serialize()), 200
-
 #------------------------Routes for Search-IA------------------------
 @api.route('/search-ia', methods=['POST'])
 @jwt_required()
@@ -144,18 +133,6 @@ def handle_search_ia():
     }
 
     return jsonify(response_body), 200
-
-#------------------------Routes for User Profile by Id------------------------
-@api.route('/users/profile/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
-@jwt_required()
-def handle_user_profile():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if not user:
-        return jsonify({"msg": "User not found"}), 404
-    
-    return jsonify(user.serialize()), 200
 
 #------------------------Routes for comments a post------------------------
 @api.route('/post/<int:post_id>/comments', methods=['POST'])
