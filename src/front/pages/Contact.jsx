@@ -7,6 +7,21 @@ export const Contact = () => {
         subject: "",
         message: "",
     })
+    // fetch("routes/contact"), {
+    //     method: "POST",
+    //     body: JSON.stringify(formData),
+    //     headers: { "Content-Type": "application/json" }
+    // })
+    //     .then(() => alert("Thank you for your message! We'll reply as soon as possible:)."))
+    //     .catch(() => alert("Something went wrong. Please try again"))
+
+    // fetch("https://jsonplaceholder.typicode.com/contact/1", {
+    //     method: "POST",
+    //     body: JSON.stringify(formData),
+    //     Headers: { "Content-Type": "application/json" }
+    // })
+    //     .then(() => alert("Thank you for your message! We'll reply as soon as possible:)."))
+    //     .catch(() => alert("Something went wrong. Please try again"))
 
     const handleSubmit = (e) => {
         e.preventDefault(); //para que no haga refresh cada vez que hundimos send
