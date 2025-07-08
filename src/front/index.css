@@ -52,7 +52,7 @@ body {
 
 /* Precio */
 .plan-price {
-	color: #ffffff;           /* <-- Color del precio */
+	color: #ffffff;           /* <-- Color del precio. */
 	font-size: 1.2rem;
 	font-weight: bold;
 	margin-bottom: 1.5rem;

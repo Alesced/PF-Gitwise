@@ -1,6 +1,7 @@
 import { useState } from "react";
 import isotipo from "../assets/img/isotipo.png";
 
+// Nota: se hizo cambio de idioma
 export const Register = () => {
     const [form, setForm] = useState({
         first_name: "",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import isotipo from "../assets/img/isotipo.png";
 
+// Nota: se hizo cambio de idioma
 export const Login = () => {
     const { dispatch } = useGlobalReducer();
     const [form, setForm] = useState({ email: "", password: "" });

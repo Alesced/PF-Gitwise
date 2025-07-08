@@ -18,7 +18,7 @@ export const Home = () => {
 			<div className="">
 
 
-				{/* Sección superior con título, descripción e imagen */}
+				{/* Sección superior con título, descripción  */}
 				<div className="pt-3" >
 
 					<div className="d-flex justify-content-center ">
