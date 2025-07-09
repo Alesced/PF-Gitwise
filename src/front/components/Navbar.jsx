@@ -50,7 +50,7 @@ export const Navbar = () => {
               <Link className="nav-link" to="/profile">Profile</Link>
             </li>
           </ul>
-
+{/* Sección superior con título, descripción  */}
           <div className="d-flex align-items-center">
             {!store.user ? (
               <>
