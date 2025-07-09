@@ -2,6 +2,7 @@ import { useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import isotipo from "../assets/img/isotipo.png";
 
+// Nota: se hizo cambio de idioma
 export const Login = () => {
     const { dispatch } = useGlobalReducer();
     const [form, setForm] = useState({ email: "", password: "" });
@@ -21,9 +22,9 @@ export const Login = () => {
             if (res.ok) {
                 const data = await res.json();
                 dispatch({ type: "set_user", payload: data });
-                alert("Sesión iniciada correctamente.");
+                alert("Session started successfully.");
             } else {
-                alert("Email o contraseña incorrectos.");
+                alert("Incorrect email or password.");
             }
         } catch (err) {
             console.error(err);
@@ -38,7 +39,7 @@ export const Login = () => {
             <form className="bg-black p-5 rounded shadow" onSubmit={handleSubmit}>
                 <div className="text-center mb-4">
                     <img src={isotipo} alt="GitWise logo" width="50" />
-                    <h4 className="text-light mt-3">Inicia sesión en <strong>GitWise</strong></h4>
+                    <h4 className="text-light mt-3">Sign in <strong>GitWise</strong></h4>
                 </div>
                 <input
                     type="email"
@@ -56,7 +57,7 @@ export const Login = () => {
                     onChange={handleChange}
                     required
                 />
-                <button type="submit" className="btn btn-primary w-100">Ingresar</button>
+                <button type="submit" className="btn btn-primary w-100">Login</button>
             </form>
         </div>
     );

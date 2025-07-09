@@ -1,4 +1,4 @@
-/* Preservar */
+/* Preservar (contacto */
 .btn-gitwise {
   background-color: #706dfe;
   color: white;
@@ -11,3 +11,29 @@
   color: white;
 }
 /* Preservar */
+/* Lista de características */
+.plan-features li {
+	margin-bottom: 0.5rem;
+	color: #c9d1d9;           /* <-- Color de cada ítem */
+	font-size: 0.95rem;
+}
+
+/* Precio */
+.plan-price {
+	color: #ffffff;           /* <-- Color del precio. */
+	font-size: 1.2rem;
+	font-weight: bold;
+	margin-bottom: 1.5rem;
+}
+
+/* Íconos grandes y azul GitHub */
+.feature-icon {
+  font-size: 2.5rem; /* Esto es el tamaño de los iconos */
+  color: #2f81f7; /* Esto es el color de los iconos */
+}
+
+.plan-button {
+	width: 100%; /* Esto es el maximo tamaño de los botones de las cards */
+}
+
+/* -------------------------- LANDIND PAGE -------------------------- *//* Preservar */

@@ -88,7 +88,7 @@ class Post(db.Model):
             "user_id": self.user_id,
             "title": self.title,
             "image_URL": self.image_URL,
-            "desciption": self.description,
+            "description": self.description,
             "repo_URL": self.repo_URL
         }
 
