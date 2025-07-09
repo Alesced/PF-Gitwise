@@ -1,16 +1,48 @@
-/* Preservar (contacto */
-.btn-gitwise {
-  background-color: #706dfe;
-  color: white;
-  border: none;
-  transition: 0.3s;
+
+/* Fondo oscuro general, color de texto y fuente */
+body {
+	background-color: black;
+	color: #ffffff;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.btn-gitwise:hover {
-  background-color: #5c58d6;
-  color: white;
+
+/* Título principal */
+.section-title {
+	color: #ffffff; /* <-- Esto es el color del titulo */
+	font-size: 1.8rem;
+	text-transform: uppercase;
 }
-/* Preservar */
+
+/* Subtítulo */
+.section-subtitle {
+	color: #c9d1d9; /* <-- Esto es el color del subtitulo */
+	font-size: 0.9rem;
+}
+
+/* Tarjeta de plan */
+.plan-title-1{
+    color: #0ac9ef;/* <-- Esto es el color de FREE */
+}
+.plan-title-2{
+    color: #fec024;/* <-- Esto es el color de PREMIUN */
+}
+.plan-card {
+	background-color: #212529; /* <-- Esto es el fondo de la card */
+	color: #c9d1d9;            /* <-- Esto es el texto general */
+	border: 1px solid white; /* <-- Esto es el borde de la card */
+	border-radius: 8px;
+	padding: 2rem;
+	min-height: 100%;
+}
+
+/* Título del plan */
+.plan-title {
+	font-weight: 700;
+	font-size: 1.1rem;
+	text-transform: uppercase;
+}
+
 /* Lista de características */
 .plan-features li {
 	margin-bottom: 0.5rem;
@@ -36,4 +68,18 @@
 	width: 100%; /* Esto es el maximo tamaño de los botones de las cards */
 }
 
-/* -------------------------- LANDIND PAGE -------------------------- *//* Preservar */
+/* -------------------------- LANDIND PAGE -------------------------- */
+
+/* botón contact*/
+.btn-gitwise {
+  background-color: #706dfe;
+  color: white;
+  border: none;
+  transition: 0.3s;
+}
+
+.btn-gitwise:hover {
+  background-color: #5c58d6;
+  color: white;
+}
+/* fin botón contact */
