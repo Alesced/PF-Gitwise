@@ -1,14 +1,93 @@
+// File: src/front/pages/Posts.jsx
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { LikeButton } from "../components/LikeButton";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { Link } from "react-router-dom";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
-const mockPosts = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  title: `Proyecto ${i + 1}`,
-  description: "Descripción del proyecto",
-  stack: ["HTML", "JavaScript", "React", "Python", "SQL"][i % 5],
-  level: ["STUDENT", "JUNIOR_DEV", "MID_DEV", "SENIOR_DEV"][i % 4],
-  github: "https://github.com/example/project"
-}));
+const mockPosts = [
+  {
+    id: 1,
+    title: "React",
+    description: "A JavaScript library for building user interfaces.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/facebook/react"
+  },
+  {
+    id: 2,
+    title: "Django",
+    description: "The Web framework for perfectionists with deadlines.",
+    stack: "Python",
+    level: "SENIOR_DEV",
+    github: "https://github.com/django/django"
+  },
+  {
+    id: 3,
+    title: "Tailwind CSS",
+    description: "A utility-first CSS framework for rapid UI development.",
+    stack: "HTML",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/tailwindlabs/tailwindcss"
+  },
+  {
+    id: 4,
+    title: "Next.js",
+    description: "React framework for production—hybrid static & server rendering.",
+    stack: "JavaScript",
+    level: "SENIOR_DEV",
+    github: "https://github.com/vercel/next.js"
+  },
+  {
+    id: 5,
+    title: "Flask",
+    description: "A micro web framework written in Python.",
+    stack: "Python",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/pallets/flask"
+  },
+  {
+    id: 6,
+    title: "Bootstrap",
+    description: "The most popular HTML, CSS, and JS library in the world.",
+    stack: "HTML",
+    level: "STUDENT",
+    github: "https://github.com/twbs/bootstrap"
+  },
+  {
+    id: 7,
+    title: "Vite",
+    description: "Next generation frontend tooling. Lightning fast.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/vitejs/vite"
+  },
+  {
+    id: 8,
+    title: "SQLModel",
+    description: "SQL databases in Python, designed for simplicity and performance.",
+    stack: "SQL",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/tiangolo/sqlmodel"
+  },
+  {
+    id: 9,
+    title: "Astro",
+    description: "The web framework for content-driven websites.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/withastro/astro"
+  },
+  {
+    id: 10,
+    title: "T3 Stack",
+    description: "Full-stack web apps with TypeScript, tRPC, Tailwind and Next.js.",
+    stack: "JavaScript",
+    level: "SENIOR_DEV",
+    github: "https://github.com/t3-oss/create-t3-app"
+  }
+];
 
 export const Posts = () => {
   const [posts, setPosts] = useState([]);
@@ -35,7 +114,7 @@ export const Posts = () => {
 
   return (
     <div className="min-vh-100 p-5" style={{ backgroundColor: "#0d0d0d" }}>
-      <h2 className="text-white mb-4">Proyectos Publicados</h2>
+      <h2 className="text-white mb-4">Published Projects</h2>
 
       <div className="d-flex gap-3 mb-4">
         <select
@@ -43,7 +122,7 @@ export const Posts = () => {
           value={stackFilter}
           onChange={e => setStackFilter(e.target.value)}
         >
-          <option value="">Todos los Stacks</option>
+          <option value="">All Stacks</option>
           {[...new Set(mockPosts.map(p => p.stack))].map(stack => (
             <option key={stack} value={stack}>{stack}</option>
           ))}
@@ -53,7 +132,7 @@ export const Posts = () => {
           value={levelFilter}
           onChange={e => setLevelFilter(e.target.value)}
         >
-          <option value="">Todos los Niveles</option>
+          <option value="">All Levels</option>
           {[...new Set(mockPosts.map(p => p.level))].map(level => (
             <option key={level} value={level}>{level}</option>
           ))}
@@ -70,13 +149,20 @@ export const Posts = () => {
             transition={{ duration: 0.4 }}
           >
             <div className="card bg-black text-white h-100 shadow">
-              <div className="card-body">
-                <h5 className="card-title" style={{ color: "#2563eb" }}>{post.title}</h5>
-                <p className="card-text">{post.description}</p>
-                <span className="badge bg-secondary me-2">{post.stack}</span>
-                <span className="badge bg-info">{post.level}</span>
+              <div className="card-body d-flex flex-column justify-content-between">
+                <div>
+                  <h5 className="card-title" style={{ color: "#2563eb" }}>{post.title}</h5>
+                  <p className="card-text">{post.description}</p>
+                  <span className="badge bg-secondary me-2">{post.stack}</span>
+                  <span className="badge bg-info">{post.level}</span>
+                </div>
+
+                <Link to={`/single/${post.id}`} className="btn btn-outline-light btn-sm mt-3 w-100">
+                  View details
+                </Link>
               </div>
-              <div className="card-footer bg-transparent border-0">
+
+              <div className="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
                 <a
                   href={post.github}
                   target="_blank"
@@ -84,8 +170,12 @@ export const Posts = () => {
                   className="btn btn-sm"
                   style={{ backgroundColor: "#2563eb", color: "white" }}
                 >
-                  Ver GitHub
+                  View GitHub
                 </a>
+                <div className="d-flex gap-2">
+                  <LikeButton postId={post.id} />
+                  <FavoriteButton postId={post.id} />
+                </div>
               </div>
             </div>
           </motion.div>

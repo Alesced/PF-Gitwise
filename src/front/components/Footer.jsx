@@ -1,4 +1,3 @@
-
 export const Footer = () => {
   return (
     <footer className="bg-dark text-white py-4 mt-auto text-center">
@@ -13,4 +12,3 @@ export const Footer = () => {
     </footer>
   );
 };
-

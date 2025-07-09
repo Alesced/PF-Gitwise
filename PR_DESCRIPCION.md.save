@@ -1,0 +1,50 @@
+## 🧩 Pull Request: Integración completa de vistas y funcionalidades (Sprints 1 y 2)
+
+### ✅ Módulos desarrollados:
+
+#### 🔐 Autenticación
+- Página de login y register funcional con estilos de la plataforma.
+- Integración de flujo JWT con backend.
+- Manejo de errores básicos y redirección después del login.
+- Avatar miniatura en el navbar al estar autenticado.
+
+#### 🧠 Módulo de búsqueda con inteligencia artificial (AI Search)
+- Ruta protegida para usuarios premium.
+- Diseño responsive con mensajes de bloqueo y acceso denegado.
+- Resultados generados por IA con tarjetas visuales.
+
+#### 📄 Vista de Posts
+- Visualización de proyectos con diseño oscuro.
+- Mock de proyectos realistas con stack, nivel y enlace a GitHub.
+- Sistema de filtrado por stack y nivel.
+- Paginación de resultados.
+- Botones de Like y Favorite integrados visualmente y funcionalmente.
+
+#### 🔍 Vista Single Post
+- Detalles del proyecto individual.
+- Botón para volver atrás y ver todos los posts.
+- Botones Like y Favorite por post.
+- Fondo y diseño acorde al resto de la plataforma.
+
+#### 💬 Comentarios
+- Sección de comentarios debajo del post individual.
+- Permite crear, editar y eliminar comentarios del usuario autenticado.
+- Estilos oscuros y consistentes con la identidad visual del sitio.
+
+#### 🎨 Estilo y UX
+- Fondo uniforme oscuro en todas las páginas.
+- Uso de colores del branding (#0d0d0d y #2563eb).
+- Cards limpias, botones accesibles y coherencia visual en filtros, formularios y tarjetas.
+
+---
+
+### 🧪 Estado:
+- Todo probado localmente.
+- Vista responsive.
+- Código organizado en componentes reutilizables.
+
+---
+
+### 🧠 Sprint 1 & 2: Entregado ✔️
+Este PR incluye todo lo correspondiente a los entregables del Sprint 1 y Sprint 2 asignados a Albert Cabrera.
+
