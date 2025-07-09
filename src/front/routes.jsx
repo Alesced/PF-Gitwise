@@ -7,7 +7,7 @@ import {
 import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
-import { SinglePost } from "./pages/SinglePost"; // ✅ nuevo import
+import { SinglePost } from "./pages/SinglePost"; 
 import { Demo } from "./pages/Demo";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
