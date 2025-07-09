@@ -39,7 +39,7 @@ export const Navbar = () => {
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/admin">Admin</Link>
-            </li>*/}
+            </li>
             <li className="nav-item">
               <Link className="nav-link" to="/contact">Contact</Link>
             </li>
@@ -50,7 +50,7 @@ export const Navbar = () => {
               <Link className="nav-link" to="/profile">Profile</Link>
             </li>
           </ul>
-
+{/* Sección superior con título, descripción  */}
           <div className="d-flex align-items-center">
             {!store.user ? (
               <>
