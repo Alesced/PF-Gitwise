@@ -33,3 +33,16 @@
 .btn-icon .text-warning {
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
 }
+
+/* Botón personalizado GitWise */
+.btn-gitwise {
+  background-color: #706DFE;
+  color: white;
+  border: none;
+  transition: 0.3s;
+}
+
+.btn-gitwise:hover {
+  background-color: #5c58d6;
+  color: white;
+}

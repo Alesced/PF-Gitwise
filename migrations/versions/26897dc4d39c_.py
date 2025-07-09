@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 88d9f0d488dc
+Revision ID: 26897dc4d39c
 Revises: 
-Create Date: 2025-06-30 21:42:42.083492
+Create Date: 2025-07-07 23:45:13.405520
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '88d9f0d488dc'
+revision = '26897dc4d39c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -33,7 +33,7 @@ def upgrade():
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('username')
     )
-    op.create_table('post',
+    op.create_table('posts',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(length=40), nullable=True),
@@ -50,7 +50,7 @@ def upgrade():
     sa.Column('title', sa.String(length=40), nullable=True),
     sa.Column('text', sa.String(length=120), nullable=False),
     sa.Column('date_added', sa.Date(), nullable=False),
-    sa.ForeignKeyConstraint(['post_id'], ['post.id'], ),
+    sa.ForeignKeyConstraint(['post_id'], ['posts.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -58,15 +58,15 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('post_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['post_id'], ['post.id'], ),
+    sa.ForeignKeyConstraint(['post_id'], ['posts.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('likes',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('post_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['post_id'], ['post.id'], ),
+    sa.Column('comments_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['comments_id'], ['comments.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -78,6 +78,6 @@ def downgrade():
     op.drop_table('likes')
     op.drop_table('favorites')
     op.drop_table('comments')
-    op.drop_table('post')
+    op.drop_table('posts')
     op.drop_table('user')
     # ### end Alembic commands ###

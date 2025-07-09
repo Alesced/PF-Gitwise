@@ -1,3 +1,4 @@
+// File: src/front/components/Navbar.jsx
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/img/logocompleto.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
@@ -9,7 +10,7 @@ export const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     actions.logout();
-    navigate("/"); 
+    navigate("/");
   };
 
   return (
