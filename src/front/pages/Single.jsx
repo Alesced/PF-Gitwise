@@ -1,5 +1,5 @@
 // File: src/front/pages/Single.jsx
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { CommentSection } from "../components/CommentSection";
 import { LikeButton } from "../components/LikeButton";
 import { FavoriteButton } from "../components/FavoriteButton";
@@ -8,8 +8,8 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 export const Single = () => {
   const { store } = useGlobalReducer();
   const { theId } = useParams();
+  const navigate = useNavigate();
 
-  // Simulamos que el ID coincide con los mockPosts o datos reales
   const post = store?.todos?.find(p => p.id === parseInt(theId)) || {
     id: theId,
     title: "Project Not Found",
@@ -20,10 +20,13 @@ export const Single = () => {
   };
 
   return (
-    <div className="min-vh-100 py-5 px-3 px-md-5" style={{ backgroundColor: "#0d0d0d" }}>
+    <div
+      className="min-vh-100 py-5 px-3 px-md-5"
+      style={{ backgroundColor: "#0d0d0d" }}
+    >
       <div className="container">
-        <div className="card bg-black text-white shadow p-4">
-          <h2 style={{ color: "#2563eb" }}>{post.title}</h2>
+        <div className="card bg-black text-white shadow p-4 border-0">
+          <h2 className="mb-3" style={{ color: "#2563eb" }}>{post.title}</h2>
           <p>{post.description}</p>
 
           <div className="mb-3">
@@ -45,9 +48,14 @@ export const Single = () => {
             <FavoriteButton postId={post.id} />
           </div>
 
-          <Link to="/posts" className="btn btn-outline-light btn-sm mt-2">
-            ← Back to Posts
-          </Link>
+          <div className="d-flex gap-2 mt-3">
+            <button onClick={() => navigate(-1)} className="btn btn-outline-light btn-sm">
+              ← Go Back
+            </button>
+            <Link to="/posts" className="btn btn-outline-primary btn-sm">
+              See All Posts
+            </Link>
+          </div>
         </div>
 
         <div className="mt-5">

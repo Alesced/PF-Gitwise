@@ -6,14 +6,88 @@ import { FavoriteButton } from "../components/FavoriteButton";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
-const mockPosts = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  title: `Project ${i + 1}`,
-  description: "Project description",
-  stack: ["HTML", "JavaScript", "React", "Python", "SQL"][i % 5],
-  level: ["STUDENT", "JUNIOR_DEV", "MID_DEV", "SENIOR_DEV"][i % 4],
-  github: "https://github.com/example/project"
-}));
+const mockPosts = [
+  {
+    id: 1,
+    title: "React",
+    description: "A JavaScript library for building user interfaces.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/facebook/react"
+  },
+  {
+    id: 2,
+    title: "Django",
+    description: "The Web framework for perfectionists with deadlines.",
+    stack: "Python",
+    level: "SENIOR_DEV",
+    github: "https://github.com/django/django"
+  },
+  {
+    id: 3,
+    title: "Tailwind CSS",
+    description: "A utility-first CSS framework for rapid UI development.",
+    stack: "HTML",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/tailwindlabs/tailwindcss"
+  },
+  {
+    id: 4,
+    title: "Next.js",
+    description: "React framework for production—hybrid static & server rendering.",
+    stack: "JavaScript",
+    level: "SENIOR_DEV",
+    github: "https://github.com/vercel/next.js"
+  },
+  {
+    id: 5,
+    title: "Flask",
+    description: "A micro web framework written in Python.",
+    stack: "Python",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/pallets/flask"
+  },
+  {
+    id: 6,
+    title: "Bootstrap",
+    description: "The most popular HTML, CSS, and JS library in the world.",
+    stack: "HTML",
+    level: "STUDENT",
+    github: "https://github.com/twbs/bootstrap"
+  },
+  {
+    id: 7,
+    title: "Vite",
+    description: "Next generation frontend tooling. Lightning fast.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/vitejs/vite"
+  },
+  {
+    id: 8,
+    title: "SQLModel",
+    description: "SQL databases in Python, designed for simplicity and performance.",
+    stack: "SQL",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/tiangolo/sqlmodel"
+  },
+  {
+    id: 9,
+    title: "Astro",
+    description: "The web framework for content-driven websites.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/withastro/astro"
+  },
+  {
+    id: 10,
+    title: "T3 Stack",
+    description: "Full-stack web apps with TypeScript, tRPC, Tailwind and Next.js.",
+    stack: "JavaScript",
+    level: "SENIOR_DEV",
+    github: "https://github.com/t3-oss/create-t3-app"
+  }
+];
 
 export const Posts = () => {
   const [posts, setPosts] = useState([]);
@@ -83,7 +157,7 @@ export const Posts = () => {
                   <span className="badge bg-info">{post.level}</span>
                 </div>
 
-                <Link to={`/post/${post.id}`} className="btn btn-outline-light btn-sm mt-3 w-100">
+                <Link to={`/single/${post.id}`} className="btn btn-outline-light btn-sm mt-3 w-100">
                   View details
                 </Link>
               </div>
