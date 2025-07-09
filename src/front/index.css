@@ -1,3 +1,76 @@
+
+/* Fondo oscuro general, color de texto y fuente */
+body {
+	background-color: black;
+	color: #ffffff;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+/* Título principal */
+.section-title {
+	color: #ffffff; /* <-- Esto es el color del titulo */
+	font-size: 1.8rem;
+	text-transform: uppercase;
+}
+
+/* Subtítulo */
+.section-subtitle {
+	color: #c9d1d9; /* <-- Esto es el color del subtitulo */
+	font-size: 0.9rem;
+}
+
+/* Tarjeta de plan */
+.plan-title-1{
+    color: #0ac9ef;/* <-- Esto es el color de FREE */
+}
+.plan-title-2{
+    color: #fec024;/* <-- Esto es el color de PREMIUN */
+}
+.plan-card {
+	background-color: #212529; /* <-- Esto es el fondo de la card */
+	color: #c9d1d9;            /* <-- Esto es el texto general */
+	border: 1px solid white; /* <-- Esto es el borde de la card */
+	border-radius: 8px;
+	padding: 2rem;
+	min-height: 100%;
+}
+
+/* Título del plan */
+.plan-title {
+	font-weight: 700;
+	font-size: 1.1rem;
+	text-transform: uppercase;
+}
+
+/* Lista de características */
+.plan-features li {
+	margin-bottom: 0.5rem;
+	color: #c9d1d9;           /* <-- Color de cada ítem */
+	font-size: 0.95rem;
+}
+
+/* Precio */
+.plan-price {
+	color: #ffffff;           /* <-- Color del precio. */
+	font-size: 1.2rem;
+	font-weight: bold;
+	margin-bottom: 1.5rem;
+}
+
+/* Íconos grandes y azul GitHub */
+.feature-icon {
+  font-size: 2.5rem; /* Esto es el tamaño de los iconos */
+  color: #2f81f7; /* Esto es el color de los iconos */
+}
+
+.plan-button {
+	width: 100%; /* Esto es el maximo tamaño de los botones de las cards */
+}
+
+/* -------------------------- LANDIND PAGE -------------------------- */
+
+/* botón contact*/
 /* Botón base común */
 .btn-action {
   transition: all 0.3s ease;
@@ -36,7 +109,7 @@
 
 /* Botón personalizado GitWise */
 .btn-gitwise {
-  background-color: #706DFE;
+  background-color: #706dfe;
   color: white;
   border: none;
   transition: 0.3s;
