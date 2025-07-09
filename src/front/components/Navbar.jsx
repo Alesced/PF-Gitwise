@@ -1,9 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/img/logocompleto.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Navbar = () => {
-  const { store } = useGlobalReducer();
+  const { store, actions } = useGlobalReducer();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    actions.logout();
+    navigate("/"); 
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
@@ -51,12 +58,15 @@ export const Navbar = () => {
                 <span className="text-white me-2">{store.user.username}</span>
                 <Link to="/profile">
                   <img
-                    src="https://avatars.githubusercontent.com/u/000000?v=4" // puedes usar store.user.avatar si lo tienes
+                    src="https://avatars.githubusercontent.com/u/000000?v=4"
                     alt="Avatar"
-                    className="rounded-circle"
+                    className="rounded-circle me-3"
                     style={{ width: "36px", height: "36px", objectFit: "cover" }}
                   />
                 </Link>
+                <button onClick={handleLogout} className="btn btn-outline-light btn-sm">
+                  Logout
+                </button>
               </>
             )}
           </div>
