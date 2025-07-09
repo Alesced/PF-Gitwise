@@ -1,0 +1,198 @@
+// File: src/front/pages/Posts.jsx
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { LikeButton } from "../components/LikeButton";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { Link } from "react-router-dom";
+import useGlobalReducer from "../hooks/useGlobalReducer";
+
+const mockPosts = [
+  {
+    id: 1,
+    title: "React",
+    description: "A JavaScript library for building user interfaces.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/facebook/react"
+  },
+  {
+    id: 2,
+    title: "Django",
+    description: "The Web framework for perfectionists with deadlines.",
+    stack: "Python",
+    level: "SENIOR_DEV",
+    github: "https://github.com/django/django"
+  },
+  {
+    id: 3,
+    title: "Tailwind CSS",
+    description: "A utility-first CSS framework for rapid UI development.",
+    stack: "HTML",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/tailwindlabs/tailwindcss"
+  },
+  {
+    id: 4,
+    title: "Next.js",
+    description: "React framework for production—hybrid static & server rendering.",
+    stack: "JavaScript",
+    level: "SENIOR_DEV",
+    github: "https://github.com/vercel/next.js"
+  },
+  {
+    id: 5,
+    title: "Flask",
+    description: "A micro web framework written in Python.",
+    stack: "Python",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/pallets/flask"
+  },
+  {
+    id: 6,
+    title: "Bootstrap",
+    description: "The most popular HTML, CSS, and JS library in the world.",
+    stack: "HTML",
+    level: "STUDENT",
+    github: "https://github.com/twbs/bootstrap"
+  },
+  {
+    id: 7,
+    title: "Vite",
+    description: "Next generation frontend tooling. Lightning fast.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/vitejs/vite"
+  },
+  {
+    id: 8,
+    title: "SQLModel",
+    description: "SQL databases in Python, designed for simplicity and performance.",
+    stack: "SQL",
+    level: "JUNIOR_DEV",
+    github: "https://github.com/tiangolo/sqlmodel"
+  },
+  {
+    id: 9,
+    title: "Astro",
+    description: "The web framework for content-driven websites.",
+    stack: "JavaScript",
+    level: "MID_DEV",
+    github: "https://github.com/withastro/astro"
+  },
+  {
+    id: 10,
+    title: "T3 Stack",
+    description: "Full-stack web apps with TypeScript, tRPC, Tailwind and Next.js.",
+    stack: "JavaScript",
+    level: "SENIOR_DEV",
+    github: "https://github.com/t3-oss/create-t3-app"
+  }
+];
+
+export const Posts = () => {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [stackFilter, setStackFilter] = useState("");
+  const [levelFilter, setLevelFilter] = useState("");
+  const postsPerPage = 6;
+
+  useEffect(() => {
+    setPosts(mockPosts);
+  }, []);
+
+  const filteredPosts = posts.filter(post => {
+    return (
+      (stackFilter ? post.stack === stackFilter : true) &&
+      (levelFilter ? post.level === levelFilter : true)
+    );
+  });
+
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+
+  return (
+    <div className="min-vh-100 p-5" style={{ backgroundColor: "#0d0d0d" }}>
+      <h2 className="text-white mb-4">Published Projects</h2>
+
+      <div className="d-flex gap-3 mb-4">
+        <select
+          className="form-select bg-dark text-white border-secondary"
+          value={stackFilter}
+          onChange={e => setStackFilter(e.target.value)}
+        >
+          <option value="">All Stacks</option>
+          {[...new Set(mockPosts.map(p => p.stack))].map(stack => (
+            <option key={stack} value={stack}>{stack}</option>
+          ))}
+        </select>
+        <select
+          className="form-select bg-dark text-white border-secondary"
+          value={levelFilter}
+          onChange={e => setLevelFilter(e.target.value)}
+        >
+          <option value="">All Levels</option>
+          {[...new Set(mockPosts.map(p => p.level))].map(level => (
+            <option key={level} value={level}>{level}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="row row-cols-1 row-cols-md-3 g-4">
+        {currentPosts.map(post => (
+          <motion.div
+            className="col"
+            key={post.id}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="card bg-black text-white h-100 shadow">
+              <div className="card-body d-flex flex-column justify-content-between">
+                <div>
+                  <h5 className="card-title" style={{ color: "#2563eb" }}>{post.title}</h5>
+                  <p className="card-text">{post.description}</p>
+                  <span className="badge bg-secondary me-2">{post.stack}</span>
+                  <span className="badge bg-info">{post.level}</span>
+                </div>
+
+                <Link to={`/single/${post.id}`} className="btn btn-outline-light btn-sm mt-3 w-100">
+                  View details
+                </Link>
+              </div>
+
+              <div className="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <a
+                  href={post.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-sm"
+                  style={{ backgroundColor: "#2563eb", color: "white" }}
+                >
+                  View GitHub
+                </a>
+                <div className="d-flex gap-2">
+                  <LikeButton postId={post.id} />
+                  <FavoriteButton postId={post.id} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="d-flex justify-content-center mt-4 gap-2">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+          <button
+            key={page}
+            className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`}
+            onClick={() => setCurrentPage(page)}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};

@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Boolean, Date, Integer, ForeignKey, Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List
 import enum
 import datetime
 from datetime import date, datetime, UTC
@@ -23,6 +24,7 @@ class Level(enum.Enum):
 
 
 class User(db.Model):
+    __tablename__ = "user"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     last_name: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -40,6 +42,12 @@ class User(db.Model):
         Date(), nullable=False, default=datetime.now(UTC))
     stack: Mapped[enum.Enum] = mapped_column(Enum(Stack), nullable=True)
     level: Mapped[enum.Enum] = mapped_column(Enum(Level), nullable=True)
+
+# relaciones User one to many
+    star: Mapped[List["Favorites"]] = relationship(back_populates="author")
+    say: Mapped[List["Post"]] = relationship(back_populates="author")
+    reply: Mapped[List["Comments"]] = relationship(back_populates="author")
+    love: Mapped[List["Likes"]] = relationship(back_populates="author")
 
     def serialize(self):
         return {
@@ -59,12 +67,20 @@ class User(db.Model):
 
 
 class Post(db.Model):
+    __tablename__ = "posts"
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     title: Mapped[str] = mapped_column(String(40), nullable=True)
     image_URL: Mapped[str] = mapped_column(String(2083), nullable=True)
     description: Mapped[str] = mapped_column(String(200), nullable=False)
     repo_URL: Mapped[str] = mapped_column(String(2083), nullable=False)
+
+    # relación one to many
+    star: Mapped[List["Favorites"]] = relationship(back_populates="say")
+    reply: Mapped[List["Comments"]] = relationship(back_populates="say")
+
+    # relación many to one
+    author: Mapped["User"] = relationship(back_populates="say")
 
     def serialize(self):
         return {
@@ -72,15 +88,20 @@ class Post(db.Model):
             "user_id": self.user_id,
             "title": self.title,
             "image_URL": self.image_URL,
-            "desciption": self.description,
+            "description": self.description,
             "repo_URL": self.repo_URL
         }
 
 
 class Favorites(db.Model):
+    __tablename__ = "favorites"
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
-    post_id: Mapped[int] = mapped_column(ForeignKey(Post.id))
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
+
+    # Many to one
+    author: Mapped["User"] = relationship(back_populates="star")
+    say: Mapped["Post"] = relationship(back_populates="star")
 
     def serialize(self):
         return {
@@ -91,14 +112,20 @@ class Favorites(db.Model):
 
 
 class Comments(db.Model):
+    __tablename__ = "comments"
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
-    post_id: Mapped[int] = mapped_column(ForeignKey(Post.id))
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
     title: Mapped[str] = mapped_column(String(40), nullable=True)
     text: Mapped[str] = mapped_column(String(120), nullable=False)
     date_added: Mapped[date] = mapped_column(
         # cambiar a que muestre hora (datetime en los corchetes no funcionó)
         nullable=False, default=datetime.now(UTC))
+
+    # Many to one
+    author: Mapped["User"] = relationship(back_populates="reply")
+    say: Mapped["Post"] = relationship(back_populates="reply")
+    love: Mapped[List["Likes"]] = relationship(back_populates="reply")
 
     def serialize(self):
         return {
@@ -112,9 +139,13 @@ class Comments(db.Model):
 
 
 class Likes(db.Model):
+    __tablename__ = "likes"
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
-    post_id: Mapped[int] = mapped_column(ForeignKey(Post.id))
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    comments_id: Mapped[int] = mapped_column(ForeignKey("comments.id"))
+
+    author: Mapped["User"] = relationship(back_populates="love")
+    reply: Mapped["Comments"] = relationship(back_populates="love")
 
     def serialize(self):
         return {

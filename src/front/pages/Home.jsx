@@ -1,6 +1,7 @@
-import React, { useEffect } from "react"
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+
 // Importar el componente para mostrar íconos
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // Importar los íconos que vas a usar
@@ -96,12 +97,5 @@ export const Home = () => {
         </>
     );
 };
-
-
-
-
-
-
-
 
 
