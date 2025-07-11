@@ -1,4 +1,10 @@
 from flask import jsonify, url_for
+import smtplib
+import ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
+
 
 class APIException(Exception):
     status_code = 400
@@ -15,10 +21,12 @@ class APIException(Exception):
         rv['message'] = self.message
         return rv
 
+
 def has_no_empty_params(rule):
     defaults = rule.defaults if rule.defaults is not None else ()
     arguments = rule.arguments if rule.arguments is not None else ()
     return len(defaults) >= len(arguments)
+
 
 def generate_sitemap(app):
     links = ['/admin/']
@@ -30,7 +38,8 @@ def generate_sitemap(app):
             if "/admin/" not in url:
                 links.append(url)
 
-    links_html = "".join(["<li><a href='" + y + "'>" + y + "</a></li>" for y in links])
+    links_html = "".join(["<li><a href='" + y + "'>" +
+                         y + "</a></li>" for y in links])
     return """
         <div style="text-align: center;">
         <img style="max-height: 80px" src='https://storage.googleapis.com/breathecode/boilerplates/rigo-baby.jpeg' />
@@ -39,3 +48,34 @@ def generate_sitemap(app):
         <p>Start working on your project by following the <a href="https://start.4geeksacademy.com/starters/full-stack" target="_blank">Quick Start</a></p>
         <p>Remember to specify a real endpoint path like: </p>
         <ul style="text-align: left;">"""+links_html+"</ul></div>"
+
+
+def send_email(sender, subject, user_message):
+    SMTP_ADDRESS = os.getenv('SMTP_ADDRESS'),
+    SMTP_PORT = os.getenv('SMTP_PORT'),
+    EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS'),
+    GMAIL_APP_PASSWORD = os.getenv('GMAIL_APP_PASSWORD')
+
+    message = MIMEMultipart('alternative')
+    message['Subject'] = subject
+    message['From'] = sender
+    message['To'] = EMAIL_ADDRESS
+
+    html = f'''
+    User: {sender},
+    Mensaje: {user_message}
+    '''
+
+    message.attach(MIMEText(html, 'html'))
+    user_message = message.as_string()
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(SMTP_ADDRESS, SMTP_PORT, context=context) as server:
+            server.login(EMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+            server.sendmail(sender, SMTP_ADDRESS, user_message)
+            print('message sent')
+        return True
+    except Exception as error:
+        print(error.args)
+        return False
