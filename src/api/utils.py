@@ -4,6 +4,7 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+# from front.assets import "logocompleto.png"
 
 
 class APIException(Exception):
@@ -51,9 +52,9 @@ def generate_sitemap(app):
 
 
 def send_email(sender, subject, user_message):
-    SMTP_ADDRESS = os.getenv('SMTP_ADDRESS'),
-    SMTP_PORT = os.getenv('SMTP_PORT'),
-    EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS'),
+    SMTP_ADDRESS = os.getenv('SMTP_ADDRESS')
+    SMTP_PORT = int(os.getenv('SMTP_PORT'))
+    EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS')
     GMAIL_APP_PASSWORD = os.getenv('GMAIL_APP_PASSWORD')
 
     message = MIMEMultipart('alternative')
@@ -62,8 +63,13 @@ def send_email(sender, subject, user_message):
     message['To'] = EMAIL_ADDRESS
 
     html = f'''
-    User: {sender},
-    Mensaje: {user_message}
+    <html>
+        <body class="test">
+            <h3><strong>Message from {sender} to the GitWise team about {subject}:</strong></h3>
+            <p>Message: {user_message}</p>
+        </body>
+    </html>
+
     '''
 
     message.attach(MIMEText(html, 'html'))
@@ -73,9 +79,10 @@ def send_email(sender, subject, user_message):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(SMTP_ADDRESS, SMTP_PORT, context=context) as server:
             server.login(EMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-            server.sendmail(sender, SMTP_ADDRESS, user_message)
-            print('message sent')
+            server.sendmail(sender, EMAIL_ADDRESS, user_message)
+            print('Message sent!')
         return True
     except Exception as error:
-        print(error.args)
+        print("Couldn't send email:", error)
+        print("Error arguments:", error.args)
         return False
