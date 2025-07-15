@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Post, Comments
+from api.models import db, User, Post, Comments, Level, Stack
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -161,8 +161,87 @@ def handle_comments(post_id):
 
     return jsonify({"msg": "Comment added successfully", "comment": comments.serialize()}), 201
 
+#------------------- Route GET and PUT user Profile--------------------------------------------
+@api.route('/users/profile/<int:user_id>', methods=['GET', 'PUT'])
+@jwt_required()
+def handle_user_profile(user_id):
+    try:
+        # Verificación de identidad
+        current_user_id = get_jwt_identity()
+        if int(current_user_id) != user_id:
+            return jsonify({"error": "Unauthorized access"}), 403
 
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
 
+        if request.method == 'GET':
+            return jsonify(user.serialize()), 200
+
+        elif request.method == 'PUT':
+            if not request.is_json:
+                return jsonify({"error": "Request must be JSON"}), 400
+
+            data = request.get_json()
+
+            # Validar campos enum
+            if 'level' in data:
+                try:
+                    data['level'] = Level[data['level'].upper()]
+                except KeyError:
+                    valid_levels = [e.name.lower() for e in Level]
+                    return jsonify({
+                        "error": f"Invalid level. Valid options: {valid_levels}"
+                    }), 400
+
+            if 'stack' in data:
+                try:
+                    data['stack'] = Stack[data['stack'].upper()]
+                except KeyError:
+                    valid_stacks = [e.name.lower() for e in Stack]
+                    return jsonify({
+                        "error": f"Invalid stack. Valid options: {valid_stacks}"
+                    }), 400
+
+            # Actualizar campos permitidos
+            update_fields = ['email', 'name', 'last_name', 'username', 'stack', 'level']
+            updated = False
+            
+            for field in update_fields:
+                if field in data:
+                    current_value = getattr(user, field)
+                    new_value = data[field]
+                    
+                    # Comparar valores actuales con nuevos
+                    if current_value != new_value:
+                        setattr(user, field, new_value)
+                        updated = True
+
+            if updated:
+                db.session.commit()
+                # Serializar manualmente para asegurar compatibilidad con JSON
+                user_data = {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "last_name": user.last_name,
+                    "username": user.username,
+                    "stack": user.stack.value if user.stack else None,
+                    "level": user.level.value if user.level else None
+                }
+                return jsonify({
+                    "message": "Profile updated successfully",
+                    "user": user_data
+                }), 200
+            else:
+                return jsonify({"message": "No changes detected"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    # Retorno por defecto (nunca debería ejecutarse)
+    return jsonify({"error": "Unexpected error"}), 500
 
 
 
