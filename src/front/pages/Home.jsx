@@ -73,7 +73,7 @@ export const Home = () => {
                                     <li className="pb-2">• Basic AI search (limited)</li>{/* Se agrego un padding para nivelar el texto */}
                                 </ul>
                                 <p className="plan-price mt-5">12x $0.00/month</p>{/* Se agrego un Margin top para nivelar el boton */}
-                                <button className="plan-button btn btn-outline-primary">CHOOSE THIS PLAN</button>
+                                <Link to="/free" className="plan-button btn btn-outline-primary">CHOOSE THIS PLAN</Link>
                             </div>
                         </div>
                         {/* Plan Premium */}
@@ -88,7 +88,7 @@ export const Home = () => {
                                     <li>• Priority support</li>
                                 </ul>
                                 <p className="plan-price">12x $5.99/month</p>
-                                <button className="plan-button btn btn-outline-primary">CHOOSE THIS PLAN</button>
+                                <Link to="/premium" className="plan-button btn btn-outline-primary">CHOOSE THIS PLAN</Link>
                             </div>
                         </div>
                     </div>
