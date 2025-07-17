@@ -17,7 +17,7 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/login", {
+      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

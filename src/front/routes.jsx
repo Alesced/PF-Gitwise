@@ -17,6 +17,8 @@ import { AdminPosts } from "./pages/AdminPosts";
 import { UserProfile } from "./pages/UserProfile";
 import { AISearch } from "./pages/AISearch";
 import { Contact } from "./pages/Contact";
+import Free  from './pages/Free';
+import Premium  from './pages/Premium';
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -33,6 +35,8 @@ export const router = createBrowserRouter(
       <Route path="/profile" element={<UserProfile />} />
       <Route path="/AI-search" element={<AISearch />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/free" element={<Free />} />
+      <Route path="/premium" element={<Premium />} />
     </Route>
   )
 );

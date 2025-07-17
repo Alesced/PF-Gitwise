@@ -58,8 +58,8 @@ export const Home = () => {
                 </div>
                 <div className="container py-5">
                     {/* Título principal */}
-                    <h2 className="section-title text-center fw-bold mb-1">CHOOSE THE BEST PLAN FOR YOU</h2>
-                    <p className="section-subtitle text-center mb-5">SAVE UP TO 30%</p>
+                    <h2 className="section-title text-center fw-bold mb-1">FIND THE BEST PLAN FOR YOU</h2>
+                    <h3 className=" text-center mb-5">And sign up now to select it</h3>
                     {/* Contenedor de los planes */}
                     <div className="row justify-content-center">
                         {/* Plan Free */}
@@ -72,8 +72,8 @@ export const Home = () => {
                                     <li>• Up to 2,000 minutes of CI/CD per month</li>
                                     <li className="pb-2">• Basic AI search (limited)</li>{/* Se agrego un padding para nivelar el texto */}
                                 </ul>
-                                <p className="plan-price mt-5">12x $0.00/month</p>{/* Se agrego un Margin top para nivelar el boton */}
-                                <button className="plan-button btn btn-outline-primary">CHOOSE THIS PLAN</button>
+                                <p className="plan-price mt-5">$0.00</p>{/* Se agrego un Margin top para nivelar el boton */}
+                                <Link to="/free" className="plan-button btn btn-outline-primary">SIGN UP HERE</Link>
                             </div>
                         </div>
                         {/* Plan Premium */}
@@ -87,8 +87,8 @@ export const Home = () => {
                                     <li>• Advanced repo insights and metrics</li>
                                     <li>• Priority support</li>
                                 </ul>
-                                <p className="plan-price">12x $5.99/month</p>
-                                <button className="plan-button btn btn-outline-primary">CHOOSE THIS PLAN</button>
+                                <p className="plan-price">$5.99/month</p>
+                                <Link to="/premium" className="plan-button btn btn-outline-primary">SIGN UP HERE</Link>
                             </div>
                         </div>
                     </div>
