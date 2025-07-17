@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Post, Comments, Level, Stack
+from api.models import db, User, Post, Comments, Level, Stack, Likes
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -307,6 +307,59 @@ def handle_user_profile(user_id):
 
     # Retorno por defecto (nunca debería ejecutarse)
     return jsonify({"error": "Unexpected error"}), 500
+
+#------------------------Routes for Get all Posts------------------------
+@api.route('/posts', methods=['GET'])
+def get_all_posts():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+
+        posts_query = Post.query.order_by(Post.id.desc())
+        posts_paginated = posts_query.paginate(page=page, per_page=per_page, error_out=False)
+
+        if not posts_paginated.items:
+            return jsonify({"msg": "No posts found"}), 404
+
+        posts_data = []
+        for post in posts_paginated.items:
+            author = User.query.get(post.user_id)
+            
+            # Obtener comentarios del post
+            comments = Comments.query.filter_by(post_id=post.id).all()
+            comment_count = len(comments)
+            
+            # Calcular likes TOTALES (sumando likes de todos los comentarios del post)
+            total_likes = 0
+            for comment in comments:
+                total_likes += Likes.query.filter_by(comments_id=comment.id).count()
+
+            post_data = post.serialize()
+            post_data.update({
+                "author_info": {
+                    "username": author.username,
+                    "avatar": author.image_URL if hasattr(author, 'image_URL') else None
+                },
+                "stats": {
+                    "comments": comment_count,
+                    "likes": total_likes  # Likes totales en todos los comentarios del post
+                }
+            })
+            posts_data.append(post_data)
+
+        return jsonify({
+            "success": True,
+            "posts": posts_data,
+            "pagination": {
+                "total_posts": posts_paginated.total,
+                "current_page": page,
+                "posts_per_page": per_page,
+                "total_pages": posts_paginated.pages
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
