@@ -7,6 +7,12 @@ from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import smtplib
+import ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
+from api.utils import send_email
 
 api = Blueprint('api', __name__)
 bcrypt = Bcrypt()
@@ -66,19 +72,29 @@ def register_user():
 @api.route('/contact', methods=['POST'])
 def handle_contact():
     data = request.get_json()
-    name = data.get('name')
+    fullname = data.get('fullname')  # that's the actual front-end variable
     email = data.get('email')
+    subject = data.get('subject')  # this one was missing
     message = data.get('message')
 
-    if not all([name, email, message]):
+    if not all([fullname, email, subject, message]):
         return jsonify({"error": "All fields are required"}), 400
+    # this part was missing (cause you didn't have utils.py before)
+    try:
+        send_email(
+            sender=email,
+            subject=subject,
+            user_message=message
+        )
+        response_body = {
+            "message": "Thank you for contacting GitWise! We will get back to you as soon as possible."
+        }
+        return jsonify(response_body), 200
 
-    # Here you would typically send an email or save the contact message to the database
-    response_body = {
-        "message": "Thank you for contacting us! We will get back to you soon."
-    }
-
-    return jsonify(response_body), 200
+    except Exception as error:
+        print("Could not send email:", error)
+        print("Error arguments:", error.args)
+        return jsonify({"error": "Failed to send message"}), 500
 
 #------------------------Routes for user login------------------------
 @api.route('/login', methods=['POST'])
@@ -164,6 +180,51 @@ def handle_comments(post_id):
     db.session.commit()
 
     return jsonify({"msg": "Comment added successfully", "comment": comments.serialize()}), 201
+
+
+#------------------------Routes for Get, Edit and Delete Post by ID------------------------
+@api.route('/post/<int:post_id>', methods=['GET', 'PUT', 'DELETE'])
+@jwt_required()
+def handle_post_by_id(post_id):
+    # GET: Return post. PUT: Update post. DELETE: Delete post.
+    #verify if the post exists
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({"msg": "Post not found"}), 404
+    
+    #verify if the user is the owner of the post
+    user_id = get_jwt_identity()
+    if post.user_id != int(user_id):
+        return jsonify({"msg": "You are not the owner of this post"}), 403
+
+    # Handle GET, PUT, DELETE methods for the post
+    if request.method == 'GET':
+        return jsonify({"post": post.serialize()}), 200
+
+    elif request.method == 'PUT':
+        # Update the post with the provided data
+        data = request.get_json()
+        if not data:
+            return jsonify({"msg": "No data provided"}), 400
+        try:
+            post.title = data.get('title', post.title)
+            post.image_URL = data.get('image_URL', post.image_URL)
+            post.description = data.get('description', post.description)
+            post.repo_URL = data.get('repo_URL', post.repo_URL)
+            db.session.commit()
+            return jsonify({"msg": "Post updated successfully", "post": post.serialize()}), 200
+        except KeyError as e:
+            db.session.rollback()
+            return jsonify({"msg": f"Server error: {str(e)}"}), 500
+    # DELETE method to remove the post
+    elif request.method == 'DELETE':
+        try:
+            db.session.delete(post)
+            db.session.commit()
+            return jsonify({"msg": "Post deleted successfully"}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
 #------------------- Route GET and PUT user Profile--------------------------------------------
 @api.route('/users/profile/<int:user_id>', methods=['GET', 'PUT'])
