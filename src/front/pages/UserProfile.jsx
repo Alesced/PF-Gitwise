@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
+import useGlobalReducer from "../hooks/useGlobalReducer";
+
 export const UserProfile = () => {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
+  const {store, dispatch} = useGlobalReducer()
   const [myPosts, setMyPosts] = useState([]);
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export const UserProfile = () => {
 
         {/* Info */}
         <div className="card-body text-center mt-5 pt-4">
-          <h3 className="card-title">{user.username}</h3>
+          <h3 className="card-title">{store.user.username}</h3>
           <p className="text-muted fst-italic">{user.bio}</p>
 
           <div className="d-flex justify-content-center flex-wrap gap-2 my-3">
@@ -75,8 +78,8 @@ export const UserProfile = () => {
             ))}
           </div>
 
-          <p className="mb-1"><strong>Level:</strong> {user.level}</p>
-          <p className="mb-1"><strong>Email:</strong> {user.email}</p>
+          <p className="mb-1"><strong>Level:</strong> {store.user.level}</p>
+          <p className="mb-1"><strong>Email:</strong> {store.user.email}</p>
           <p className="mb-2 text-secondary">Member since: Dec 2024</p>
 
           <div className="mt-3 d-flex justify-content-center gap-3">
