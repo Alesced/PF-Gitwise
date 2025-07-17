@@ -32,6 +32,8 @@ def register_user():
     name = data.get('name')
     last_name = data.get('last_name')
     username = data.get('username')
+    level = data.get('level')
+    stack = data.get('stack')
 
     if not all([email, password, name, last_name, username]):
         return jsonify({"error": "All fields are required"}), 400
@@ -49,7 +51,9 @@ def register_user():
                     password=hashed_password,
                     name=name,
                     last_name=last_name,
-                    username=username)
+                    username=username,
+                    level=level,
+                    stack=stack)
     db.session.add(new_user)
     db.session.commit()
 
@@ -93,9 +97,9 @@ def login_user():
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-    # Generate JWT token
+    # Generate JWT token ------> Aqui hubo una edicion
     access_token = create_access_token(identity=str(user.id))
-    return jsonify({"message": "Login successful", "token": access_token, "id": user.id}), 200
+    return jsonify({"message": "Login successful", "token": access_token, "id": user.id, "name": user.name,"last_name": user.last_name, "username": user.username, "email": user.email, "stack": user.stack.value if user.stack else None, "level": user.level.value if user.level else None }), 200
 
 #------------------------Routes for New Post------------------------
 @api.route('/post', methods=['POST'])

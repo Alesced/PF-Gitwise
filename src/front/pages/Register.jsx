@@ -7,13 +7,13 @@ import bannerImg from "../assets/img/mohammad-rahmani-_Fx34KeqIEw-unsplash.jpg";
 export const Register = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    first_name: "",
+    name: "",
     last_name: "",
     username: "",
     email: "",
     password: "",
     stack: "",
-    level: "",
+    level: ""
   });
 
   const handleChange = (e) => {
