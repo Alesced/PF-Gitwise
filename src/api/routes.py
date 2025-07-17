@@ -118,31 +118,40 @@ def login_user():
     return jsonify({"message": "Login successful", "token": access_token, "id": user.id, "name": user.name,"last_name": user.last_name, "username": user.username, "email": user.email, "stack": user.stack.value if user.stack else None, "level": user.level.value if user.level else None }), 200
 
 #------------------------Routes for New Post------------------------
-@api.route('/post', methods=['POST'])
+@api.route('user/post/<int:user_id>', methods=['POST'])  
 @jwt_required()
-def handle_new_post():
-    user_id_row= get_jwt_identity()
-    user_id = str(user_id_row)
-    data = request.get_json()
-    title = data.get('title')
-    image_URL = data.get('image_URL')
-    description = data.get('description')
-    repo_URL = data.get('repo_URL')
+def handle_new_post(user_id): 
+    try:
+        # Verificar que el usuario del token coincide con el user_id
+        current_user_id = get_jwt_identity()
+        if int(current_user_id) != user_id:
+            return jsonify({"error": "No autorizado"}), 403
 
-    if not description or not title or not repo_URL:
-        return jsonify({"msg": "Description, title and repo_URL are required"}), 400
-    
-    post = Post(
-        user_id=user_id,
-        title=title,
-        image_URL=image_URL,
-        description=description,
-        repo_URL=repo_URL
-    )
-    db.session.add(post)
-    db.session.commit()
+        # Resto de tu lógica...
+        data = request.get_json()
+        title = data.get('title')
+        description = data.get('description')
+        repo_URL = data.get('repo_URL')
+        
+        if not all([title, description, repo_URL]):
+            return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    return jsonify({"msg": "Post created successfully", "post": post.serialize()}), 201
+        new_post = Post(
+            user_id=user_id,  # Usamos el user_id de la URL
+            title=title,
+            description=description,
+            repo_URL=repo_URL,
+            image_URL=data.get('image_URL')
+        )
+
+        db.session.add(new_post)
+        db.session.commit()
+
+        return jsonify({"message": "Post creado", "post": new_post.serialize()}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 #------------------------Routes for Search-IA------------------------
 @api.route('/search-ia', methods=['POST'])
