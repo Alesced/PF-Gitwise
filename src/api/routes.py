@@ -320,7 +320,9 @@ def handle_user_profile(user_id):
 #------------------------Routes for Get all Posts------------------------
 @api.route('/posts', methods=['GET'])
 def get_all_posts():
+    # This endpoint retrieves all posts with pagination, author info, and comment stats
     try:
+        # Pagination parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
 
@@ -334,11 +336,11 @@ def get_all_posts():
         for post in posts_paginated.items:
             author = User.query.get(post.user_id)
             
-            # Obtener comentarios del post
+            # get the comments for the post and count them
             comments = Comments.query.filter_by(post_id=post.id).all()
             comment_count = len(comments)
             
-            # Calcular likes TOTALES (sumando likes de todos los comentarios del post)
+            # get the total likes for each comment and sum them up
             total_likes = 0
             for comment in comments:
                 total_likes += Likes.query.filter_by(comments_id=comment.id).count()
