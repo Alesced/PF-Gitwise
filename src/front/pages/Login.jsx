@@ -2,41 +2,60 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import isotipo from "../assets/img/isotipo.png";
-
 import bannerImg from "../assets/img/ferenc-almasi-oCm8nPkE40k-unsplash.jpg";
 
 export const Login = () => {
-  const { dispatch } = useGlobalReducer();
-  const navigate = useNavigate();
+  const { dispatch } = useGlobalReducer();   // Acceso al store global
+  const navigate = useNavigate();            // Permite redirigir después de login
+
+  // Estado local para capturar el email y la contraseña del formulario
   const [form, setForm] = useState({ email: "", password: "" });
 
+  // Maneja los cambios en los inputs del formulario
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Maneja el envío del formulario de login
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/login", {
+      // Realiza la solicitud POST al backend (ruta de login)
+      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+
       if (res.ok) {
         const data = await res.json();
-        dispatch({ type: "set_user", payload: data });
+
+        // CAMBIO IMPORTANTE:
+        // Guarda el token y los datos del usuario en localStorage para mantener la sesión
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // CAMBIO CLAVE:
+        // Guarda el usuario en el store global (para mostrar en navbar, etc.)
+        dispatch({ type: "set_user", payload: data.user });
+
         alert("Login successful!");
-        navigate("/profile");
+        navigate("/profile");    // Redirige al perfil después del login
       } else {
-        alert("Invalid email or password.");
+        const error = await res.json();
+        alert(error.error || "Invalid email or password.");  // Muestra error del backend
       }
     } catch (err) {
       console.error(err);
+      alert("Error logging in.");  // Error genérico si el servidor no responde
     }
   };
 
+  // Renderiza el formulario visual de login
   return (
     <div className="vh-100 vw-100 d-flex overflow-hidden">
+      {/* Imagen lateral */}
       <div className="d-none d-md-block w-50">
         <img
           src={bannerImg}
@@ -46,6 +65,7 @@ export const Login = () => {
         />
       </div>
 
+      {/* Formulario de login */}
       <div className="w-100 w-md-50 bg-dark text-white d-flex align-items-center justify-content-center">
         <div className="p-5" style={{ width: "100%", maxWidth: "400px" }}>
           <div className="text-center mb-4">
@@ -58,6 +78,7 @@ export const Login = () => {
             </p>
           </div>
 
+          {/* Formulario */}
           <form onSubmit={handleSubmit}>
             <input
               type="email"

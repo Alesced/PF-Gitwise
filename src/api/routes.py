@@ -77,25 +77,66 @@ def handle_contact():
     return jsonify(response_body), 200
 
 #------------------------Routes for user login------------------------
+# Ruta de login: permite a un usuario autenticarse y obtener sus datos + token
 @api.route('/login', methods=['POST'])
 def login_user():
+    # Obtiene datos enviados desde el frontend
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
 
+    # Validación básica: email y password obligatorios
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
 
-    # Verify user credentials
+    # Busca el usuario por email
     user = User.query.filter_by(email=email).first()
 
-    # Check if user exists and password matches
+    # Verifica existencia y contraseña válida
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-    # Generate JWT token
+    # Crea token JWT para sesión segura
     access_token = create_access_token(identity=str(user.id))
-    return jsonify({"message": "Login successful", "token": access_token, "id": user.id}), 200
+
+
+    # CAMBIO - Generar lista real de posts (my_posts)
+    # Recorre la relación "user.say" (posts creados por el usuario)
+    my_posts = [
+        {
+            "id": post.id,
+            "title": post.title or "(No title)"   # Si no tiene título, muestra texto alternativo
+        }
+        for post in user.say   # user.say es la relación User -> Post (one-to-many)
+    ]
+
+    # CAMBIO - Generar lista real de favoritos (favorites)
+    # Extrae IDs de post desde relación "user.star" (favorites)
+    favorites = [fav.post_id for fav in user.star]   # user.star es User -> Favorites
+
+
+    # CAMBIO - Preparar objeto JSON con toda la info real del usuario
+    user_data = {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "name": user.name,
+        "last_name": user.last_name,
+        "avatar_url": "https://avatars.githubusercontent.com/u/000000?v=4",   # Imagen que se puede modificar despues
+        "join_date": user.member_since.isoformat(),    # Fecha de registro exacta 
+
+        "my_posts": my_posts,                          # Posts reales asociados al usuario
+        "favorites": favorites                         # Favoritos reales (IDs de posts)
+    }
+
+    # Retorna token + datos del usuario al frontend
+    return jsonify({
+        "message": "Login successful",
+        "token": access_token,      # Token JWT
+        "user": user_data           # Todos los datos del usuario
+    }), 200
+
+
 
 #------------------------Routes for New Post------------------------
 @api.route('/post', methods=['POST'])
