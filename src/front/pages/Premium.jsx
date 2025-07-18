@@ -4,7 +4,7 @@ import React from "react";
 const Premium = () => {
     return (
         <div className="container text-light py-5">
-            <h2>Premium Plan Payment</h2>
+            <h2>Donate Here</h2>
             <form className="bg-dark p-4 rounded">
                 <div className="mb-3">
                     <label className="form-label">Name</label>
@@ -26,8 +26,10 @@ const Premium = () => {
                 <div className="mb-3">
                     <label className="form-label">Payment method</label>
                     <select className="form-select">
+                        <option>Debit card</option>
                         <option>Credit card</option>
                         <option>PayPal</option>
+                        <option>Google Pay</option>
                     </select>
                 </div>
                 <button type="button" className="btn btn-primary w-100">Pay</button>

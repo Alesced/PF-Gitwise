@@ -29,7 +29,6 @@ def handle_hello():
 
     return jsonify(response_body), 200
 #------------------------Routes for user registration and authentication------------------------
-
 @api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
