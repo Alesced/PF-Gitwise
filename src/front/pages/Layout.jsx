@@ -4,7 +4,7 @@ import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { SessionInitializer } from "../components/SessionInitializer"; // Se agregó este componente 
 
-// Base layout component with navbar, footer and scroll-to-top.
+// Base layout component with navbar, footer and scroll-to-top
 export const Layout = () => {
   return (
     <div className="d-flex flex-column min-vh-100">

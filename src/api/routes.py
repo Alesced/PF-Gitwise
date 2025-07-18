@@ -125,7 +125,7 @@ def login_user():
         "avatar_url": "https://avatars.githubusercontent.com/u/000000?v=4",   # Imagen que se puede modificar despues
         "join_date": user.member_since.isoformat(),    # Fecha de registro exacta 
 
-        "my_posts": my_posts,                          # Posts reales asociados al usuario
+        "my_posts": my_posts,                          # Posts reales asociados al usuario.
         "favorites": favorites                         # Favoritos reales (IDs de posts)
     }
 

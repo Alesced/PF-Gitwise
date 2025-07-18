@@ -6,7 +6,7 @@ import bannerImg from "../assets/img/ferenc-almasi-oCm8nPkE40k-unsplash.jpg";
 
 export const Login = () => {
   const { dispatch } = useGlobalReducer();   // Acceso al store global
-  const navigate = useNavigate();            // Permite redirigir después de login.
+  const navigate = useNavigate();            // Permite redirigir después de login
 
   // Estado local para capturar el email y la contraseña del formulario
   const [form, setForm] = useState({ email: "", password: "" });

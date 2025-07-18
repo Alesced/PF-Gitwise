@@ -41,7 +41,7 @@ export const UserProfile = () => {
           />
         </div>
 
-        {/* Información del usuario. */}
+        {/* Información del usuario */}
         <div className="card-body text-center mt-5 pt-4">
           <h3 className="card-title">{user.username}</h3>
           <p className="mb-1"><strong>Email:</strong> {user.email}</p>

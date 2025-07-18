@@ -40,7 +40,7 @@ export default function storeReducer(store, action = {}) {
         user: action.payload
       };
 
-    case 'logout':        // se añadio la acción de cierre de sesión.
+    case 'logout':        // se añadio la acción de cierre de sesión
       return {
         ...store,
         user: null
