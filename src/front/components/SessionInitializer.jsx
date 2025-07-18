@@ -6,7 +6,7 @@ export const SessionInitializer = () => {
 
   useEffect(() => {
     // Este efecto solo se ejecuta una vez al montar el componente
-    // Sirve para recuperar la sesión si existe algo guardado en localStorage
+    // Sirve para recuperar la sesión si existe algo guardado en localStorage.
 
     const token = localStorage.getItem("token");   // Busca el token guardado (si existe)
     const user = localStorage.getItem("user");     // Busca el usuario guardado (si existe)

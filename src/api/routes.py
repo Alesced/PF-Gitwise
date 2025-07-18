@@ -115,7 +115,7 @@ def login_user():
     favorites = [fav.post_id for fav in user.star]   # user.star es User -> Favorites
 
 
-    # CAMBIO - Preparar objeto JSON con toda la info real del usuario
+    # CAMBIO - Preparar objeto JSON con toda la info real del usuario.
     user_data = {
         "id": user.id,
         "username": user.username,

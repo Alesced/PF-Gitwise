@@ -6,7 +6,7 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Navbar = () => {
   const { store, actions } = useGlobalReducer();    // Accede al store y las acciones globales
-  const navigate = useNavigate();                   // Permite redirigir
+  const navigate = useNavigate();                   // Permite redirigir.
 
   // Función que cierra la sesión
   const handleLogout = () => {

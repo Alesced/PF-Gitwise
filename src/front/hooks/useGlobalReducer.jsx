@@ -24,8 +24,8 @@ export default function useGlobalReducer() {
 
 
        const actions = {
-        logout: () => dispatch({ type: 'logout' }),   // Cierra sesión
-        setUser: (user) => dispatch({ type: 'set_user', payload: user }),  // Establece usuario
+        logout: () => dispatch({ type: 'logout' }),   // se cierra la sesión
+        setUser: (user) => dispatch({ type: 'set_user', payload: user }),  // Establece el usuario
         
     };
 

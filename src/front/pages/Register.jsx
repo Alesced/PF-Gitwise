@@ -22,7 +22,7 @@ export const Register = () => {
 
   // Función que se ejecuta cuando se envía el formulario
   const handleSubmit = async (e) => {
-    e.preventDefault();   // Previene que la página se recargue
+    e.preventDefault();   // Previene que la página se recargue.
 
     try {
       // Envia la información al backend usando fetch
