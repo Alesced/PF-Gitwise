@@ -28,7 +28,8 @@ def handle_hello():
     }
 
     return jsonify(response_body), 200
-#------------------------Routes for user registration and authentication------------------------
+# ------------------------Routes for user registration and authentication------------------------
+
 @api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -67,7 +68,9 @@ def register_user():
 
     return jsonify({"message": "User registered successfully", "token": access_token, "id": new_user.id}), 201
 
-#------------------------Routes for Contacts us------------------------
+# ------------------------Routes for Contacts us------------------------
+
+
 @api.route('/contact', methods=['POST'])
 def handle_contact():
     data = request.get_json()
@@ -95,8 +98,10 @@ def handle_contact():
         print("Error arguments:", error.args)
         return jsonify({"error": "Failed to send message"}), 500
 
-#------------------------Routes for user login------------------------
+# ------------------------Routes for user login------------------------
 # Ruta de login: permite a un usuario autenticarse y obtener sus datos + token
+
+
 @api.route('/login', methods=['POST'])
 def login_user():
     # Obtiene datos enviados desde el frontend
@@ -115,25 +120,25 @@ def login_user():
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-
     # Crea token JWT para sesión segura
     access_token = create_access_token(identity=str(user.id))
-
 
     # CAMBIO - Generar lista real de posts (my_posts)
     # Recorre la relación "user.say" (posts creados por el usuario)
     my_posts = [
         {
             "id": post.id,
-            "title": post.title or "(No title)"   # Si no tiene título, muestra texto alternativo
+            # Si no tiene título, muestra texto alternativo
+            "title": post.title or "(No title)"
         }
-        for post in user.say   # user.say es la relación User -> Post (one-to-many)
+        # user.say es la relación User -> Post (one-to-many)
+        for post in user.say
     ]
 
     # CAMBIO - Generar lista real de favoritos (favorites)
     # Extrae IDs de post desde relación "user.star" (favorites)
-    favorites = [fav.post_id for fav in user.star]   # user.star es User -> Favorites
-
+    # user.star es User -> Favorites
+    favorites = [fav.post_id for fav in user.star]
 
     # CAMBIO - Preparar objeto JSON con toda la info real del usuario.
     user_data = {
@@ -142,11 +147,14 @@ def login_user():
         "email": user.email,
         "name": user.name,
         "last_name": user.last_name,
-        "avatar_url": "https://avatars.githubusercontent.com/u/000000?v=4",   # Imagen que se puede modificar despues
-        "join_date": user.member_since.isoformat(),    # Fecha de registro exacta 
+        # Imagen que se puede modificar despues
+        "avatar_url": "https://avatars.githubusercontent.com/u/000000?v=4",
+        "join_date": user.member_since.isoformat(),    # Fecha de registro exacta
 
-        "my_posts": my_posts,                          # Posts reales asociados al usuario.
-        "favorites": favorites                         # Favoritos reales (IDs de posts)
+        # Posts reales asociados al usuario.
+        "my_posts": my_posts,
+        # Favoritos reales (IDs de posts)
+        "favorites": favorites
     }
 
     # Retorna token + datos del usuario al frontend
@@ -157,11 +165,10 @@ def login_user():
     }), 200
 
 
-
-#------------------------Routes for New Post------------------------
-@api.route('user/post/<int:user_id>', methods=['POST'])  
+# ------------------------Routes for New Post------------------------
+@api.route('/user/post/<int:user_id>', methods=['POST'])
 @jwt_required()
-def handle_new_post(user_id): 
+def handle_new_post(user_id):
     try:
         # Verificar que el usuario del token coincide con el user_id
         current_user_id = get_jwt_identity()
@@ -173,7 +180,7 @@ def handle_new_post(user_id):
         title = data.get('title')
         description = data.get('description')
         repo_URL = data.get('repo_URL')
-        
+
         if not all([title, description, repo_URL]):
             return jsonify({"error": "Faltan campos requeridos"}), 400
 
@@ -194,7 +201,9 @@ def handle_new_post(user_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-#------------------------Routes for Search-IA------------------------
+# ------------------------Routes for Search-IA------------------------
+
+
 @api.route('/search-ia', methods=['POST'])
 @jwt_required()
 def handle_search_ia():
@@ -204,7 +213,9 @@ def handle_search_ia():
 
     return jsonify(response_body), 200
 
-#------------------------Routes for comments a post------------------------
+# ------------------------Routes for comments a post------------------------
+
+
 @api.route('/post/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def handle_comments(post_id):
@@ -215,11 +226,11 @@ def handle_comments(post_id):
 
     if not text:
         return jsonify({"msg": "Text is required"}), 400
-    
+
     post = Post.query.get(post_id)
     if not post:
         return jsonify({"msg": "Post not found"}), 404
-    
+
     comments = Comments(
         user_id=user_id,
         post_id=post_id,
@@ -232,17 +243,17 @@ def handle_comments(post_id):
     return jsonify({"msg": "Comment added successfully", "comment": comments.serialize()}), 201
 
 
-#------------------------Routes for Get, Edit and Delete Post by ID------------------------
+# ------------------------Routes for Get, Edit and Delete Post by ID------------------------
 @api.route('/post/<int:post_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def handle_post_by_id(post_id):
     # GET: Return post. PUT: Update post. DELETE: Delete post.
-    #verify if the post exists
+    # verify if the post exists
     post = Post.query.get(post_id)
     if not post:
         return jsonify({"msg": "Post not found"}), 404
-    
-    #verify if the user is the owner of the post
+
+    # verify if the user is the owner of the post
     user_id = get_jwt_identity()
     if post.user_id != int(user_id):
         return jsonify({"msg": "You are not the owner of this post"}), 403
@@ -276,7 +287,9 @@ def handle_post_by_id(post_id):
             db.session.rollback()
             return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
-#------------------- Route GET and PUT user Profile--------------------------------------------
+# ------------------- Route GET and PUT user Profile--------------------------------------------
+
+
 @api.route('/users/profile/<int:user_id>', methods=['GET', 'PUT'])
 @jwt_required()
 def handle_user_profile(user_id):
@@ -319,14 +332,15 @@ def handle_user_profile(user_id):
                     }), 400
 
             # Actualizar campos permitidos
-            update_fields = ['email', 'name', 'last_name', 'username', 'stack', 'level']
+            update_fields = ['email', 'name',
+                             'last_name', 'username', 'stack', 'level']
             updated = False
-            
+
             for field in update_fields:
                 if field in data:
                     current_value = getattr(user, field)
                     new_value = data[field]
-                    
+
                     # Comparar valores actuales con nuevos
                     if current_value != new_value:
                         setattr(user, field, new_value)
@@ -358,7 +372,9 @@ def handle_user_profile(user_id):
     # Retorno por defecto (nunca debería ejecutarse)
     return jsonify({"error": "Unexpected error"}), 500
 
-#------------------------Routes for Get all Posts------------------------
+# ------------------------Routes for Get all Posts------------------------
+
+
 @api.route('/posts', methods=['GET'])
 def get_all_posts():
     # This endpoint retrieves all posts with pagination, author info, and comment stats
@@ -368,7 +384,8 @@ def get_all_posts():
         per_page = request.args.get('per_page', 10, type=int)
 
         posts_query = Post.query.order_by(Post.id.desc())
-        posts_paginated = posts_query.paginate(page=page, per_page=per_page, error_out=False)
+        posts_paginated = posts_query.paginate(
+            page=page, per_page=per_page, error_out=False)
 
         if not posts_paginated.items:
             return jsonify({"msg": "No posts found"}), 404
@@ -376,15 +393,16 @@ def get_all_posts():
         posts_data = []
         for post in posts_paginated.items:
             author = User.query.get(post.user_id)
-            
+
             # get the comments for the post and count them
             comments = Comments.query.filter_by(post_id=post.id).all()
             comment_count = len(comments)
-            
+
             # get the total likes for each comment and sum them up
             total_likes = 0
             for comment in comments:
-                total_likes += Likes.query.filter_by(comments_id=comment.id).count()
+                total_likes += Likes.query.filter_by(
+                    comments_id=comment.id).count()
 
             post_data = post.serialize()
             post_data.update({
@@ -412,8 +430,3 @@ def get_all_posts():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-
-
-
