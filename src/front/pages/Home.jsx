@@ -29,7 +29,7 @@ export const Home = () => {
                                 What makes it unique? An <strong>AI-powered search engine</strong> that understands natural language and gives contextual suggestions.
                             </p>
                             {/* iconos y texto */}
-                            <div className="container py-5">
+                            <div className="container pt-5">
                                 <div className="row text-center text-light">
                                     {/* icono 1 */}
                                     <div className="col-6 col-md-3 mb-4">
@@ -56,38 +56,41 @@ export const Home = () => {
                         </div>
                     </div>
                 </div>
+                 {/* Why Support Section */}
+                <div className="container">
+                    <div className="space-y-4 pt-8 border-t border-border">
+                        <h3>Why support our project?</h3>
+                        <div className="text-muted-foreground space-y-2">
+                            <p>
+                                This project is maintained by a passionate team of developers who dedicate
+                                their time to creating high-quality, open-source software for the community.
+                            </p>
+                            <p>
+                                Your donations help us cover infrastructure costs, development tools,
+                                and allow us to spend more time improving the project for everyone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            
                 <div className="container py-5">
                     {/* Título principal */}
-                    <h2 className="section-title text-center fw-bold mb-1">FIND THE BEST PLAN FOR YOU</h2>
-                    <h3 className=" text-center mb-5">And sign up now to select it</h3>
+                    <h2 className="section-title text-center fw-bold mb-1">SUPPORT OUR PROJECT</h2>
+                    <h3 className=" text-center mb-5">Made with ❤️ by the open-source community</h3>
                     {/* Contenedor de los planes */}
                     <div className="row justify-content-center">
-                        {/* Plan Free */}
+                        {/* Donate Plan */}
                         <div className="col-12 col-md-5 mb-4">
                             <div className="plan-card text-center">
-                                <h5 className="plan-title-1">FREE</h5>
+                                <h5 className="plan-title-1">DONATE</h5>
+                                <p className="plan-description text-white">Support the development of this platform</p>
                                 <ul className="plan-features list-unstyled mt-3 mb-4 text-start mx-auto">
                                     <li>• Unlimited repositories (basic public or private)</li>
                                     <li>• Community and collaborative support</li>
                                     <li>• Up to 2,000 minutes of CI/CD per month</li>
-                                    <li className="pb-2">• Basic AI search (limited)</li>{/* Se agrego un padding para nivelar el texto */}
+                                    <li className="pb-2">• AI search </li>{/* Se agrego un padding para nivelar el texto */}
                                 </ul>
                                 <p className="plan-price mt-5">$0.00</p>{/* Se agrego un Margin top para nivelar el boton */}
-                                <Link to="/free" className="plan-button btn btn-outline-primary">SIGN UP HERE</Link>
-                            </div>
-                        </div>
-                        {/* Plan Premium */}
-                        <div className="col-12 col-md-5 mb-4">
-                            <div className="plan-card text-center">
-                                <h5 className="plan-title-2">PREMIUM</h5>
-                                <ul className="plan-features list-unstyled mt-3 mb-4 text-start mx-auto">
-                                    <li>• All Free plan features</li>
-                                    <li>• Unlimited CI/CD minutes</li>
-                                    <li>• Advanced AI (GPT-4 or Claude)</li>
-                                    <li>• Advanced repo insights and metrics</li>
-                                    <li>• Priority support</li>
-                                </ul>
-                                <p className="plan-price">$5.99/month</p>
                                 <Link to="/premium" className="plan-button btn btn-outline-primary">SIGN UP HERE</Link>
                             </div>
                         </div>
