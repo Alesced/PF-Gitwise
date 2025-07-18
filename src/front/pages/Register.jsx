@@ -8,11 +8,13 @@ export const Register = () => {
 
   // Estado inicial del formulario (usa las propiedades que el backend espera)
   const [form, setForm] = useState({
+
     name: "",          // Cambio que se hizo en clase con el profe, backend espera "name"
     last_name: "",
     username: "",
     email: "",
     password: ""
+
   });
 
   // Esta función actualiza el estado del formulario cuando el usuario escribe
