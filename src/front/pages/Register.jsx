@@ -1,46 +1,56 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import isotipo from "../assets/img/isotipo.png";
-
-import bannerImg from "../assets/img/mohammad-rahmani-_Fx34KeqIEw-unsplash.jpg";
+import { useState } from "react";                 // Importa el hook useState para manejar el formulario
+import { useNavigate } from "react-router-dom";    // Importa useNavigate para redirigir después del registro
+import isotipo from "../assets/img/isotipo.png";   // Imagen del logo
+import bannerImg from "../assets/img/mohammad-rahmani-_Fx34KeqIEw-unsplash.jpg";  // Imagen del banner
 
 export const Register = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate();   // Hook para redirigir al usuario después del registro
+
+  // Estado inicial del formulario (usa las propiedades que el backend espera)
   const [form, setForm] = useState({
-    name: "",
+
+    name: "",          // Cambio que se hizo en clase con el profe, backend espera "name"
     last_name: "",
     username: "",
     email: "",
-    password: "",
-    stack: "",
-    level: ""
+    password: ""
+
   });
 
+  // Esta función actualiza el estado del formulario cuando el usuario escribe
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Función que se ejecuta cuando se envía el formulario
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault();   // Previene que la página se recargue
+
     try {
-      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/register", {
+      // Envia la información al backend usando fetch
+      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(form),   // Convierte el objeto form a JSON
       });
+
       if (res.ok) {
-        alert("Account created successfully.");
-        navigate("/profile");
+        alert("Account created successfully.");  // Muestra alerta si fue exitoso
+        navigate("/login");                      // Redirige al login después del registro
       } else {
-        alert("Error creating account.");
+        const error = await res.json();
+        alert(error.error || "Error creating account.");  // Muestra mensaje de error del backend
       }
     } catch (err) {
       console.error(err);
+      alert("Error creating account.");  // Error general
     }
   };
 
+  // JSX: Renderiza el formulario y la estructura visual del registro
   return (
     <div className="vh-100 vw-100 d-flex overflow-hidden">
+      {/* Columna izquierda: Imagen de fondo */}
       <div className="d-none d-md-block w-50">
         <img
           src={bannerImg}
@@ -50,8 +60,10 @@ export const Register = () => {
         />
       </div>
 
+      {/* Columna derecha: Formulario */}
       <div className="w-100 w-md-50 bg-dark text-white d-flex align-items-center justify-content-center">
         <div className="p-5" style={{ width: "100%", maxWidth: "500px" }}>
+          {/* Logo y encabezado */}
           <div className="text-center mb-4">
             <img src={isotipo} alt="GitWise logo" width="50" />
             <h4 className="mt-3">
@@ -62,12 +74,15 @@ export const Register = () => {
             </p>
           </div>
 
+          {/* Formulario de registro */}
           <form onSubmit={handleSubmit}>
+
+            {/* Campos: Nombre y Apellido */}
             <div className="row">
               <div className="col-md-6 mb-2">
                 <input
                   type="text"
-                  name="first_name"
+                  name="name"   // El backend espera el campo como "name"
                   placeholder="First name"
                   className="form-control bg-light border-0"
                   onChange={handleChange}
@@ -86,6 +101,7 @@ export const Register = () => {
               </div>
             </div>
 
+            {/* Campo: Nombre de usuario */}
             <input
               type="text"
               name="username"
@@ -95,6 +111,7 @@ export const Register = () => {
               required
             />
 
+            {/* Campo: Correo electrónico */}
             <input
               type="email"
               name="email"
@@ -104,6 +121,7 @@ export const Register = () => {
               required
             />
 
+            {/* Campo: Contraseña */}
             <input
               type="password"
               name="password"
@@ -113,30 +131,7 @@ export const Register = () => {
               required
             />
 
-            <select
-              name="stack"
-              className="form-control my-2 bg-light border-0"
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select your main stack</option>
-              <option value="frontend">Frontend</option>
-              <option value="backend">Backend</option>
-              <option value="fullstack">Fullstack</option>
-            </select>
-
-            <select
-              name="level"
-              className="form-control my-2 bg-light border-0"
-              onChange={handleChange}
-              required
-            >
-              <option value="">Developer level</option>
-              <option value="junior">Junior</option>
-              <option value="semi-senior">Semi-Senior</option>
-              <option value="senior">Senior</option>
-            </select>
-
+            {/* Botón para enviar el formulario */}
             <button type="submit" className="btn btn-primary w-100 mt-3">
               Register
             </button>

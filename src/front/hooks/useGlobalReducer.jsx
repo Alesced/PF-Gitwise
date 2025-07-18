@@ -17,8 +17,19 @@ export function StoreProvider({ children }) {
     </StoreContext.Provider>
 }
 
-// Custom hook to access the global state and dispatch function.
+// Custom hook to access the global state and dispatch function
 export default function useGlobalReducer() {
     const { dispatch, store } = useContext(StoreContext)
-    return { dispatch, store };
+    
+
+
+       const actions = {
+        logout: () => dispatch({ type: 'logout' }),   // se cierra la sesión
+        setUser: (user) => dispatch({ type: 'set_user', payload: user }),  // Establece el usuario
+        
+    };
+
+    return { store, dispatch, actions };
+
 }
+
