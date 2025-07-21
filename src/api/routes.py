@@ -431,30 +431,28 @@ def get_all_posts():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ------------------------Routes for Favorites------------------------
-@api.route('/favorites', methods=['GET', 'POST', 'DELETE'])
+# ------------------------Routes GET Favorites by users------------------------
+@api.route('/favorites', methods=['GET'])
 @jwt_required()
-def handle_favorites():
+def get_user_favorites():
+    #obtein the favorites posts of the current user
+    current_user_id = get_jwt_identity()
+    favorites = Favorites.query.filter_by(user_id=current_user_id).all()
+    return jsonify([fav.serialize() for fav in favorites]), 200
+
+# ------------------------Routes for Add and Delete Favorites------------------------
+@api.route('/favorites/<int:post_id>', methods=['POST', 'DELETE'])
+@jwt_required()
+def handle_single_favorite(post_id):
+    #for add and delete favorite 
     current_user_id = get_jwt_identity()
     
-    if request.method == 'GET':
-        # Obtener todos los favoritos del usuario
-        favorites = Favorites.query.filter_by(user_id=current_user_id).all()
-        return jsonify([fav.serialize() for fav in favorites]), 200
-    
-    elif request.method == 'POST':
-        # Añadir un nuevo favorito
-        data = request.get_json()
-        post_id = data.get('post_id')
-        
-        if not post_id:
-            return jsonify({"error": "post_id is required"}), 400
-        
-        # Verificar si el post existe
-        post = Post.query.get(post_id)
-        if not post:
-            return jsonify({"error": "Post not found"}), 404
-        
+    # Verificar si el post existe
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
+
+    if request.method == 'POST':
         # Verificar si ya es favorito
         existing_fav = Favorites.query.filter_by(
             user_id=current_user_id, 
@@ -479,13 +477,6 @@ def handle_favorites():
         }), 201
     
     elif request.method == 'DELETE':
-        # Eliminar un favorito
-        data = request.get_json()
-        post_id = data.get('post_id')
-        
-        if not post_id:
-            return jsonify({"error": "post_id is required"}), 400
-        
         # Buscar el favorito
         favorite = Favorites.query.filter_by(
             user_id=current_user_id,
