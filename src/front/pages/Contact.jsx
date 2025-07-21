@@ -11,7 +11,7 @@ export const Contact = () => {
     const handleSubmit = (e) => {
         e.preventDefault(); //para que no haga refresh cada vez que hundimos send
 
-        fetch("http://localhost:3001/api/contact", {
+        fetch("https://fantastic-doodle-pjw4647v49p936xwr-3001.app.github.dev/api/contact", {
             method: "POST",
             body: JSON.stringify(formData),
             headers: {
@@ -83,7 +83,7 @@ export const Contact = () => {
                             className="form-control"
                             value={formData.subject}
                             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                            placeholder="Questions about Premium / Technical issue / Constructive feedback"
+                            placeholder="Questions/feedback about..."
                             required
                         />
                     </div>
