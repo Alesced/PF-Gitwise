@@ -431,6 +431,7 @@ def get_all_posts():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 # ------------------------Routes GET Favorites by users------------------------
 @api.route('/favorites', methods=['GET'])
 @jwt_required()
@@ -490,3 +491,64 @@ def handle_single_favorite(post_id):
         db.session.commit()
         
         return jsonify({"message": "Favorite removed successfully"}), 200
+
+#-----------------------Routes for Likes to Comments------------------------
+@api.route('/comments/<int:comment_id>/like', methods=['POST', 'DELETE'])
+@jwt_required()
+def like_comment(comment_id):
+    try:
+        user_id = get_jwt_identity()
+        comment = Comments.query.get(comment_id)
+
+        if not comment:
+            return jsonify({"error": "Comment not found"}), 404
+
+        # Check if the user has already liked this comment
+        existing_like = Likes.query.filter_by(
+            user_id=user_id, 
+            comments_id=comment_id
+        ).first()
+
+        # handle POST request to like a comment
+        if request.method == 'POST':
+            if existing_like:
+                return jsonify({
+                    "error": "You have already liked this comment", 
+                    "comment_id": comment_id
+                }), 400
+
+            new_like = Likes(
+                user_id=user_id, 
+                comments_id=comment_id
+            )
+            db.session.add(new_like)
+            action = "liked"
+
+        # handle DELETE request to unlike a comment
+        elif request.method == 'DELETE':
+            if not existing_like:
+                return jsonify({
+                    "error": "You have not liked this comment", 
+                    "comment_id": comment_id
+                }), 404
+
+            db.session.delete(existing_like)
+            action = "unliked"
+        
+        db.session.commit()
+
+        # Return the updated like count for the comment
+        like_count = Likes.query.filter_by(comments_id=comment_id).count()
+
+        return jsonify({
+            "success": True,
+            "message": f"You have successfully {action} the comment",
+            "comment_id": comment_id,
+            "like_count": like_count,
+            "has_liked": request.method == 'POST' # This will indicate if the user has liked the comment
+         }), 200 if request.method == "DELETE" else 201  
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
