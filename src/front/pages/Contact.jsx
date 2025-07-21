@@ -8,6 +8,7 @@ import CountUp from "react-countup";
 import Accordion from "react-bootstrap/Accordion";
 import Collapse from "react-bootstrap/Collapse";
 import Button from "react-bootstrap/Button";
+import Alert from "react-bootstrap/Alert";
 
 export const Contact = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,7 @@ export const Contact = () => {
   });
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(true);
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 600);
@@ -28,22 +30,27 @@ export const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch("https://fantastic-doodle-pjw4647v49p936xwr-3001.app.github.dev/api/contact", {
+    setStatus(null);
+    fetch("https://stunning-space-bassoon-975p6j5p6p46hpq4v-3001.app.github.dev/api/contact", {
       method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
       body: JSON.stringify(formData),
-      headers: { "Content-Type": "application/json" },
     })
       .then((res) => {
         if (!res.ok) throw new Error("Network response was not ok");
         return res.json();
       })
       .then(() => {
-        alert("Message sent successfully!");
+        setStatus({ type: "success", message: "Message sent successfully!" });
         setFormData({ fullname: "", email: "", subject: "", message: "" });
       })
       .catch((err) => {
         console.error("Failed to send message:", err);
-        alert("Something went wrong. Please try again.");
+        setStatus({ type: "danger", message: "Something went wrong. Please try again." });
       });
   };
 
@@ -77,7 +84,8 @@ export const Contact = () => {
 
         <Collapse in={open || !isMobile}>
           <div id="contact-form" className="w-100" style={{ maxWidth: "500px" }}>
-            <motion.div
+            <motion.form
+              onSubmit={handleSubmit}
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
@@ -89,6 +97,12 @@ export const Contact = () => {
                   Send us a message and we'll get back to you as soon as possible.
                 </p>
               </div>
+
+              {status && (
+                <Alert variant={status.type} className="text-center">
+                  {status.message}
+                </Alert>
+              )}
 
               {["fullname", "email", "subject"].map((field) => (
                 <div className="form-group mb-3 text-start" key={field}>
@@ -116,7 +130,7 @@ export const Contact = () => {
                 ></textarea>
               </div>
 
-              <button className="btn btn-gitwise w-100 fw-bold">Send</button>
+              <button type="submit" className="btn btn-gitwise w-100 fw-bold">Send</button>
 
               <div className="text-white text-center mt-4 small">
                 <p className="mb-1">📍 GitWise HQ — Colombia, Uruguay & Venezuela</p>
@@ -163,7 +177,7 @@ export const Contact = () => {
                   </Accordion>
                 </div>
               </div>
-            </motion.div>
+            </motion.form>
           </div>
         </Collapse>
       </div>
