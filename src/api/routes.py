@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Post, Comments, Level, Stack, Likes
+from api.models import db, User, Post, Comments, Level, Stack, Likes, Favorites
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -430,3 +430,72 @@ def get_all_posts():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ------------------------Routes for Favorites------------------------
+@api.route('/favorites', methods=['GET', 'POST', 'DELETE'])
+@jwt_required()
+def handle_favorites():
+    current_user_id = get_jwt_identity()
+    
+    if request.method == 'GET':
+        # Obtener todos los favoritos del usuario
+        favorites = Favorites.query.filter_by(user_id=current_user_id).all()
+        return jsonify([fav.serialize() for fav in favorites]), 200
+    
+    elif request.method == 'POST':
+        # Añadir un nuevo favorito
+        data = request.get_json()
+        post_id = data.get('post_id')
+        
+        if not post_id:
+            return jsonify({"error": "post_id is required"}), 400
+        
+        # Verificar si el post existe
+        post = Post.query.get(post_id)
+        if not post:
+            return jsonify({"error": "Post not found"}), 404
+        
+        # Verificar si ya es favorito
+        existing_fav = Favorites.query.filter_by(
+            user_id=current_user_id, 
+            post_id=post_id
+        ).first()
+        
+        if existing_fav:
+            return jsonify({"error": "Post already in favorites"}), 400
+        
+        # Crear nuevo favorito
+        new_favorite = Favorites(
+            user_id=current_user_id,
+            post_id=post_id
+        )
+        
+        db.session.add(new_favorite)
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Post added to favorites",
+            "favorite": new_favorite.serialize()
+        }), 201
+    
+    elif request.method == 'DELETE':
+        # Eliminar un favorito
+        data = request.get_json()
+        post_id = data.get('post_id')
+        
+        if not post_id:
+            return jsonify({"error": "post_id is required"}), 400
+        
+        # Buscar el favorito
+        favorite = Favorites.query.filter_by(
+            user_id=current_user_id,
+            post_id=post_id
+        ).first()
+        
+        if not favorite:
+            return jsonify({"error": "Favorite not found"}), 404
+        
+        db.session.delete(favorite)
+        db.session.commit()
+        
+        return jsonify({"message": "Favorite removed successfully"}), 200
