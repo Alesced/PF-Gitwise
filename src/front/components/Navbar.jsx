@@ -16,6 +16,12 @@ export const Navbar = () => {
     navigate("/");                         // Redirige al Home
   };
 
+  // Define la lista de usernames autorizados como administradores
+  const adminUsernames = ["Admin", "D1nx0x"];
+
+  // Verifica si el usuario actual es uno de los administradores
+  const Admin = store.user && adminUsernames.includes(store.user.username);
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
       <div className="container-fluid">
@@ -38,21 +44,42 @@ export const Navbar = () => {
         {/* Enlaces del menú */}
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-              <Link className="nav-link" to="/posts">Projects</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/AI-search">AI Search</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/admin">Admin</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/contact">Contact</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/profile">Profile</Link>
-            </li>
+
+            {/* Si no está logueado muestra solo Contact y Donate */}
+            {/* La expresión {store.user ? ( ... ) : ( ... )} es un condicional ternario que sirve para mostrar contenido diferente en el JSX*/}
+            {!store.user ? (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/contact">Contact</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="https://stripe.com/es">Donate</Link>
+                </li>
+              </>
+            ) : (
+              // Si está logueado muestra TODO el menú
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/posts">Projects</Link>
+                </li>
+                {/* solo admins pueden ver este botón */}
+                {Admin && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/admin">Admin</Link>
+                  </li>
+                )}
+                <li className="nav-item">
+                  <Link className="nav-link" to="/contact">Contact</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/profile">Profile</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="https://stripe.com/es">Donate</Link>
+                </li>
+              </>
+            )}
+
           </ul>
 
           {/* Parte derecha del navbar */}
