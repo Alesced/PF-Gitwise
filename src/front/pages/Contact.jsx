@@ -31,12 +31,13 @@ export const Contact = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setStatus(null);
-    fetch("https://stunning-space-bassoon-975p6j5p6p46hpq4v-3001.app.github.dev/api/contact", {
+
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/contact`, {
       method: "POST",
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(formData),
     })
@@ -133,7 +134,7 @@ export const Contact = () => {
               <button type="submit" className="btn btn-gitwise w-100 fw-bold">Send</button>
 
               <div className="text-white text-center mt-4 small">
-                <p className="mb-1">📍 GitWise HQ — Colombia, Uruguay & Venezuela</p>
+                <p className="mb-1">\ud83d\udccd GitWise HQ — Colombia, Uruguay & Venezuela</p>
                 <div className="d-flex justify-content-center gap-3">
                   <a href="https://github.com/gitwise-ai" target="_blank" rel="noreferrer" className="text-white">
                     <i className="fab fa-github fa-lg"></i>

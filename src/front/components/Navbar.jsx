@@ -5,33 +5,26 @@ import logo from "../assets/img/logocompleto.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Navbar = () => {
-  const { store, actions } = useGlobalReducer();    // Accede al store y las acciones globales
-  const navigate = useNavigate();                   // Permite redirigir
+  const { store, actions } = useGlobalReducer();
+  const navigate = useNavigate();
 
-  // Función que cierra la sesión
   const handleLogout = () => {
-    localStorage.removeItem("token");      // Borra el token del almacenamiento local
-    localStorage.removeItem("user");       // Borra los datos de usuario guardados
-    actions.logout();                      // Elimina el usuario del store global (acción en el reducer)
-    navigate("/");                         // Redirige al Home
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    actions.logout();
+    navigate("/");
   };
 
-  // Define la lista de usernames autorizados como administradores
   const adminUsernames = ["Admin", "D1nx0x"];
-
-  // Verifica si el usuario actual es uno de los administradores
   const Admin = store.user && adminUsernames.includes(store.user.username);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
       <div className="container-fluid">
-
-        {/* Logo */}
         <Link to="/" className="navbar-brand d-flex align-items-center">
           <img src={logo} alt="GitWise Logo" style={{ height: "40px" }} className="me-2" />
         </Link>
 
-        {/* Botón hamburguesa responsive */}
         <button
           className="navbar-toggler"
           type="button"
@@ -41,51 +34,42 @@ export const Navbar = () => {
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Enlaces del menú */}
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-
-            {/* Si no está logueado muestra solo Contact y Donate */}
-            {/* La expresión {store.user ? ( ... ) : ( ... )} es un condicional ternario que sirve para mostrar contenido diferente en el JSX*/}
             {!store.user ? (
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/contact">Contact</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="https://stripe.com/es">Donate</Link>
+                  <Link className="nav-link text-warning fw-bold donate-hover" to="https://stripe.com/es">Donate</Link>
                 </li>
               </>
             ) : (
-              // Si está logueado muestra TODO el menú
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/posts">Projects</Link>
-                </li>
-                {/* solo admins pueden ver este botón */}
-                {Admin && (
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/admin">Admin</Link>
-                  </li>
-                )}
-                <li className="nav-item">
-                  <Link className="nav-link" to="/contact">Contact</Link>
                 </li>
                 <li className="nav-item">
                   <Link className="nav-link" to="/profile">Profile</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="https://stripe.com/es">Donate</Link>
+                  <Link className="nav-link" to="/contact">Contact</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link text-warning fw-bold donate-hover" to="https://stripe.com/es">Donate</Link>
                 </li>
               </>
             )}
 
+            {store.user && Admin && (
+              <li className="nav-item">
+                <Link className="nav-link" to="/admin">Admin</Link>
+              </li>
+            )}
           </ul>
 
-          {/* Parte derecha del navbar */}
           <div className="d-flex align-items-center">
-
-            {/* Si NO hay usuario, muestra login y register */}
             {!store.user ? (
               <>
                 <Link to="/login" className="btn btn-outline-primary me-2">Login</Link>
@@ -93,7 +77,6 @@ export const Navbar = () => {
               </>
             ) : (
               <>
-                {/* Si el usuario está logueado: muestra su nombre, avatar y botón logout */}
                 <span className="text-white me-2">{store.user.username}</span>
                 <Link to="/profile">
                   <img
@@ -105,16 +88,16 @@ export const Navbar = () => {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="btn btn-outline-light btn-sm"
+                  className="btn btn-outline-primary"
                 >
                   Logout
                 </button>
               </>
             )}
-
           </div>
         </div>
       </div>
     </nav>
   );
 };
+

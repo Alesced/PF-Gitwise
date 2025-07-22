@@ -170,6 +170,12 @@ body {
   color: #c9d1d9;
 }
 
+/* ------------------ FAVORITE ANIMATION ------------------ */
+.pop-animation {
+  transform: scale(1.3);
+  transition: transform 0.3s ease;
+}
+
 /* ------------------ RESPONSIVE ------------------ */
 @media (max-width: 768px) {
   .hero-title {
@@ -187,4 +193,3 @@ body {
     margin-bottom: 1rem;
   }
 }
-

@@ -1,119 +1,191 @@
-// Importa el hook del store global para acceder al usuario
+import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import { useNavigate } from "react-router-dom";
+import { FavoriteButton } from "../components/FavoriteButton";
 
-// Componente UserProfile
 export const UserProfile = () => {
-  const { store } = useGlobalReducer();    // Obtiene el usuario desde el contexto global
-  const user = store.user;                 // Acceso directo al objeto usuario
+  const { store } = useGlobalReducer();
+  const navigate = useNavigate();
+  const [myPosts, setMyPosts] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState({ title: "", description: "", repo_URL: "" });
 
-  // Si no hay usuario logueado, muestra un mensaje simple
-  if (!user) {
-    return <p className="text-white p-5">Please log in to view your profile.</p>;
-  }
+  const user = store.user || {
+    username: "GuestDev",
+    email: "guest@example.com",
+    avatar_url: "https://avatars.githubusercontent.com/u/000000?v=4",
+    join_date: "2024-05-01",
+    my_posts: [],
+    favorites: []
+  };
+
+  useEffect(() => {
+    if (!store.user) return navigate("/login");
+
+    const fetchPosts = async () => {
+      const token = localStorage.getItem("token");
+      const all = await Promise.all(
+        store.user?.my_posts?.map(async (p) => {
+          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${p.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return null;
+          const json = await res.json();
+          return json.post;
+        }) || []
+      );
+      setMyPosts(all.filter(Boolean));
+    };
+
+    const fetchFavorites = async () => {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const favs = await res.json();
+        const fullPosts = await Promise.all(
+          favs.map(async (f) => {
+            const r = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${f.post_id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!r.ok) return null;
+            const json = await r.json();
+            return json.post;
+          })
+        );
+        setFavorites(fullPosts.filter(Boolean));
+      }
+    };
+
+    fetchPosts();
+    fetchFavorites();
+  }, [store]);
+
+  const removePost = async (id) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setMyPosts(myPosts.filter(p => p.id !== id));
+  };
+
+  const startEdit = (post) => {
+    setEditId(post.id);
+    setFormData({ title: post.title, description: post.description, repo_URL: post.repo_URL });
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setFormData({ title: "", description: "", repo_URL: "" });
+  };
+
+  const saveEdit = async (id) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(formData),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setMyPosts(myPosts.map(p => p.id === id ? json.post : p));
+      cancelEdit();
+    }
+  };
 
   return (
-    <div className="bg-black text-white min-vh-100 p-3">
+    <div className="container-fluid min-vh-100 d-flex flex-column justify-content-start py-5 hero-bg text-white">
+      <div className="text-center mb-5">
+        <h1 className="hero-title">Welcome, {user.username}</h1>
+        <p className="hero-subtitle">Manage your GitWise profile and track your contributions</p>
+      </div>
 
-      {/* Tarjeta principal con datos básicos */}
-      <div className="card bg-dark text-white shadow-lg">
-
-        {/* Banner superior del perfil */}
-        <div className="position-relative">
+      <div className="icon-box mb-5 mx-auto" style={{ maxWidth: "600px", width: "100%" }}>
+        <div className="position-relative mb-4">
           <img
             src="https://images.unsplash.com/photo-1503264116251-35a269479413"
             alt="Banner"
-            className="card-img-top"
-            style={{ height: "200px", objectFit: "cover" }}
+            className="w-100 rounded"
+            style={{ height: "180px", objectFit: "cover" }}
           />
-
-          {/* Avatar del usuario */}
           <img
-            src={user.avatar_url || "https://avatars.githubusercontent.com/u/000000?v=4"}  // imagen de GH
+            src={user.avatar_url}
             alt="Avatar"
             className="rounded-circle border border-3 border-white position-absolute"
-            style={{
-              width: "120px",
-              height: "120px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              bottom: "-60px"
-            }}
+            style={{ width: "100px", height: "100px", left: "50%", transform: "translateX(-50%)", bottom: "-50px" }}
           />
         </div>
 
-        {/* Información del usuario */}
-        <div className="card-body text-center mt-5 pt-4">
-
-          <h3 className="card-title">{user.username}</h3>
-          <p className="mb-1"><strong>Email:</strong> {user.email}</p>
-          
-
-          {/* Fecha de registro (exacta) */}
+        <div className="text-center pt-5">
+          <h3 className="fw-bold mb-1">{user.username}</h3>
+          <p className="mb-1 text-light">{user.email}</p>
           {user.join_date && (
-            <p className="mb-2 text-secondary">
-              Member since: {new Date(user.join_date).toLocaleDateString()}
-            </p>
+            <p className="text-secondary">Member since: {new Date(user.join_date).toLocaleDateString()}</p>
           )}
-
-          {/* NOTA: Enlaces para mejorar */}
-          {/*
-          <div className="mt-3 d-flex justify-content-center gap-3">
-            {user.github && (
-              <a href={user.github} target="_blank" rel="noreferrer">
-                <i className="fab fa-github fa-lg text-white"></i>
-              </a>
-            )}
-            {user.linkedin && (
-              <a href={user.linkedin} target="_blank" rel="noreferrer">
-                <i className="fab fa-linkedin fa-lg text-white"></i>
-              </a>
-            )}
-            {user.portfolio && (
-              <a href={user.portfolio} target="_blank" rel="noreferrer">
-                <i className="fas fa-globe fa-lg text-white"></i>
-              </a>
-            )}
-          </div>
-          */}
         </div>
       </div>
 
-      {/* Sección My Posts */}
-      <div className="mt-5">
-        <h4 style={{ color: "#2563eb" }}>My Posts</h4>
+      <div className="px-4 w-100">
+        <h4 className="mb-3" style={{ color: "#7b5bff" }}>My Posts</h4>
+        <div className="row row-cols-1 row-cols-md-2 g-3 mb-4">
+          {myPosts.length > 0 ? (
+            myPosts.map(post => (
+              <div key={post.id} className="col">
+                <div className="icon-box h-100">
+                  {editId === post.id ? (
+                    <>
+                      <input type="text" className="form-control mb-2" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+                      <textarea className="form-control mb-2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                      <input type="url" className="form-control mb-2" value={formData.repo_URL} onChange={e => setFormData({ ...formData, repo_URL: e.target.value })} />
+                      <button className="btn btn-sm btn-success me-2" onClick={() => saveEdit(post.id)}>Save</button>
+                      <button className="btn btn-sm btn-secondary" onClick={cancelEdit}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <h6 className="text-white mb-1">{post.title}</h6>
+                      <p className="text-light small">{post.description}</p>
+                      <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm mt-2">View GitHub</a>
+                      <div className="d-flex justify-content-center align-items-center mt-3 gap-3">
+                        <FavoriteButton postId={post.id} />
+                        <button className="btn btn-sm btn-outline-primary" onClick={() => startEdit(post)}>Edit</button>
+                        <button className="btn btn-sm btn-outline-danger" onClick={() => removePost(post.id)}>Delete</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-light">No posts yet.</p>
+          )}
+        </div>
 
-        {/* Si el usuario tiene posts */}
-        {user.my_posts && user.my_posts.length > 0 ? (
-          <ul className="list-group list-group-flush">
-            {user.my_posts.map(post => (
-              <li key={post.id} className="list-group-item bg-black text-white">
-                <strong>{post.title}</strong>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No posts yet.</p>    // Si no tiene posts
-        )}
+        <h4 className="mt-4 mb-3" style={{ color: "#7b5bff" }}>My Favorites</h4>
+        <div className="row row-cols-1 row-cols-md-2 g-3">
+          {favorites.length > 0 ? (
+            favorites.map(post => (
+              <div key={post.id} className="col">
+                <div className="icon-box h-100">
+                  <h6 className="text-white mb-1">{post.title}</h6>
+                  <p className="text-light small">{post.description}</p>
+                  <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm mt-2">View GitHub</a>
+                  <div className="d-flex justify-content-center align-items-center mt-3 gap-3">
+                    <FavoriteButton postId={post.id} />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-light">No favorites yet.</p>
+          )}
+        </div>
       </div>
-
-      {/* Sección My Favorites */}
-      <div className="mt-4">
-        <h4 style={{ color: "#2563eb" }}>My Favorites</h4>
-
-        {/* Si el usuario tiene favoritos */}
-        {user.favorites && user.favorites.length > 0 ? (
-          <ul className="list-group list-group-flush">
-            {user.favorites.map(fav => (
-              <li key={fav} className="list-group-item bg-black text-white">
-                Favorite Post ID: {fav}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No favorites yet.</p>  // Si no tiene favoritos
-        )}
-      </div>
-
     </div>
   );
 };
