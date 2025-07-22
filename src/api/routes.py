@@ -15,6 +15,7 @@ import os
 from api.utils import send_email
 from functools import wraps
 from datetime import datetime, UTC
+import stripe
 
 api = Blueprint('api', __name__)
 bcrypt = Bcrypt()
@@ -928,8 +929,6 @@ def admin_dashboard():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 #-----------------------------Routes for payment method-------------------------
-import stripe
-from flask import request, jsonify
 
 # Configura tu clave secreta de Stripe (guárdala en variables de entorno)
 stripe.api_key = 'sk_test_...'  # Reemplaza con tu clave secreta de prueba
