@@ -6,20 +6,47 @@ from api.models import db, User, Post, Comments, Level, Stack, Likes, Favorites
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 import smtplib
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 from api.utils import send_email
+from functools import wraps
+from datetime import datetime, UTC
 
 api = Blueprint('api', __name__)
 bcrypt = Bcrypt()
 # Allow CORS requests to this API
 CORS(api)
 
+#-------------------------Decorator Administrator------------------------
+def admin_required(fn):
+    """
+    Versión simplificada que no inyecta el admin
+    """
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            verify_jwt_in_request()
+            current_user_id = get_jwt_identity()
+            user = User.query.get(current_user_id)
+            
+            if not user:
+                return jsonify({"error": "Usuario no encontrado"}), 404
+                
+            if not user.is_admin:
+                return jsonify({"error": "Se requieren privilegios de administrador"}), 403
+                
+            return fn(*args, **kwargs)  # <-- Sin inyectar parámetros
+            
+        except Exception as e:
+            return jsonify({"error": "Error de autorización", "details": str(e)}), 401
 
+    return wrapper
+
+# ------------------------Routes for Hello World------------------------
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
 
@@ -29,7 +56,6 @@ def handle_hello():
 
     return jsonify(response_body), 200
 # ------------------------Routes for user registration and authentication------------------------
-
 @api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -38,39 +64,50 @@ def register_user():
     name = data.get('name')
     last_name = data.get('last_name')
     username = data.get('username')
-    level = data.get('level')
-    stack = data.get('stack')
+    
+    # Solo esta línea adicional para convertir a booleano
+    is_admin = True if str(data.get('is_admin', 'False')).lower() == 'true' else False
 
     if not all([email, password, name, last_name, username]):
         return jsonify({"error": "All fields are required"}), 400
 
-    # verify if the user already exists
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email already exists"}), 400
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
 
-    # Create a new user instance
-    # utf-8 decode is used to convert the hashed password to a string
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    new_user = User(email=email,
-                    password=hashed_password,
-                    name=name,
-                    last_name=last_name,
-                    username=username,
-                    level=level,
-                    stack=stack)
+    new_user = User(
+        email=email,
+        password=hashed_password,
+        name=name,
+        last_name=last_name,
+        username=username,
+        is_admin=is_admin,
+        stack=Stack[data.get('stack').upper()] if data.get('stack') else None,
+        level=Level[data.get('level').upper()] if data.get('level') else None,
+        member_since=datetime.now(UTC)
+    )
+    
     db.session.add(new_user)
     db.session.commit()
 
-    # Generate JWT token
     access_token = create_access_token(identity=new_user.id)
 
-    return jsonify({"message": "User registered successfully", "token": access_token, "id": new_user.id}), 201
+    return jsonify({
+        "message": "User registered successfully", 
+        "token": access_token,
+        "user": {
+            "id": new_user.id,
+            "email": new_user.email,
+            "username": new_user.username,
+            "is_admin": new_user.is_admin, 
+            "stack": new_user.stack.name if new_user.stack else None,
+            "level": new_user.level.name if new_user.level else None
+        }
+    }), 201
 
 # ------------------------Routes for Contacts us------------------------
-
-
 @api.route('/contact', methods=['POST'])
 def handle_contact():
     data = request.get_json()
@@ -100,8 +137,6 @@ def handle_contact():
 
 # ------------------------Routes for user login------------------------
 # Ruta de login: permite a un usuario autenticarse y obtener sus datos + token
-
-
 @api.route('/login', methods=['POST'])
 def login_user():
     # Obtiene datos enviados desde el frontend
@@ -150,11 +185,13 @@ def login_user():
         # Imagen que se puede modificar despues
         "avatar_url": "https://avatars.githubusercontent.com/u/000000?v=4",
         "join_date": user.member_since.isoformat(),    # Fecha de registro exacta
-
+        "is_admin": user.is_admin,
         # Posts reales asociados al usuario.
         "my_posts": my_posts,
         # Favoritos reales (IDs de posts)
-        "favorites": favorites
+        "favorites": favorites,
+        "stack": user.stack.name if user.stack else None,
+        "level": user.level.name if user.level else None
     }
 
     # Retorna token + datos del usuario al frontend
@@ -214,8 +251,6 @@ def handle_search_ia():
     return jsonify(response_body), 200
 
 # ------------------------Routes for comments a post------------------------
-
-
 @api.route('/post/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def handle_comments(post_id):
@@ -550,5 +585,345 @@ def like_comment(comment_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+#-------------------------Routes for Get all Users (Admin only)------------------------
+@api.route('/admin/users', methods=['GET'])
+@admin_required
+def get_all_users():
+    try:
+        #Pagination parameters 
+        # page and per_page are used to control the number of results returned
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
 
+        #Filter parameters 
+        search = request.args.get('search', '').strip() #<--- strip() is for removing whitespaces from the beginning and end of the string
+        is_active = request.args.get('is_active', None, type=lambda v: v.lower() == 'true' ) #--- filters for active or inactive users
+        is_admin = request.args.get('is_admin', None, type=lambda v: v.lower() == 'true' ) #--- filters for admin or non-admin users
 
+        #Ordenation parameters
+        sort_field = request.args.get('sort', 'member_since') # Default sort field
+        order = request.args.get('order', 'desc') # Default order is descending
+
+        #Field validation
+        # Valid sort fields are defined to prevent SQL injection and ensure valid ordering
+        valid_sort_fields = ['id', 'email', 'username', 'member_since', 'name', 'last_name', 'is_active', 'is_admin']
+
+        # Check if the provided sort field is valid
+        if sort_field not in valid_sort_fields:
+            sort_field = 'member_since' # Default sort field if the provided one is invalid
+
+        # Build the query in our data base
+        query = User.query
+
+        #Apply search filter if exists
+        # The search term is used to filter users by email, username, name or last_name
+        if search:
+            search_term = f"%{search}%" # The search term is wrapped in % to allow partial matches
+            query = query.filter(
+                db.or_(
+                    User.email.ilike(search_term), # The ilike() function is used for case-insensitive matching
+                    User.username.ilike(search_term),
+                    User.name.ilike(search_term),
+                    User.last_name.ilike(search_term)
+                )
+            )
+        
+        # Apply filters for active and admin users if is specified
+        # The is_active and is_admin parameters are used to filter users by their active status and admin status
+        if is_active is not None:
+            query = query.filter(User.is_active == is_active)
+        
+        if is_admin is not None:
+            query = query.filter(User.is_admin == is_admin)
+        
+        # Apply ordering asc or desc
+        if order == 'asc':
+            query = query.order_by(getattr(User, sort_field).asc())
+        else:
+            query = query.order_by(getattr(User, sort_field).desc())
+        
+        # Paginate the query results for page and per_page 
+        users_paginated = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+        # Response data
+        users_data = []
+        for user in users_paginated.items:
+            user_data = {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "name": user.name,
+                "last_name": user.last_name,
+                "is_active": user.is_active,
+                "is_admin": user.is_admin,
+                "member_since": user.member_since.isoformat(),
+                "stack": user.stack.value if user.stack else None,
+                "level": user.level.value if user.level else None
+            }
+            users_data.append(user_data)
+
+        return jsonify({
+            "success": True,
+            "users": users_data,
+            "pagination": {
+                "total_users": users_paginated.total,
+                "current_page": page,
+                "users_per_page": per_page,
+                "total_pages": users_paginated.pages
+            }, 
+            "filters": {
+                "applied": {
+                    "search": search,
+                    "is_active": is_active,
+                    "is_admin": is_admin,
+                    "sort_field": sort_field,
+                    "order": order
+                },
+                "valid_sort_fields": valid_sort_fields
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error to obtain the Users' List","error": str(e)}), 500
+
+#------------------------Routes for Get User by ID (Admin only)------------------------
+@api.route('/admin/users/<int:user_id>', methods=['GET', 'DELETE'])
+@admin_required
+def admin_manage_user(user_id):
+    """
+    Maneja operaciones para un usuario específico
+    GET: Obtiene detalles del usuario
+    DELETE: Elimina un usuario permanentemente (con todas sus dependencias)
+    """
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+
+        current_admin_id = get_jwt_identity()
+        
+        # Evitar que un admin se elimine a sí mismo
+        if request.method == 'DELETE' and user_id == current_admin_id:
+            return jsonify({"error": "No puedes eliminarte a ti mismo"}), 400
+
+        if request.method == 'GET':
+            # Serialización segura para Enums
+            user_data = {
+                "id": user.id,
+                "name": user.name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "username": user.username,
+                "is_active": user.is_active,
+                "is_admin": user.is_admin,
+                "member_since": user.member_since.isoformat() if user.member_since else None,
+                "stack": user.stack.name if user.stack else None,  # Serialización correcta de Enum
+                "level": user.level.name if user.level else None,   # Serialización correcta de Enum
+                "stats": {
+                    "total_posts": len(user.say),
+                    "total_comments": len(user.reply),
+                    "total_favorites": len(user.star)
+                }
+            }
+            return jsonify(user_data), 200
+
+        elif request.method == 'DELETE':
+            try:
+                # Eliminar en cascada todas las dependencias
+                
+                # 1. Eliminar posts del usuario (con sus comentarios y favoritos)
+                for post in user.say:
+                    Comments.query.filter_by(post_id=post.id).delete()
+                    Favorites.query.filter_by(post_id=post.id).delete()
+                    db.session.delete(post)
+                
+                # 2. Eliminar comentarios hechos por el usuario
+                Comments.query.filter_by(user_id=user_id).delete()
+                
+                # 3. Eliminar favoritos del usuario
+                Favorites.query.filter_by(user_id=user_id).delete()
+                
+                # 4. Eliminar likes del usuario
+                Likes.query.filter_by(user_id=user_id).delete()
+                
+                # Finalmente eliminar el usuario
+                db.session.delete(user)
+                db.session.commit()
+                
+                return jsonify({
+                    "message": "Usuario eliminado permanentemente con todas sus dependencias",
+                    "deleted_user_id": user_id
+                }), 200
+                
+            except Exception as delete_error:
+                db.session.rollback()
+                return jsonify({
+                    "error": "Error al eliminar el usuario",
+                    "details": str(delete_error)
+                }), 500
+
+    except Exception as e:
+        return jsonify({
+            "error": "Error en el servidor",
+            "details": str(e)
+        }), 500
+#----------------------Routes for Get all Post (Admin only)------------------------
+@api.route('/admin/posts', methods=['GET'])
+@admin_required
+def admin_get_posts():
+    """
+    Obtiene todos los posts (sin parámetro admin inyectado)
+    """
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        
+        posts = Post.query.order_by(Post.id.desc()).paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+        posts_data = [post.serialize() for post in posts.items]
+        
+        return jsonify({
+            "posts": posts_data,
+            "total": posts.total,
+            "pages": posts.pages,
+            "current_page": page
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#------------------------Routes for Get Post by ID (Admin only)------------------------
+@api.route('/admin/posts/<int:post_id>', methods=['GET', 'DELETE'])
+@admin_required
+def handle_single_admin_post(post_id):
+    """
+    Maneja operaciones para un post específico
+    GET: Obtiene detalles del post
+    DELETE: Elimina un post específico
+    """
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({"error": "Post no encontrado"}), 404
+
+    if request.method == 'GET':
+        post_data = post.serialize()
+        post_data['author'] = {
+            'id': post.author.id,
+            'username': post.author.username,
+            'email': post.author.email
+        }
+        post_data['comments'] = [c.serialize() for c in post.reply]
+        return jsonify(post_data), 200
+
+    elif request.method == 'DELETE':
+        try:
+            # Eliminar en cascada
+            Comments.query.filter_by(post_id=post_id).delete()
+            Favorites.query.filter_by(post_id=post_id).delete()
+            db.session.delete(post)
+            db.session.commit()
+            return jsonify({
+                "message": "Post eliminado permanentemente",
+                "deleted_id": post_id
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
+
+#------------------------Routes for Get Comments (Admin only)------------------------
+@api.route('/admin/comments', methods=['GET'])
+@admin_required
+def admin_get_comments():
+    """
+    Obtiene todos los comentarios (sin parámetro admin inyectado)
+    """
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        
+        comments = Comments.query.order_by(Comments.id.desc()).paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+        comments_data = [comment.serialize() for comment in comments.items]
+        
+        return jsonify({
+            "comments": comments_data,
+            "total": comments.total,
+            "pages": comments.pages,
+            "current_page": page
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#------------------------Routes for Get Comments by ID (Admin only)------------------------
+@api.route('/admin/comments/<int:comment_id>', methods=['GET', 'DELETE'])
+@admin_required
+def handle_single_admin_comment(comment_id):
+    """
+    Maneja operaciones para un comentario específico
+    GET: Obtiene detalles del comentario
+    DELETE: Elimina un comentario específico
+    """
+    comment = Comments.query.get(comment_id)
+    if not comment:
+        return jsonify({"error": "Comentario no encontrado"}), 404
+
+    if request.method == 'GET':
+        comment_data = comment.serialize()
+        comment_data['author'] = {
+            'id': comment.author.id,
+            'username': comment.author.username
+        }
+        comment_data['post_title'] = comment.say.title
+        return jsonify(comment_data), 200
+
+    elif request.method == 'DELETE':
+        try:
+            # Eliminar en cascada
+            Likes.query.filter_by(comments_id=comment_id).delete()
+            db.session.delete(comment)
+            db.session.commit()
+            return jsonify({
+                "message": "Comentario eliminado permanentemente",
+                "deleted_id": comment_id
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
+#---------------------------Routes for Get Dashboard (Admin only)--------------------------
+@api.route('/admin/dashboard', methods=['GET'])
+@admin_required
+def admin_dashboard():
+    """
+    Dashboard administrativo (sin parámetro admin inyectado)
+    """
+    try:
+        current_admin_id = get_jwt_identity()  # Obtenemos el ID desde el token
+        
+        stats = {
+            "total_users": User.query.count(),
+            "active_users": User.query.filter_by(is_active=True).count(),
+            "total_posts": Post.query.count(),
+            "recent_posts": [p.serialize() for p in Post.query.order_by(Post.id.desc()).limit(5).all()],
+            "total_comments": Comments.query.count(),
+            "your_admin_id": current_admin_id  # Solo información de referencia
+        }
+        
+        return jsonify(stats), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
