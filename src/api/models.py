@@ -37,10 +37,12 @@ class User(db.Model):
     password: Mapped[str] = mapped_column(nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean(), nullable=False, default=True)  # no incluir en formulario
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean(), nullable=False, default=False)  # no incluir en formulario
     member_since: Mapped[date] = mapped_column(
         # no incluir en formulario, se llena automáticamente
         Date(), nullable=False, default=datetime.now(UTC))
-    stack: Mapped[enum.Enum] = mapped_column(Enum(Stack), nullable=True)
+    stack: Mapped[enum.Enum] = mapped_column(Enum(Stack), nullable=True) 
     level: Mapped[enum.Enum] = mapped_column(Enum(Level), nullable=True)
 
 # relaciones User one to many
@@ -58,11 +60,13 @@ class User(db.Model):
             # "gh_login": self.gh_login,
             "username": self.username,
             "is_active": self.is_active,
-            "stack": self.stack,
-            "level": self.level,
+            "is_admin": self.is_admin,
+            "stack": self.stack if self.stack else None,
+            "level": self.level if self.level else None,
             "member_since": self.member_since,
             # do not serialize the password, its a security breach
         }
+        
         
 
 
