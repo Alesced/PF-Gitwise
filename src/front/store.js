@@ -1,29 +1,21 @@
+// File: src/store.js
+
 export const initialStore = () => {
   return {
     message: null,
-    user: null,       // se arreglo sesión desactivada al inicio
+    user: null,
+    token: null,
     todos: [
-      {
-        id: 1,
-        title: "Make the bed",
-        background: null,
-      },
-      {
-        id: 2,
-        title: "Do my homework",
-        background: null,
-      }
-    ]
+      { id: 1, title: "Make the bed", background: null },
+      { id: 2, title: "Do my homework", background: null },
+    ],
   };
 };
 
 export default function storeReducer(store, action = {}) {
   switch (action.type) {
     case 'set_hello':
-      return {
-        ...store,
-        message: action.payload
-      };
+      return { ...store, message: action.payload };
 
     case 'add_task':
       const { id, color } = action.payload;
@@ -31,51 +23,41 @@ export default function storeReducer(store, action = {}) {
         ...store,
         todos: store.todos.map(todo =>
           todo.id === id ? { ...todo, background: color } : todo
-        )
+        ),
       };
 
     case 'set_user':
       return {
         ...store,
-        user: action.payload
+        user: action.payload.user,
+        token: action.payload.token,
       };
 
-    case 'logout':        // se añadio la acción de cierre de sesión
+    case 'logout':
       return {
         ...store,
-        user: null
+        user: null,
+        token: null,
       };
 
     case 'toggle_like':
       if (!store.user) return store;
-
-      const currentLikes = store.user.likes || [];
-      const updatedLikes = currentLikes.includes(action.payload)
-        ? currentLikes.filter(id => id !== action.payload)
-        : [...currentLikes, action.payload];
-
+      const updatedLikes = store.user.likes?.includes(action.payload)
+        ? store.user.likes.filter(id => id !== action.payload)
+        : [...(store.user.likes || []), action.payload];
       return {
         ...store,
-        user: {
-          ...store.user,
-          likes: updatedLikes
-        }
+        user: { ...store.user, likes: updatedLikes },
       };
 
     case 'toggle_favorite':
       if (!store.user) return store;
-
-      const currentFavorites = store.user.favorites || [];
-      const updatedFavorites = currentFavorites.includes(action.payload)
-        ? currentFavorites.filter(id => id !== action.payload)
-        : [...currentFavorites, action.payload];
-
+      const updatedFavorites = store.user.favorites?.includes(action.payload)
+        ? store.user.favorites.filter(id => id !== action.payload)
+        : [...(store.user.favorites || []), action.payload];
       return {
         ...store,
-        user: {
-          ...store.user,
-          favorites: updatedFavorites
-        }
+        user: { ...store.user, favorites: updatedFavorites },
       };
 
     default:
