@@ -930,9 +930,6 @@ def admin_dashboard():
         return jsonify({"error": str(e)}), 500
 #-----------------------------Routes for payment method-------------------------
 
-# Configura tu clave secreta de Stripe (guárdala en variables de entorno)
-stripe.api_key = 'sk_test_...'  # Reemplaza con tu clave secreta de prueba
-
 @api.route('/process-payment', methods=['POST'])
 def process_payment():
     """
