@@ -21,8 +21,8 @@ wtforms = "==3.1.2"
 sqlalchemy = "*"
 flask-bcrypt = "*"
 email-validator = "*"
-stripe = "*"
 python-dotenv = "*"
+stripe = "*"
 
 [requires]
 python_version = "3.13"
