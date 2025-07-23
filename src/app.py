@@ -1,4 +1,4 @@
-# ✅ File: src/app.py
+
 
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
@@ -18,15 +18,15 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 
 app = Flask(__name__)
 
-# Configuración de seguridad
+# 🔐 Seguridad
 app.config["JWT_SECRET_KEY"] = "secret-key"
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 
-# ✅ Habilita CORS para todo origen y permite OPTIONS
+# 🌐 CORS para todos los orígenes
 CORS(app, supports_credentials=True, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
-# ✅ Forzar encabezados CORS manualmente
+# 🔧 Headers manuales CORS
 @app.after_request
 def apply_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -36,7 +36,7 @@ def apply_cors_headers(response):
 
 app.url_map.strict_slashes = False
 
-# Base de datos
+# 💾 Configuración de Base de Datos
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace("postgres://", "postgresql://")
@@ -47,20 +47,26 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 
+# ⚙️ Setup extra
 setup_admin(app)
 setup_commands(app)
+
+# 📡 Registrar Blueprint de la API
 app.register_blueprint(api, url_prefix='/api')
 
+# 🛠 Error handler
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
+# 📍 Sitemap en desarrollo
 @app.route('/')
 def sitemap():
     if ENV == "development":
         return generate_sitemap(app)
     return send_from_directory(static_file_dir, 'index.html')
 
+# 🌐 Catch-all para rutas frontend
 @app.route('/<path:path>', methods=['GET'])
 def serve_any_other_file(path):
     if not os.path.isfile(os.path.join(static_file_dir, path)):
@@ -69,11 +75,12 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0
     return response
 
+# 🧪 Fallback para 404: React routing
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory(static_file_dir, 'index.html')
+
+# 🚀 Arranque local
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
     app.run(host='0.0.0.0', port=PORT, debug=True)
-
-    # Serve React frontend for any non-API route
-@app.errorhandler(404)
-def not_found(e):
-    return send_from_directory(app.static_folder, 'index.html')
