@@ -15,6 +15,7 @@ import os
 from api.utils import send_email
 from functools import wraps
 from datetime import datetime, UTC
+import stripe
 
 api = Blueprint('api', __name__)
 bcrypt = Bcrypt()
@@ -927,3 +928,62 @@ def admin_dashboard():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+#-----------------------------Routes for payment method-------------------------
+
+@api.route('/process-payment', methods=['POST'])
+def process_payment():
+    """
+    Ruta básica para procesar pagos con Stripe
+    Requiere:
+    - token: Token de tarjeta generado por Stripe.js
+    - amount: Monto en centavos (ej: 1000 = $10.00)
+    - currency: Moneda (opcional, por defecto 'usd')
+    - description: Descripción del pago (opcional)
+    """
+    try:
+        data = request.get_json()
+        
+        # Validación básica
+        if not data or 'token' not in data or 'amount' not in data:
+            return jsonify({"error": "Token and amount are required"}), 400
+        
+        # Crear el cargo en Stripe
+        charge = stripe.Charge.create(
+            amount=data['amount'],
+            currency=data.get('currency', 'usd'),
+            source=data['token'],  # Obtenido con Stripe.js en el frontend
+            description=data.get('description', 'Payment for service')
+        )
+        
+        # Respuesta exitosa (sin guardar en DB)
+        return jsonify({
+            "status": "success",
+            "message": "Payment processed",
+            "payment_id": charge.id,
+            "amount": charge.amount,
+            "currency": charge.currency
+        }), 200
+        
+    except stripe.error.CardError as e:
+        # Error de tarjeta (declinada, etc.)
+        return jsonify({
+            "status": "error",
+            "type": "card_error",
+            "message": e.user_message
+        }), 400
+        
+    except stripe.error.StripeError as e:
+        # Otros errores de Stripe
+        return jsonify({
+            "status": "error",
+            "type": "stripe_error",
+            "message": str(e)
+        }), 500
+        
+    except Exception as e:
+        # Errores inesperados
+        return jsonify({
+            "status": "error",
+            "type": "server_error",
+            "message": "An unexpected error occurred"
+        }), 500
