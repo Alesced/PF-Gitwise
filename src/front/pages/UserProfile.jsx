@@ -1,7 +1,10 @@
+// File: src/front/pages/UserProfile.jsx
+
 import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { motion } from "framer-motion";
 
 export const UserProfile = () => {
   const { store } = useGlobalReducer();
@@ -25,17 +28,24 @@ export const UserProfile = () => {
 
     const fetchPosts = async () => {
       const token = localStorage.getItem("token");
-      const all = await Promise.all(
-        store.user?.my_posts?.map(async (p) => {
-          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${p.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!res.ok) return null;
-          const json = await res.json();
-          return json.post;
-        }) || []
-      );
-      setMyPosts(all.filter(Boolean));
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/posts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Error response:", text);
+          throw new Error(`Failed: ${res.status}`);
+        }
+
+        const json = await res.json();
+        const allPosts = json.posts || [];
+        const userPosts = allPosts.filter(p => p.user_id === store.user.id);
+        setMyPosts(userPosts);
+      } catch (err) {
+        console.error("Fetch posts failed:", err.message);
+      }
     };
 
     const fetchFavorites = async () => {
@@ -61,7 +71,7 @@ export const UserProfile = () => {
 
     fetchPosts();
     fetchFavorites();
-  }, [store]);
+  }, [store.user?.id, store.user?.my_posts?.length]);
 
   const removePost = async (id) => {
     const token = localStorage.getItem("token");
@@ -99,6 +109,49 @@ export const UserProfile = () => {
     }
   };
 
+  const renderCard = (post, editable = false) => (
+    <motion.div
+      className="col"
+      key={post.id}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="icon-box h-100 d-flex flex-column justify-content-between">
+        {editable && editId === post.id ? (
+          <>
+            <input type="text" className="form-control mb-2" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+            <textarea className="form-control mb-2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+            <input type="url" className="form-control mb-2" value={formData.repo_URL} onChange={e => setFormData({ ...formData, repo_URL: e.target.value })} />
+            <div className="d-flex justify-content-between">
+              <button className="btn btn-sm btn-success" onClick={() => saveEdit(post.id)}>Save</button>
+              <button className="btn btn-sm btn-secondary" onClick={cancelEdit}>Cancel</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <h5 className="text-white">{post.title}</h5>
+              <p>{post.description}</p>
+              {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
+              {post.level && <span className="badge bg-info">{post.level}</span>}
+            </div>
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">View GitHub</a>
+              <div className="d-flex gap-2 align-items-center">
+                <FavoriteButton postId={post.id} whiteText={true} />
+                {editable && <>
+                  <button className="btn btn-sm btn-outline-primary" onClick={() => startEdit(post)}>Edit</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => removePost(post.id)}>Delete</button>
+                </>}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+
   return (
     <div className="container-fluid min-vh-100 d-flex flex-column justify-content-start py-5 hero-bg text-white">
       <div className="text-center mb-5">
@@ -133,57 +186,13 @@ export const UserProfile = () => {
 
       <div className="px-4 w-100">
         <h4 className="mb-3" style={{ color: "#7b5bff" }}>My Posts</h4>
-        <div className="row row-cols-1 row-cols-md-2 g-3 mb-4">
-          {myPosts.length > 0 ? (
-            myPosts.map(post => (
-              <div key={post.id} className="col">
-                <div className="icon-box h-100">
-                  {editId === post.id ? (
-                    <>
-                      <input type="text" className="form-control mb-2" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
-                      <textarea className="form-control mb-2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
-                      <input type="url" className="form-control mb-2" value={formData.repo_URL} onChange={e => setFormData({ ...formData, repo_URL: e.target.value })} />
-                      <button className="btn btn-sm btn-success me-2" onClick={() => saveEdit(post.id)}>Save</button>
-                      <button className="btn btn-sm btn-secondary" onClick={cancelEdit}>Cancel</button>
-                    </>
-                  ) : (
-                    <>
-                      <h6 className="text-white mb-1">{post.title}</h6>
-                      <p className="text-light small">{post.description}</p>
-                      <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm mt-2">View GitHub</a>
-                      <div className="d-flex justify-content-center align-items-center mt-3 gap-3">
-                        <FavoriteButton postId={post.id} />
-                        <button className="btn btn-sm btn-outline-primary" onClick={() => startEdit(post)}>Edit</button>
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => removePost(post.id)}>Delete</button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-light">No posts yet.</p>
-          )}
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          {myPosts.length > 0 ? myPosts.map(p => renderCard(p, true)) : <p className="text-light">No posts yet.</p>}
         </div>
 
-        <h4 className="mt-4 mb-3" style={{ color: "#7b5bff" }}>My Favorites</h4>
-        <div className="row row-cols-1 row-cols-md-2 g-3">
-          {favorites.length > 0 ? (
-            favorites.map(post => (
-              <div key={post.id} className="col">
-                <div className="icon-box h-100">
-                  <h6 className="text-white mb-1">{post.title}</h6>
-                  <p className="text-light small">{post.description}</p>
-                  <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm mt-2">View GitHub</a>
-                  <div className="d-flex justify-content-center align-items-center mt-3 gap-3">
-                    <FavoriteButton postId={post.id} />
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-light">No favorites yet.</p>
-          )}
+        <h4 className="mt-5 mb-3" style={{ color: "#7b5bff" }}>My Favorites</h4>
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          {favorites.length > 0 ? favorites.map(p => renderCard(p)) : <p className="text-light">No favorites yet.</p>}
         </div>
       </div>
     </div>

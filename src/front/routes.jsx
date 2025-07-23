@@ -11,7 +11,7 @@ import { SinglePost } from "./pages/SinglePost";
 import { Demo } from "./pages/Demo";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
-import { AISearch } from "./pages/Posts";
+import { Posts } from "./pages/Posts"; // 🔧 corregido
 import { PostForm } from "./pages/PostForm";
 import { AdminPosts } from "./pages/AdminPosts";
 import { UserProfile } from "./pages/UserProfile";
@@ -19,7 +19,7 @@ import { Contact } from "./pages/Contact";
 import Free from "./pages/Free";
 import Premium from "./pages/Premium";
 import { SinglePost2 } from "./components/SinglePost2";
-import { ErrorPage } from "./pages/ErrorPage"; // ✅ nueva página de error
+import { ErrorPage } from "./pages/ErrorPage";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -29,7 +29,7 @@ export const router = createBrowserRouter(
       <Route path="/demo" element={<Demo />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/posts" element={<AISearch />} />
+      <Route path="/posts" element={<Posts />} /> {/* 🔧 corregido */}
       <Route path="/post-form" element={<PostForm />} />
       <Route path="/admin" element={<AdminPosts />} />
       <Route path="/profile" element={<UserProfile />} />

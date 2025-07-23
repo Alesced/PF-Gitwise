@@ -1,4 +1,4 @@
-// File: src/front/components/FavoriteButton.jsx
+// src/front/components/FavoriteButton.jsx
 import { useEffect, useState, useRef } from "react";
 import { FaHeart } from "react-icons/fa";
 import useGlobalReducer from "../hooks/useGlobalReducer";
@@ -17,37 +17,30 @@ export const FavoriteButton = ({ postId, whiteText = false, onToggle, count: cou
     audioRef.current = new Audio(clickSoundFile);
   }, []);
 
-  const fetchCount = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites/count/${postId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setCount(Math.max(0, data.count));
-      }
-    } catch (err) {
-      console.error("Failed to fetch favorite count:", err);
-    }
-  };
-
-  const fetchUserFavStatus = async () => {
+  const fetchUserFavorites = async () => {
     if (!token) return;
+
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        const ids = data.map(f => f.post_id);
-        setIsFavorite(ids.includes(postId));
+
+      const contentType = res.headers.get("Content-Type") || "";
+      if (!res.ok || !contentType.includes("application/json")) {
+        throw new Error("Invalid response format");
       }
+
+      const data = await res.json();
+      const matching = data.filter(f => f.post_id === postId);
+      setIsFavorite(matching.length > 0);
+      setCount(matching.length); // Por si acaso hay múltiples favoritos (defensivo)
     } catch (err) {
-      console.error("Error checking user favorite status", err);
+      console.error("Error checking favorites:", err.message);
     }
   };
 
   useEffect(() => {
-    fetchCount();
-    fetchUserFavStatus();
+    fetchUserFavorites();
   }, [postId]);
 
   const triggerPop = () => {
@@ -57,21 +50,24 @@ export const FavoriteButton = ({ postId, whiteText = false, onToggle, count: cou
 
   const toggleFavorite = async () => {
     if (!token) return;
+
     const method = isFavorite ? "DELETE" : "POST";
+
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites/${postId}`, {
         method,
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        setIsFavorite(!isFavorite);
-        setCount(prev => Math.max(0, (prev ?? 0) + (isFavorite ? -1 : 1)));
-        triggerPop();
-        audioRef.current?.play().catch(e => console.warn("Audio play failed", e));
-        onToggle?.();
-      }
+
+      if (!res.ok) throw new Error("Toggle favorite failed");
+
+      setIsFavorite(!isFavorite);
+      setCount(prev => prev + (isFavorite ? -1 : 1));
+      triggerPop();
+      audioRef.current?.play().catch(e => console.warn("Audio play failed", e));
+      onToggle?.();
     } catch (err) {
-      console.error("Failed to toggle favorite:", err);
+      console.error("Error toggling favorite:", err.message);
     }
   };
 
@@ -89,7 +85,7 @@ export const FavoriteButton = ({ postId, whiteText = false, onToggle, count: cou
         }}
         className="me-1"
       />
-      <span style={{ color: whiteText ? "#fff" : undefined }}>{count ?? 0}</span>
+      <span style={{ color: whiteText ? "#fff" : undefined }}>{count}</span>
     </button>
   );
 };

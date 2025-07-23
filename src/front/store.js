@@ -1,10 +1,13 @@
 // File: src/store.js
 
 export const initialStore = () => {
+  const storedUser = localStorage.getItem("user");
+  const storedToken = localStorage.getItem("token");
+
   return {
     message: null,
-    user: null,
-    token: null,
+    user: storedUser ? JSON.parse(storedUser) : null,
+    token: storedToken || null,
     todos: [
       { id: 1, title: "Make the bed", background: null },
       { id: 2, title: "Do my homework", background: null },
