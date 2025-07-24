@@ -15,8 +15,7 @@ export const Navbar = () => {
     navigate("/");
   };
 
-  const adminUsernames = ["Admin", "D1nx0x"];
-  const Admin = store.user && adminUsernames.includes(store.user.username);
+  const isAdmin = store.user?.is_admin === true;
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
@@ -62,7 +61,7 @@ export const Navbar = () => {
               </>
             )}
 
-            {store.user && Admin && (
+            {isAdmin && (
               <li className="nav-item">
                 <Link className="nav-link" to="/admin">Admin</Link>
               </li>
@@ -100,4 +99,5 @@ export const Navbar = () => {
     </nav>
   );
 };
+
 
