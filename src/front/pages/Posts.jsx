@@ -91,9 +91,13 @@ export const Posts = () => {
     <div className="container-fluid hero-bg min-vh-100 py-5 px-3 d-flex flex-column align-items-center">
       <div className="w-100 w-md-75 w-lg-50 text-center">
         <h2 className="hero-title mb-3">AI Search & Explore</h2>
-        <p className="hero-subtitle mb-4">
+        {/* <p className="hero-subtitle mb-4">
           Discover and contribute open-source projects powered by AI. Find ideas,
           publish your work, and connect with fellow developers.
+        </p> */}
+        <p className="hero-subtitle mb-4">
+          Discover, manually or through our AI, and contribute open-source projects. Find ideas,
+          publish your work or inspiration, and connect with fellow developers.
         </p>
         <button className="btn cta-btn my-3" onClick={() => setShowModal(true)}>+ Create New Project</button>
 
