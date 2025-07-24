@@ -1,7 +1,7 @@
 import requests
 
 BASE_URL = "https://fantastic-doodle-pjw4647v49p936xwr-3001.app.github.dev/api"
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MzMwMjQwMCwianRpIjoiNjEyNDk0N2ItOWYwNC00MjkyLWFlNmYtZTcxOWU2NTA3MTcwIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTMzMDI0MDAsImNzcmYiOiJkZjZiYTgwMy0wMmUxLTRiZWEtYjkyYy0xY2Q3ZDE5ZDY2NGEiLCJleHAiOjE3NTMzMDMzMDB9.2c329-fOqfcuzNy6zH8sgSLidgC-FL8IowWifsFDztI"  # replace this with your actual token
+TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MzMxMTMyMSwianRpIjoiYWQzZGJjOWQtNzBmNi00OWNiLTg3MGEtNjMxZmY2YzliZjAxIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTMzMTEzMjEsImNzcmYiOiJjNjcxZmI1My04YTk1LTQzZmEtYTg5Ny0yZTQyNTQ4MjlmMmQiLCJleHAiOjE3NTMzMTIyMjF9.KKTzngG6Fh5L4VNocaZ5cfQD-mI5wGnrPRXLITbWqsk"  # replace this with your actual token
 
 headers = {
     "Authorization": f"Bearer {TOKEN}",
