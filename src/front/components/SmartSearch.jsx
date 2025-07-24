@@ -1,6 +1,8 @@
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { color, motion } from "framer-motion"
 import { toast } from "react-toastify"
+import isotipo from "../assets/img/isotipo.png";
+
 
 const SmartSearch = () => {
     const [userRequest, setUserRequest] = useState("")
@@ -40,10 +42,10 @@ const SmartSearch = () => {
     return (
         <div className="container-fluid hero-bg min-vh-100 py-1 px-3 d-flex flex-column align-items-center text-white">
             <div className="w-100 w-md-75 w-lg-50 text-center">
-                <h2 className="hero-title mb-1">Smart Search</h2>
-                <p className="hero-subtitle mb-2">
+                <h2 className="hero-title mb-1"> <span className="wise">Smart</span> Search</h2>
+                {/* <p className="hero-subtitle mb-2">
                     Describe in one line the type of project you're looking to build and our AI will find the best matches we have in our app for you specifically.
-                </p>
+                </p> */}
                 <div className="d-flex flex-wrap justify-content-center gap-2 mb-4">
                     <input
                         type="text"
@@ -53,14 +55,29 @@ const SmartSearch = () => {
                         value={userRequest}
                         onChange={e => setUserRequest(e.target.value)}
                     />
-                    <button
+                    {/* <button
                         type="button"
                         className="btn btn-gitwise"
                         onClick={handleSearch}
                         disabled={loading}
                     >
                         {loading ? "Searching for you..." : "Smart Search"}
-                    </button>
+                    </button> */}
+                    <button className="s-btn" style={{
+                        boxShadow: `0 0 8px rgba(135, 90, 224, 0.93),
+          0 0 13px rgba(84, 0, 252, 0.6),
+          0 0 20px rgba(54, 255, 201, 0.84),
+          0 0 30px rgba(194, 10, 194, 0.3)`, borderRadius: '30px'
+                    }}><img
+                            src={isotipo}
+                            alt="GitWise logo"
+                            width="40"
+                            padding="0"
+                            type="button"
+                            onClick={handleSearch}
+                            disabled={loading}
+                        /></button>
+
                 </div>
             </div>
             {results.length > 0 && (
