@@ -6,6 +6,7 @@ import { FavoriteButton } from "../components/FavoriteButton";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { toast } from "react-toastify";
 import { Navigate } from "react-router-dom";
+import SmartSearch from "../components/SmartSearch";
 
 const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -121,48 +122,51 @@ export const Posts = () => {
           </div>
         )}
 
-        <div className="d-flex flex-wrap justify-content-center gap-2 mb-5">
+        {/* <div className="d-flex flex-wrap justify-content-center gap-2 mb-5">
           <input type="text" className="form-control bg-dark text-white border-secondary flex-grow-1" style={{ maxWidth: "500px" }} placeholder="Search projects..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <button className="btn btn-gitwise">Smart Search</button>
         </div>
-      </div>
+      </div> */}
 
-      <div className="d-flex gap-3 justify-content-center mb-4">
-        <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={stackFilter} onChange={(e) => setStackFilter(e.target.value)}>
-          <option value="">All Stacks</option>
-          {[...new Set(posts.map(p => p.stack).filter(Boolean))].map((stack, i) => <option key={`stack-filter-${i}`} value={stack}>{stack}</option>)}
-        </select>
+        <SmartSearch />
 
-        <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
-          <option value="">All Levels</option>
-          {[...new Set(posts.map(p => p.level).filter(Boolean))].map((level, i) => <option key={`level-filter-${i}`} value={level}>{level}</option>)}
-        </select>
-      </div>
+        <div className="d-flex gap-3 justify-content-center mb-4">
+          <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={stackFilter} onChange={(e) => setStackFilter(e.target.value)}>
+            <option value="">All Stacks</option>
+            {[...new Set(posts.map(p => p.stack).filter(Boolean))].map((stack, i) => <option key={`stack-filter-${i}`} value={stack}>{stack}</option>)}
+          </select>
 
-      <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 w-100 px-md-5">
-        {currentPosts.map(post => (
-          <motion.div key={post.id} className="col" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <div className="icon-box h-100 d-flex flex-column justify-content-between">
-              <h5 style={{ color: "#fff" }}>{post.title}</h5>
-              <p>{post.description}</p>
-              {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
-              {post.level && <span className="badge bg-info">{post.level}</span>}
-              <div className="d-flex justify-content-between align-items-center mt-3">
-                <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
-                <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+          <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+            <option value="">All Levels</option>
+            {[...new Set(posts.map(p => p.level).filter(Boolean))].map((level, i) => <option key={`level-filter-${i}`} value={level}>{level}</option>)}
+          </select>
+        </div>
+
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 w-100 px-md-5">
+          {currentPosts.map(post => (
+            <motion.div key={post.id} className="col" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              <div className="icon-box h-100 d-flex flex-column justify-content-between">
+                <h5 style={{ color: "#fff" }}>{post.title}</h5>
+                <p>{post.description}</p>
+                {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
+                {post.level && <span className="badge bg-info">{post.level}</span>}
+                <div className="d-flex justify-content-between align-items-center mt-3">
+                  <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
+                  <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
 
-      <div className="d-flex justify-content-center mt-5 gap-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-          <button key={page} className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`} onClick={() => setCurrentPage(page)}>
-            {page}
-          </button>
-        ))}
+        <div className="d-flex justify-content-center mt-5 gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button key={page} className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`} onClick={() => setCurrentPage(page)}>
+              {page}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1060,10 +1060,10 @@ client = OpenAI(api_key=os.getenv("GPTKey"))
 
 def parse_ai_response(response_text: str):
     pattern = re.compile(
-        r"RANK_POSITION:\s*(\d+),\s*"
-        r"POST_ID:\s*(\d+),\s*"
-        r'JUSTIFICATION:\s*"([^"]+)",\s*'
-        r'RELEVANCE:\s*"([^"]+)",\s*'
+        r"RANK_POSITION:\s*(\d+)\s*"
+        r"POST_ID:\s*(\d+)\s*"
+        r'JUSTIFICATION:\s*"([^"]+)"\s*'
+        r'RELEVANCE:\s*"([^"]+)"\s*'
         r'FIT_SCORE:\s*(\d+)'
     )
 
