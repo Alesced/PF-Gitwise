@@ -20,6 +20,9 @@ import Free from "./pages/Free";
 import Premium from "./pages/Premium";
 import { SinglePost2 } from "./components/SinglePost2";
 import { ErrorPage } from "./pages/ErrorPage";
+import StripeCheckout from "./components/StripeCheckout";
+import DonationCancel from "./components/DonationCancel";
+import DonationSuccess from "./components/DonationSuccess"
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -36,6 +39,9 @@ export const router = createBrowserRouter(
       <Route path="/contact" element={<Contact />} />
       <Route path="/free" element={<Free />} />
       <Route path="/premium" element={<Premium />} />
+      <Route path="/donation-success" element={<DonationSuccess />} />
+      <Route path="/donation-cancel" element={<DonationCancel />} />
+      <Route path="/checkout" element={<StripeCheckout />} />
     </Route>
   )
 );

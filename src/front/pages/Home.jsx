@@ -48,7 +48,7 @@ export const Home = () => {
                     <p>
                         As an open-source initiative, your support enables us to stay independent, ship features faster, and reach more developers worldwide.
                     </p>
-                    <Link to="/donate" className="cta-btn mt-3">Donate & Support Innovation</Link>
+                    <Link to="/checkout" className="cta-btn mt-3">Donate & Support Innovation</Link>
                 </motion.div>
             </div>
         </motion.div>

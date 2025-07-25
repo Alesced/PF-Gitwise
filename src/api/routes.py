@@ -1051,6 +1051,45 @@ def process_payment():
             "type": "server_error",
             "message": "An unexpected error occurred"
         }), 500
+
+#------------------------------Routes Stripe Checkout----------------------
+@api.route('/create-stripe-session', methods=['POST'])
+def create_stripe_session():
+    try:
+        data = request.get_json()
+        
+        # Validación mejorada
+        if not data or 'amount' not in data or not isinstance(data['amount'], int) or data['amount'] <= 0:
+            return jsonify({"error": "Amount must be a positive integer in cents"}), 400
+
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': data.get('currency', 'usd'),
+                    'product_data': {
+                        'name': 'Donación',
+                        'description': 'Gracias por tu apoyo',
+                    },
+                    'unit_amount': data['amount'],
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url='http://localhost:5173/donation-success',  # Ajustado al puerto del frontend
+            cancel_url='http://localhost:5173/donation-cancel',
+            metadata={
+                'user_id': '123',  # En producción, usa el ID real del usuario
+                'purpose': 'donation'
+            }
+        )
+        
+        return jsonify({'sessionId': session.id}), 200
+        
+    except stripe.error.StripeError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
 # -----------------------------Defs for OpenAI API-------------------------
 
 
