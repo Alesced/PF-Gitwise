@@ -1,60 +1,27 @@
 import { loadStripe } from '@stripe/stripe-js';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const stripePromise = loadStripe('pk_test_51RnmUFFYN6tLpF6krG0ijTd317Me09EBq0wApfnSnTBWdGzibJnhdcWkzFPKmLl8qbqEHSFQ86CyN7RWiWD8eaWv00yY5lFqfy');
 
-const StripeCheckout = () => {
-  const [error, setError] = useState(null);
-  const [amount, setAmount] = useState(1000); // Monto por defecto: $10.00
-  const navigate = useNavigate();
+export const handleStripeCheckout = async (amount = 10) => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/create-stripe-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: amount * 100, // Convierte dólares a centavos
+        currency: 'usd'
+      }),
+    });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const stripe = await stripePromise;
-      const response = await fetch('/create-stripe-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, currency: 'usd' }),
-      });
-
-      if (!response.ok) throw new Error(await response.text());
-      
-      const { sessionId } = await response.json();
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (stripeError) throw stripeError;
-    } catch (err) {
-      setError(err.message);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
     }
-  };
 
-  if (error) {
-    return (
-      <div className="error-container">
-        <h3>Error</h3>
-        <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Reintentar</button>
-      </div>
-    );
+    const { url } = await response.json(); // Espera que tu backend devuelva { url: "https://checkout.stripe.com/..." }
+    window.open(url, '_blank', 'noopener,noreferrer'); // Abre Stripe en nueva pestaña
+
+  } catch (error) {
+    console.error("Error al procesar donación:", error);
+    window.location.href = '/donation-cancel';
   }
-
-  return (
-    <form onSubmit={handleSubmit} className="checkout-form">
-      <label>
-        Monto (en centavos):
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-          min="100"
-          step="100"
-        />
-      </label>
-      <button type="submit">Donar ${amount / 100}</button>
-    </form>
-  );
 };
-
-export default StripeCheckout;

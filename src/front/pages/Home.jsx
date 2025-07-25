@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserGear, faProjectDiagram, faUsers, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { handleStripeCheckout } from '../components/StripeCheckout';
 
 export const Home = () => {
     return (
@@ -48,7 +48,12 @@ export const Home = () => {
                     <p>
                         As an open-source initiative, your support enables us to stay independent, ship features faster, and reach more developers worldwide.
                     </p>
-                    <Link to="/checkout" className="cta-btn mt-3">Donate & Support Innovation</Link>
+                        <button
+                            onClick={() => handleStripeCheckout(10)} // Monto fijo $10
+                            className="cta-btn mt-3"
+                        >
+                            Donate & Support Innovation
+                        </button>
                 </motion.div>
             </div>
         </motion.div>

@@ -1057,39 +1057,33 @@ def process_payment():
 def create_stripe_session():
     try:
         data = request.get_json()
-        
-        # Validación mejorada
-        if not data or 'amount' not in data or not isinstance(data['amount'], int) or data['amount'] <= 0:
-            return jsonify({"error": "Amount must be a positive integer in cents"}), 400
+        amount = data['amount']
 
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
                 'price_data': {
-                    'currency': data.get('currency', 'usd'),
+                    'currency': 'usd',
                     'product_data': {
-                        'name': 'Donación',
-                        'description': 'Gracias por tu apoyo',
+                        'name': 'GitWise Donation',
                     },
-                    'unit_amount': data['amount'],
+                    'unit_amount': amount,
                 },
                 'quantity': 1,
             }],
             mode='payment',
-            success_url='http://localhost:5173/donation-success',  # Ajustado al puerto del frontend
-            cancel_url='http://localhost:5173/donation-cancel',
-            metadata={
-                'user_id': '123',  # En producción, usa el ID real del usuario
-                'purpose': 'donation'
-            }
+            success_url='https://tu-frontend.com/donation-success',
+            cancel_url='https://tu-frontend.com/donation-cancel',
         )
-        
-        return jsonify({'sessionId': session.id}), 200
-        
-    except stripe.error.StripeError as e:
-        return jsonify({'error': str(e)}), 400
+
+        # Devuelve BOTH sessionId Y la URL completa
+        return jsonify({
+            'sessionId': session.id,
+            'url': session.url  # Esta es la URL mágica que necesitamos
+        }), 200
+
     except Exception as e:
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({'error': str(e)}), 500
 # -----------------------------Defs for OpenAI API-------------------------
 
 
