@@ -1058,6 +1058,7 @@ def create_stripe_session():
     try:
         data = request.get_json()
         amount = data['amount']
+        frontend_url = data.get('frontend_url')
 
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -1072,8 +1073,8 @@ def create_stripe_session():
                 'quantity': 1,
             }],
             mode='payment',
-            success_url='https://tu-frontend.com/donation-success',
-            cancel_url='https://tu-frontend.com/donation-cancel',
+            success_url=f'{frontend_url}/donation-success',
+            cancel_url=f'{frontend_url}/donation-cancel',
         )
 
         # Devuelve BOTH sessionId Y la URL completa

@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 
 const DonationSuccess = () => (
   <div className="donation-success">
-    <h2>¡Donación exitosa! 💖</h2>
-    <p>Gracias por tu generosidad. Tu apoyo hace la diferencia.</p>
+    <h2>¡Exit Donation! 💖</h2>
+    <p>Thank you for your generosity, your support help us to grow.</p>
     <Link to="/" className="home-link">Volver al inicio</Link>
   </div>
 );

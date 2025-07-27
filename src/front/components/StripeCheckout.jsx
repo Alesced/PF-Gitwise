@@ -9,7 +9,8 @@ export const handleStripeCheckout = async (amount = 10) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         amount: amount * 100, // Convierte dólares a centavos
-        currency: 'usd'
+        currency: 'usd',
+        frontend_url: window.location.origin // URL del frontend para redireccion
       }),
     });
 
