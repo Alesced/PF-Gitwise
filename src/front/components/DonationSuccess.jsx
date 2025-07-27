@@ -1,11 +1,23 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const DonationSuccess = () => (
-  <div className="donation-success">
-    <h2>¡Exit Donation! 💖</h2>
-    <p>Thank you for your generosity, your support help us to grow.</p>
-    <Link to="/" className="home-link">Volver al inicio</Link>
-  </div>
-);
+const DonationSuccess = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/');
+    }, 3000); // 3 segundos
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+  return (
+    <div className="donation-success">
+      <h2>¡Donación exitosa! 💖</h2>
+      <p>Gracias por tu generosidad, tu apoyo nos ayuda a crecer.</p>
+      <p>Serás redirigido al inicio en unos segundos...</p>
+    </div>
+  );
+};
 
 export default DonationSuccess;

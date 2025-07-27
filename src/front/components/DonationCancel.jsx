@@ -1,11 +1,23 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const DonationCancel = () => (
-  <div className="donation-cancel">
-    <h2>Donación no completada</h2>
-    <p>El proceso de pago fue cancelado. ¿Quieres intentarlo de nuevo?</p>
-    <Link to="/" className="retry-link">Reintentar</Link>
-  </div>
-);
+const DonationCancel = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/');
+    }, 3000); // 3 segundos
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+  return (
+    <div className="donation-cancel">
+      <h2>Donación no completada</h2>
+      <p>El proceso de pago fue cancelado. ¿Quieres intentarlo de nuevo?</p>
+      <p>Serás redirigido al inicio en unos segundos...</p>
+    </div>
+  );
+};
 
 export default DonationCancel;
