@@ -1,5 +1,3 @@
-// File: src/front/pages/Posts.jsx
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FavoriteButton } from "../components/FavoriteButton";
@@ -7,6 +5,8 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 import { toast } from "react-toastify";
 import { Navigate } from "react-router-dom";
 import SmartSearch from "../components/SmartSearch";
+import { FaRegComment } from "react-icons/fa";
+import { CommentSection } from "../components/CommentSection";
 
 const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -18,7 +18,14 @@ export const Posts = () => {
   const [levelFilter, setLevelFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [newProject, setNewProject] = useState({ title: "", description: "", github: "", stack: "", level: "" });
+  const [openCommentPostId, setOpenCommentPostId] = useState(null);
+  const [newProject, setNewProject] = useState({
+    title: "",
+    description: "",
+    github: "",
+    stack: "",
+    level: ""
+  });
 
   const { store } = useGlobalReducer();
   const postsPerPage = 6;
@@ -91,10 +98,6 @@ export const Posts = () => {
     <div className="container-fluid hero-bg min-vh-100 py-5 px-3 d-flex flex-column align-items-center">
       <div className="w-100 w-md-75 w-lg-50 text-center">
         <h2 className="hero-title mb-3">AI Search & Explore</h2>
-        {/* <p className="hero-subtitle mb-4">
-          Discover and contribute open-source projects powered by AI. Find ideas,
-          publish your work, and connect with fellow developers.
-        </p> */}
         <p className="hero-subtitle mb-4">
           Discover, manually or through our AI, and contribute open-source projects. Find ideas,
           publish your work or inspiration, and connect with fellow developers.
@@ -126,12 +129,6 @@ export const Posts = () => {
           </div>
         )}
 
-        {/* <div className="d-flex flex-wrap justify-content-center gap-2 mb-5">
-          <input type="text" className="form-control bg-dark text-white border-secondary flex-grow-1" style={{ maxWidth: "500px" }} placeholder="Search projects..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          <button className="btn btn-gitwise">Smart Search</button>
-        </div>
-      </div> */}
-
         <SmartSearch />
 
         <div className="d-flex gap-3 justify-content-center mb-4">
@@ -149,15 +146,38 @@ export const Posts = () => {
         <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 w-100 px-md-5">
           {currentPosts.map(post => (
             <motion.div key={post.id} className="col" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-              <div className="icon-box h-100 d-flex flex-column justify-content-between">
-                <h5 style={{ color: "#fff" }}>{post.title}</h5>
-                <p>{post.description}</p>
-                {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
-                {post.level && <span className="badge bg-info">{post.level}</span>}
-                <div className="d-flex justify-content-between align-items-center mt-3">
-                  <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
-                  <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+              <div className="position-relative">
+                <div
+                  className="icon-box d-flex flex-column justify-content-between"
+                  style={{ minHeight: "300px" }}
+                >
+                  <h5 style={{ color: "#fff" }}>{post.title}</h5>
+                  <p>{post.description}</p>
+                  {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
+                  {post.level && <span className="badge bg-info">{post.level}</span>}
+
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
+                    <div className="d-flex align-items-center gap-2">
+                      <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+                      <button
+                        className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center"
+                        style={{ width: "40px", height: "32px" }}
+                        onClick={() =>
+                          setOpenCommentPostId((prev) => (prev === post.id ? null : post.id))
+                        }
+                      >
+                        <FaRegComment />
+                      </button>
+                    </div>
+                  </div>
                 </div>
+
+                {openCommentPostId === post.id && (
+                  <div className="mt-3 w-100">
+                    <CommentSection postId={post.id} visible={true} />
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
@@ -172,5 +192,5 @@ export const Posts = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
