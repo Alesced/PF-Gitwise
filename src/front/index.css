@@ -204,3 +204,17 @@ body {
     margin-bottom: 1rem;
   }
 }
+
+/* ------------------ STRIPE CHECKOUT ------------------ */
+.donation-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.donation-center h2 {
+  font-weight: bold;
+}

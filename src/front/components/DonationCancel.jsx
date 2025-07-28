@@ -12,10 +12,10 @@ const DonationCancel = () => {
   }, [navigate]);
 
   return (
-    <div className="donation-cancel">
-      <h2>Donación no completada</h2>
-      <p>El proceso de pago fue cancelado. ¿Quieres intentarlo de nuevo?</p>
-      <p>Serás redirigido al inicio en unos segundos...</p>
+    <div className="donation-center">
+      <h2>Donation not completed</h2>
+      <p>The process of payment was canceled.</p>
+      <p>You are goint to be redirect in a few second...</p>
     </div>
   );
 };

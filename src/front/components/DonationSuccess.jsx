@@ -12,10 +12,10 @@ const DonationSuccess = () => {
   }, [navigate]);
 
   return (
-    <div className="donation-success">
-      <h2>¡Donación exitosa! 💖</h2>
-      <p>Gracias por tu generosidad, tu apoyo nos ayuda a crecer.</p>
-      <p>Serás redirigido al inicio en unos segundos...</p>
+    <div className="donation-center">
+      <h2>¡Exit Donation!</h2>
+      <p>Thank You for your generosity, your support help us to grow.</p>
+      <p>You are going to be redirect in a few secons...</p>
     </div>
   );
 };
