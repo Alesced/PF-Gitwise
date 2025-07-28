@@ -43,9 +43,9 @@ const SmartSearch = () => {
         <div className="container-fluid hero-bg min-vh-100 py-1 px-3 d-flex flex-column align-items-center text-white">
             <div className="w-100 w-md-75 w-lg-50 text-center">
                 <h2 className="hero-title mb-1"> <span className="wise">Smart</span> Search</h2>
-                {/* <p className="hero-subtitle mb-2">
-                    Describe in one line the type of project you're looking to build and our AI will find the best matches we have in our app for you specifically.
-                </p> */}
+                <p className="hero-subtitle mb-4">
+                    If you could describe your project in one line, what would you say? Let our AI do the hard work
+                </p>
                 <div className="d-flex flex-wrap justify-content-center gap-2 mb-4">
                     <input
                         type="text"
@@ -55,15 +55,15 @@ const SmartSearch = () => {
                         value={userRequest}
                         onChange={e => setUserRequest(e.target.value)}
                     />
-                    {/* <button
+                    <button
                         type="button"
-                        className="btn btn-gitwise"
+                        className="btn btn-gitwise s-search-btn"
                         onClick={handleSearch}
                         disabled={loading}
                     >
-                        {loading ? "Searching for you..." : "Smart Search"}
-                    </button> */}
-                    <button className="s-btn" style={{
+                        {loading ? "Searching for you..." : "Ask away!"}
+                    </button>
+                    {/* <button className="sadly-rejected-btn" style={{
                         boxShadow: `0 0 8px rgba(135, 90, 224, 0.93),
           0 0 13px rgba(84, 0, 252, 0.6),
           0 0 20px rgba(54, 255, 201, 0.84),
@@ -76,7 +76,7 @@ const SmartSearch = () => {
                             type="button"
                             onClick={handleSearch}
                             disabled={loading}
-                        /></button>
+                        /></button> */}
 
                 </div>
             </div>

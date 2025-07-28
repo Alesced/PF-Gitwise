@@ -179,14 +179,29 @@ body {
 .wise {
   color: #4e46c4;
 }
-.s-btn {
+.s-search-btn {
+  background-color: #7b5bff;
+  color: rgb(255, 255, 255);
+  font-weight: 500;
+  transition: 0.8s;
+}
+.s-search-btn:hover {
+  transform: scale(0.9);
+  /* transform: scale(1.1); */
+  box-shadow: 0 0 3px #724ac5, 0 0 10px #724ac5,
+    0 0 20px rgba(115, 74, 197, 0.05);
+  cursor: pointer;
+}
+
+/* 
+.sadly-rejected-btn {
   background-color: #10131a;
 }
-.s-btn:hover {
+.sadly-rejected-btn:hover {
   transform: scale(0.9);
   box-shadow: 0 0 8px #724ac5, 0 0 18px #724ac5,
     0 0 30px rgba(115, 74, 197, 0.4);
-}
+} */
 /* ------------------ RESPONSIVE ------------------ */
 @media (max-width: 768px) {
   .hero-title {
