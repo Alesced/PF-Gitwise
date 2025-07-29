@@ -13,7 +13,7 @@ const DonationSuccess = () => {
 
   return (
     <div className="donation-center">
-      <h2>¡Exit Donation!</h2>
+      <h2>¡Successful Donation!</h2>
       <p>Thank You for your generosity, your support help us to grow.</p>
       <p>You are going to be redirect in a few secons...</p>
     </div>
