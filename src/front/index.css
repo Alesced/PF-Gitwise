@@ -220,6 +220,13 @@ body {
   }
 }
 
+
+/* ------------------ Hover del commentSection 27/7 ------------------ */
+.list-group-item:hover {
+  background-color: #1e1e2f !important;
+  transition: background-color 0.3s ease;
+}
+
 /* ------------------ STRIPE CHECKOUT ------------------ */
 .donation-center {
   display: flex;
