@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaCode, FaLevelUpAlt, FaGithub, FaPencilAlt } from "react-icons/fa";
 
 export const PostForm = () => {
+  const navigate = useNavigate();
   const location = useLocation();
-  const editingPost = location.state || null;
+  const editingPost = location.state !== null;
 
   const [form, setForm] = useState({
     title: "",
@@ -48,6 +49,18 @@ export const PostForm = () => {
             {editingPost ? "Edit Your Project" : "Share a New Project"}
           </h3>
         </div>
+
+        {editingPost && (
+          <button
+            type="button"
+            className="btn btn-outline-light bg-danger btn-sm align-right"
+            onClick={() => navigate("/admin")}
+          >
+            x
+          </button>
+        )
+
+        }
 
         <p className="text-muted mb-4">
           {editingPost
