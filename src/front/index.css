@@ -233,3 +233,7 @@ body {
 .donation-center h2 {
   font-weight: bold;
 }
+
+.border-purple {
+  border-color: #7b5bff !important;
+}

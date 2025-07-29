@@ -22,8 +22,8 @@ sqlalchemy = "*"
 flask-bcrypt = "*"
 email-validator = "*"
 python-dotenv = "*"
-stripe = "*"
 openai = "*"
+stripe = "*"
 
 [requires]
 python_version = "3.13"

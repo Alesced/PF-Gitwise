@@ -5,6 +5,10 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+
+const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
+const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
 export const UserProfile = () => {
   const { store } = useGlobalReducer();
@@ -13,6 +17,10 @@ export const UserProfile = () => {
   const [favorites, setFavorites] = useState([]);
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({ title: "", description: "", repo_URL: "" });
+  const [activeTab, setActiveTab] = useState("posts");
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [showModal, setShowModal] = useState(false);
+  const [newProject, setNewProject] = useState({ title: "", description: "", github: "", stack: "", level: "" });
 
   const user = store.user || {
     username: "GuestDev",
@@ -32,16 +40,9 @@ export const UserProfile = () => {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/posts`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Error response:", text);
-          throw new Error(`Failed: ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`Failed: ${res.status}`);
         const json = await res.json();
-        const allPosts = json.posts || [];
-        const userPosts = allPosts.filter(p => p.user_id === store.user.id);
+        const userPosts = (json.posts || []).filter(p => p.user_id === store.user.id);
         setMyPosts(userPosts);
       } catch (err) {
         console.error("Fetch posts failed:", err.message);
@@ -60,9 +61,7 @@ export const UserProfile = () => {
             const r = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${f.post_id}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!r.ok) return null;
-            const json = await r.json();
-            return json.post;
+            return r.ok ? (await r.json()).post : null;
           })
         );
         setFavorites(fullPosts.filter(Boolean));
@@ -72,6 +71,38 @@ export const UserProfile = () => {
     fetchPosts();
     fetchFavorites();
   }, [store.user?.id, store.user?.my_posts?.length]);
+
+  const handleCreateProject = async () => {
+    const { title, description, github, stack, level } = newProject;
+    if (!title || !description || !github) return toast.error("All fields required");
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/post/${store.user.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${store.token}`,
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          repo_URL: github,
+          image_URL: "https://via.placeholder.com/300",
+          stack,
+          level,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.msg || "Failed to save project");
+      setMyPosts(prev => [data.post, ...prev]);
+      toast.success("Project created!");
+      setShowModal(false);
+      setNewProject({ title: "", description: "", github: "", stack: "", level: "" });
+    } catch (err) {
+      console.error("POST error:", err);
+      toast.error("Failed to save project: " + err.message);
+    }
+  };
 
   const removePost = async (id) => {
     const token = localStorage.getItem("token");
@@ -152,6 +183,56 @@ export const UserProfile = () => {
     </motion.div>
   );
 
+  const renderList = () => {
+    const list = activeTab === "posts" ? myPosts : favorites;
+    const editable = activeTab === "posts";
+    const displayed = list.slice(0, visibleCount);
+
+    return (
+      <>
+        {editable && (
+          <div className="text-center mb-4">
+            <button className="btn btn-gitwise" onClick={() => setShowModal(true)}>+ Create New Project</button>
+          </div>
+        )}
+
+        {showModal && (
+          <section className="modal d-block bg-dark bg-opacity-75">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content bg-dark text-white p-4 rounded">
+                <h5 className="mb-3">New Project</h5>
+                <input type="text" className="form-control mb-2" placeholder="Project Title" value={newProject.title} onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
+                <textarea className="form-control mb-2" placeholder="Description" value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })}></textarea>
+                <input type="text" className="form-control mb-2" placeholder="GitHub Repo URL" value={newProject.github} onChange={e => setNewProject({ ...newProject, github: e.target.value })} />
+                <select className="form-select mb-2" value={newProject.stack} onChange={e => setNewProject({ ...newProject, stack: e.target.value })}>
+                  <option value="">Select Stack</option>
+                  {STACKS.map((stack, i) => <option key={i} value={stack}>{stack}</option>)}
+                </select>
+                <select className="form-select mb-3" value={newProject.level} onChange={e => setNewProject({ ...newProject, level: e.target.value })}>
+                  <option value="">Select Level</option>
+                  {LEVELS.map((level, i) => <option key={i} value={level}>{level}</option>)}
+                </select>
+                <div className="d-flex justify-content-between">
+                  <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                  <button className="btn btn-gitwise" onClick={handleCreateProject}>Save Project</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          {displayed.length > 0 ? displayed.map(p => renderCard(p, editable)) : <p className="text-light">No content yet.</p>}
+        </div>
+        {list.length > visibleCount && (
+          <div className="text-center mt-4">
+            <button className="btn btn-outline-light" onClick={() => setVisibleCount(c => c + 6)}>Load More</button>
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="container-fluid min-vh-100 d-flex flex-column justify-content-start py-5 hero-bg text-white">
       <div className="text-center mb-5">
@@ -161,39 +242,23 @@ export const UserProfile = () => {
 
       <div className="icon-box mb-5 mx-auto" style={{ maxWidth: "600px", width: "100%" }}>
         <div className="position-relative mb-4">
-          <img
-            src="https://images.unsplash.com/photo-1503264116251-35a269479413"
-            alt="Banner"
-            className="w-100 rounded"
-            style={{ height: "180px", objectFit: "cover" }}
-          />
-          <img
-            src={user.avatar_url}
-            alt="Avatar"
-            className="rounded-circle border border-3 border-white position-absolute"
-            style={{ width: "100px", height: "100px", left: "50%", transform: "translateX(-50%)", bottom: "-50px" }}
-          />
+          <img src="https://images.unsplash.com/photo-1503264116251-35a269479413" alt="Banner" className="w-100 rounded" style={{ height: "180px", objectFit: "cover" }} />
+          <img src={user.avatar_url} alt="Avatar" className="rounded-circle border border-3 border-white position-absolute" style={{ width: "100px", height: "100px", left: "50%", transform: "translateX(-50%)", bottom: "-50px" }} />
         </div>
-
         <div className="text-center pt-5">
           <h3 className="fw-bold mb-1">{user.username}</h3>
           <p className="mb-1 text-light">{user.email}</p>
-          {user.join_date && (
-            <p className="text-secondary">Member since: {new Date(user.join_date).toLocaleDateString()}</p>
-          )}
+          {user.join_date && <p className="text-secondary">Member since: {new Date(user.join_date).toLocaleDateString()}</p>}
         </div>
       </div>
 
       <div className="px-4 w-100">
-        <h4 className="mb-3" style={{ color: "#7b5bff" }}>My Posts</h4>
-        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          {myPosts.length > 0 ? myPosts.map(p => renderCard(p, true)) : <p className="text-light">No posts yet.</p>}
+        <div className="d-flex justify-content-center gap-4 mb-4">
+          <button className={`btn ${activeTab === "posts" ? "btn-primary" : "btn-outline-light"}`} onClick={() => setActiveTab("posts")}>My Posts</button>
+          <button className={`btn ${activeTab === "favorites" ? "btn-primary" : "btn-outline-light"}`} onClick={() => setActiveTab("favorites")}>My Favorites</button>
         </div>
 
-        <h4 className="mt-5 mb-3" style={{ color: "#7b5bff" }}>My Favorites</h4>
-        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          {favorites.length > 0 ? favorites.map(p => renderCard(p)) : <p className="text-light">No favorites yet.</p>}
-        </div>
+        {renderList()}
       </div>
     </div>
   );
