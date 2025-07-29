@@ -40,9 +40,9 @@ export const Navbar = () => {
                 <li className="nav-item">
                   <Link className="nav-link" to="/contact">Contact</Link>
                 </li>
-                <li className="nav-item">
+                {/* <li className="nav-item">
                   <Link className="nav-link text-warning fw-bold donate-hover" to="https://stripe.com/es">Donate</Link>
-                </li>
+                </li> */}
               </>
             ) : (
               <>
@@ -55,15 +55,15 @@ export const Navbar = () => {
                 <li className="nav-item">
                   <Link className="nav-link" to="/contact">Contact</Link>
                 </li>
-                <li className="nav-item">
-                  <Link className="nav-link text-warning fw-bold donate-hover" to="https://stripe.com/es">Donate</Link>
-                </li>
+                {/* <li className="nav-item">
+                  <Link className="nav-link text-warning fw-bold donate-hover" to="/donate">Donate</Link>
+                </li> */}
               </>
             )}
 
             {isAdmin && (
               <li className="nav-item">
-                <Link className="nav-link" to="/admin">Admin</Link>
+                <Link className="nav-link" to="/admin/dashboard">Admin</Link>
               </li>
             )}
           </ul>
@@ -71,8 +71,8 @@ export const Navbar = () => {
           <div className="d-flex align-items-center">
             {!store.user ? (
               <>
-                <Link to="/login" className="btn btn-outline-primary me-2">Login</Link>
-                <Link to="/register" className="btn btn-primary">Register</Link>
+                <Link to="/login" className="btn btn-outline-light me-2 border border-purple">Login</Link>
+                <Link to="/register" className="btn btn-gitwise">Register</Link>
               </>
             ) : (
               <>
@@ -87,7 +87,7 @@ export const Navbar = () => {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="btn btn-outline-primary"
+                  className="btn btn-outline-light border border-purple"
                 >
                   Logout
                 </button>
@@ -99,5 +99,3 @@ export const Navbar = () => {
     </nav>
   );
 };
-
-

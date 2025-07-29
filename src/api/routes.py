@@ -1051,6 +1051,40 @@ def process_payment():
             "type": "server_error",
             "message": "An unexpected error occurred"
         }), 500
+
+#------------------------------Routes Stripe Checkout----------------------
+@api.route('/create-stripe-session', methods=['POST'])
+def create_stripe_session():
+    try:
+        data = request.get_json()
+        amount = data['amount']
+        frontend_url = data.get('frontend_url')
+
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'GitWise Donation',
+                    },
+                    'unit_amount': amount,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=f'{frontend_url}/donation-success',
+            cancel_url=f'{frontend_url}/donation-cancel',
+        )
+
+        # Devuelve BOTH sessionId Y la URL completa
+        return jsonify({
+            'sessionId': session.id,
+            'url': session.url  # Esta es la URL mágica que necesitamos
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 # -----------------------------Defs for OpenAI API-------------------------
 
 

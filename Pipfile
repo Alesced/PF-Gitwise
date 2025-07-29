@@ -22,6 +22,7 @@ sqlalchemy = "*"
 flask-bcrypt = "*"
 email-validator = "*"
 python-dotenv = "*"
+openai = "*"
 stripe = "*"
 
 [requires]

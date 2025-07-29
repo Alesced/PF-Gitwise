@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { FavoriteButton } from "../components/FavoriteButton";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { toast } from "react-toastify";
@@ -7,9 +7,6 @@ import { Navigate } from "react-router-dom";
 import SmartSearch from "../components/SmartSearch";
 import { FaRegComment } from "react-icons/fa";
 import { CommentSection } from "../components/CommentSection";
-
-const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
-const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
 export const Posts = () => {
   const [posts, setPosts] = useState([]);
@@ -26,6 +23,8 @@ export const Posts = () => {
     stack: "",
     level: ""
   });
+  const [showMainContent, setShowMainContent] = useState(true);
+
 
   const { store } = useGlobalReducer();
   const postsPerPage = 6;
@@ -61,75 +60,68 @@ export const Posts = () => {
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
   const currentPosts = filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
 
-  const handleCreateProject = async () => {
-    if (!store.user || !store.token) return toast.error("Please login to create a project");
-    const { title, description, github, stack, level } = newProject;
-    if (!title || !description || !github) return toast.error("All fields required");
-
-    try {
-      const res = await fetch(`${BASE_URL}/api/user/post/${store.user.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${store.token}`,
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          repo_URL: github,
-          image_URL: "https://via.placeholder.com/300",
-          stack,
-          level,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.msg || "Failed to save project");
-      setPosts(prev => [data.post, ...prev]);
-      toast.success("Project created!");
-      setShowModal(false);
-      setNewProject({ title: "", description: "", github: "", stack: "", level: "" });
-    } catch (err) {
-      console.error("POST error:", err);
-      toast.error("Failed to save project: " + err.message);
-    }
-  };
+  const uniqueStacks = [...new Set(posts.map(p => p.stack).filter(Boolean))];
+  const uniqueLevels = [...new Set(posts.map(p => p.level).filter(Boolean))];
 
   return (
     <div className="container-fluid hero-bg min-vh-100 py-5 px-3 d-flex flex-column align-items-center">
-      <div className="w-100 w-md-75 w-lg-50 text-center">
-        <h2 className="hero-title mb-3">AI Search & Explore</h2>
+      <section className="w-100 text-center" style={{ marginTop: "-20px" }}>
+        <SmartSearch onSearchStart={() => setShowMainContent(false)} onSearchEnd={() => setShowMainContent(true)} />
+        <h2 className="hero-title mt-4 mb-3">Explore</h2>
         <p className="hero-subtitle mb-4">
-          Discover, manually or through our AI, and contribute open-source projects. Find ideas,
-          publish your work or inspiration, and connect with fellow developers.
+          Discover open-source projects, and connect with developers like you.
         </p>
-        <button className="btn cta-btn my-3" onClick={() => setShowModal(true)}>+ Create New Project</button>
+      </section>
 
-        {showModal && (
-          <div className="modal d-block bg-dark bg-opacity-75">
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content bg-dark text-white p-4 rounded">
-                <h5 className="mb-3">New Project</h5>
-                <input type="text" className="form-control mb-2" placeholder="Project Title" value={newProject.title} onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
-                <textarea className="form-control mb-2" placeholder="Description" value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })}></textarea>
-                <input type="text" className="form-control mb-2" placeholder="GitHub Repo URL" value={newProject.github} onChange={e => setNewProject({ ...newProject, github: e.target.value })} />
-                <select className="form-select mb-2" value={newProject.stack} onChange={e => setNewProject({ ...newProject, stack: e.target.value })}>
-                  <option value="">Select Stack</option>
-                  {STACKS.map((stack, i) => <option key={i} value={stack}>{stack}</option>)}
-                </select>
-                <select className="form-select mb-3" value={newProject.level} onChange={e => setNewProject({ ...newProject, level: e.target.value })}>
-                  <option value="">Select Level</option>
-                  {LEVELS.map((level, i) => <option key={i} value={level}>{level}</option>)}
-                </select>
-                <div className="d-flex justify-content-between">
-                  <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button className="btn btn-gitwise" onClick={handleCreateProject}>Save Project</button>
-                </div>
+      <AnimatePresence>
+        {showMainContent && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+            className="w-100 d-flex flex-column align-items-center"
+          >
+            <section className="w-100 d-flex gap-3 justify-content-center mb-4 flex-wrap">
+              <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={stackFilter} onChange={(e) => setStackFilter(e.target.value)}>
+                <option value="">Select Stack</option>
+                {uniqueStacks.map((stack, i) => <option key={`stack-filter-${i}`} value={stack}>{stack}</option>)}
+              </select>
+
+              <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+                <option value="">Select Level</option>
+                {uniqueLevels.map((level, i) => <option key={`level-filter-${i}`} value={level}>{level}</option>)}
+              </select>
+            </section>
+
+            <section className="w-100 px-md-5">
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {currentPosts.map(post => (
+                  <motion.div key={post.id} className="col" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                    <div className="icon-box h-100 d-flex flex-column justify-content-between">
+                      <h5 style={{ color: "#fff" }}>{post.title}</h5>
+                      <p>{post.description}</p>
+                      {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
+                      {post.level && <span className="badge bg-info">{post.level}</span>}
+                      <div className="d-flex justify-content-between align-items-center mt-3">
+                        <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
+                        <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-            </div>
-          </div>
-        )}
+            </section>
 
-        <SmartSearch />
+            <section className="d-flex justify-content-center mt-5 gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button key={page} className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`} onClick={() => setCurrentPage(page)}>
+                  {page}
+                </button>
+              ))}
+            </section>
+          </motion.div>
+        )}
 
         <div className="d-flex gap-3 justify-content-center mb-4">
           <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={stackFilter} onChange={(e) => setStackFilter(e.target.value)}>
@@ -190,7 +182,7 @@ export const Posts = () => {
             </button>
           ))}
         </div>
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
