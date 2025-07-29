@@ -71,8 +71,8 @@ export const Navbar = () => {
           <div className="d-flex align-items-center">
             {!store.user ? (
               <>
-                <Link to="/login" className="btn btn-outline-primary me-2">Login</Link>
-                <Link to="/register" className="btn btn-primary">Register</Link>
+                <Link to="/login" className="btn btn-outline-light me-2 border border-purple">Login</Link>
+                <Link to="/register" className="btn btn-gitwise">Register</Link>
               </>
             ) : (
               <>
@@ -87,7 +87,7 @@ export const Navbar = () => {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="btn btn-outline-primary"
+                  className="btn btn-outline-light border border-purple"
                 >
                   Logout
                 </button>
@@ -99,5 +99,3 @@ export const Navbar = () => {
     </nav>
   );
 };
-
-

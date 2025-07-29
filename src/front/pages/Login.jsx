@@ -4,37 +4,36 @@ import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import isotipo from "../assets/img/isotipo.png";
 import bannerImg from "../assets/img/ferenc-almasi-oCm8nPkE40k-unsplash.jpg";
-import { toast } from "react-toastify";
+import Alert from "react-bootstrap/Alert";
 
 export const Login = () => {
   const { dispatch } = useGlobalReducer();
   const navigate = useNavigate();
+
   const [form, setForm] = useState({ email: "", password: "" });
+  const [status, setStatus] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setStatus(null);
   };
 
-  const isValidEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setStatus(null);
 
     if (!form.email || !form.password) {
-      toast.error("Email and password are required.");
-      return;
+      return setStatus({ type: "danger", message: "Email and password are required." });
     }
 
     if (!isValidEmail(form.email)) {
-      toast.error("Please enter a valid email address.");
-      return;
+      return setStatus({ type: "danger", message: "Please enter a valid email address." });
     }
 
     if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
-      return;
+      return setStatus({ type: "danger", message: "Password must be at least 6 characters." });
     }
 
     try {
@@ -47,8 +46,7 @@ export const Login = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Invalid email or password.");
-        return;
+        return setStatus({ type: "danger", message: data.error || "Invalid email or password." });
       }
 
       localStorage.setItem("token", data.token);
@@ -59,11 +57,11 @@ export const Login = () => {
         payload: { user: data.user, token: data.token },
       });
 
-      toast.success("Login successful!");
-      navigate("/profile");
+      setStatus({ type: "success", message: "Login successful! Redirecting..." });
+      setTimeout(() => navigate("/profile"), 1500);
     } catch (err) {
       console.error(err);
-      toast.error("Error logging in.");
+      setStatus({ type: "danger", message: "Error logging in." });
     }
   };
 
@@ -77,12 +75,19 @@ export const Login = () => {
           <div className="text-center mb-4">
             <img src={isotipo} alt="GitWise logo" width="50" />
             <h4 className="mt-3">
-              Sign in to <span style={{ color: "#2563eb" }}><strong>GitWise</strong></span>
+              Sign in to <span style={{ color: "#7b5bff" }}><strong>GitWise</strong></span>
             </h4>
             <p className="text-secondary">
               Discover inspiring projects and connect with developers like you.
             </p>
           </div>
+
+          {status && (
+            <Alert variant={status.type} className="text-center">
+              {status.message}
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit}>
             <input
               type="email"
@@ -100,7 +105,7 @@ export const Login = () => {
               onChange={handleChange}
               required
             />
-            <button type="submit" className="btn btn-primary w-100 mb-3">
+            <button type="submit" className="btn btn-gitwise w-100 mb-3">
               Sign In
             </button>
           </form>
