@@ -40,9 +40,9 @@ export const Navbar = () => {
                 <li className="nav-item">
                   <Link className="nav-link" to="/contact">Contact</Link>
                 </li>
-                <li className="nav-item">
+                {/* <li className="nav-item">
                   <Link className="nav-link text-warning fw-bold donate-hover" to="https://stripe.com/es">Donate</Link>
-                </li>
+                </li> */}
               </>
             ) : (
               <>
@@ -55,15 +55,15 @@ export const Navbar = () => {
                 <li className="nav-item">
                   <Link className="nav-link" to="/contact">Contact</Link>
                 </li>
-                <li className="nav-item">
-                  <Link className="nav-link text-warning fw-bold donate-hover" to="https://stripe.com/es">Donate</Link>
-                </li>
+                {/* <li className="nav-item">
+                  <Link className="nav-link text-warning fw-bold donate-hover" to="/donate">Donate</Link>
+                </li> */}
               </>
             )}
 
             {isAdmin && (
               <li className="nav-item">
-                <Link className="nav-link" to="/admin">Admin</Link>
+                <Link className="nav-link" to="/admin/dashboard">Admin</Link>
               </li>
             )}
           </ul>

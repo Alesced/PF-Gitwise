@@ -1,50 +1,65 @@
 // File: src/front/pages/AdminPosts.jsx
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-const mockPosts = Array.from({ length: 25 }, (_, i) => ({
-  id: i + 1,
-  title: `Project ${i + 1}`,
-  description: "Project description",
-  stack: ["HTML", "JavaScript", "React", "Python", "SQL"][i % 5],
-  level: ["STUDENT", "JUNIOR_DEV", "MID_DEV", "SENIOR_DEV"][i % 4],
-  github: "https://github.com/example/project"
-}));
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { toast } from "react-toastify"
 
 export const AdminPosts = () => {
-  const [posts, setPosts] = useState([]);
-  const [stackFilter, setStackFilter] = useState("");
-  const [levelFilter, setLevelFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [postToDelete, setPostToDelete] = useState(null);
+  const [posts, setPosts] = useState([])
+  const [stackFilter, setStackFilter] = useState("")
+  const [levelFilter, setLevelFilter] = useState("")
+  const [search, setSearch] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [postToDelete, setPostToDelete] = useState(null)
 
-  const navigate = useNavigate();
-  const postsPerPage = 7;
+  const navigate = useNavigate()
+  const postsPerPage = 7
+
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
+  const token = localStorage.getItem("token")
 
   useEffect(() => {
-    setPosts(mockPosts);
-  }, []);
+    const fetchPosts = async () => {
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` })
+
+        }
+        const response1 = await fetch(`${BASE_URL}/api/posts?page=1`, { headers })
+        const data1 = await response1.json()
+        const response2 = await fetch(`${BASE_URL}/api/posts?page=2`, { headers })
+        const data2 = await response2.json()
+
+        const allPosts = [...(data1.posts || []), ...(data2.posts || [])]
+        setPosts(allPosts)
+      } catch (error) {
+        console.error("Error fetching posts:", error)
+        toast.error("could not load posts.")
+      }
+    }
+
+    fetchPosts()
+  }, [])
 
   const filtered = posts.filter(post => {
     return (
       (stackFilter ? post.stack === stackFilter : true) &&
       (levelFilter ? post.level === levelFilter : true) &&
       (search ? post.title.toLowerCase().includes(search.toLowerCase()) : true)
-    );
-  });
+    )
+  })
 
-  const totalPages = Math.ceil(filtered.length / postsPerPage);
+  const totalPages = Math.ceil(filtered.length / postsPerPage)
   const current = filtered.slice(
     (currentPage - 1) * postsPerPage,
     currentPage * postsPerPage
-  );
+  )
 
   const handleDelete = () => {
-    setPosts(prev => prev.filter(p => p.id !== postToDelete));
-    setPostToDelete(null);
-  };
+    setPosts(prev => prev.filter(p => p.id !== postToDelete))
+    setPostToDelete(null)
+  }
 
   return (
     <div className="p-5 bg-black min-vh-100 text-white">
@@ -121,7 +136,7 @@ export const AdminPosts = () => {
                 <td>{post.level}</td>
                 <td>
                   <a
-                    href={post.github}
+                    href={post.repo_URL}
                     target="_blank"
                     rel="noreferrer"
                     className="text-primary"
@@ -200,5 +215,5 @@ export const AdminPosts = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+} 

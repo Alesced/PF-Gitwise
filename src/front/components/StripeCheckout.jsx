@@ -4,7 +4,7 @@ const stripePromise = loadStripe('pk_test_51RnmUFFYN6tLpF6krG0ijTd317Me09EBq0wAp
 
 export const handleStripeCheckout = async (amount = 10) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/create-stripe-session`, {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/create-stripe-session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
