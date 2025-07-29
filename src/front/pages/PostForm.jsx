@@ -17,7 +17,15 @@ export const PostForm = () => {
 
   useEffect(() => {
     if (editingPost) {
-      setForm(editingPost);
+      setForm(
+        {
+          title: editingPost.title || "",
+          description: editingPost.description || "",
+          stack: editingPost.stack || "",
+          level: editingPost.level || "",
+          github: editingPost.github || ""
+        }
+      );
     }
   }, [editingPost]);
 
@@ -53,8 +61,8 @@ export const PostForm = () => {
         {editingPost && (
           <button
             type="button"
-            className="btn btn-outline-light bg-danger btn-sm align-right"
-            onClick={() => navigate("/admin")}
+            className="btn btn-outline-light bg-danger btn-sm"
+            onClick={() => navigate("/admin/dashboard")}
           >
             x
           </button>
