@@ -4,6 +4,7 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+
 # from front.assets import "logocompleto.png"
 
 
@@ -65,7 +66,7 @@ def send_email(sender, subject, user_message):
     html = f'''
     <html>
         <body class="test">
-            <h3><strong>Message from {sender} to the GitWise team about {subject}:</strong></h3>
+            <h3><strong>Form-message from {sender}:</strong></h3>
             <p>Message: {user_message}</p>
         </body>
     </html>

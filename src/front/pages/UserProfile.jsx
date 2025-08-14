@@ -1,142 +1,264 @@
+// File: src/front/pages/UserProfile.jsx
+
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import useGlobalReducer from "../hooks/useGlobalReducer";
+import { useNavigate } from "react-router-dom";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+
+const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
+const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
 export const UserProfile = () => {
-  const { id } = useParams();
-  const [user, setUser] = useState(null);
-  const [favorites, setFavorites] = useState([]);
+  const { store } = useGlobalReducer();
+  const navigate = useNavigate();
   const [myPosts, setMyPosts] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState({ title: "", description: "", repo_URL: "" });
+  const [activeTab, setActiveTab] = useState("posts");
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [showModal, setShowModal] = useState(false);
+  const [newProject, setNewProject] = useState({ title: "", description: "", github: "", stack: "", level: "" });
+
+  const user = store.user || {
+    username: "GuestDev",
+    email: "guest@example.com",
+    avatar_url: "https://avatars.githubusercontent.com/u/000000?v=4",
+    join_date: "2024-05-01",
+    my_posts: [],
+    favorites: []
+  };
 
   useEffect(() => {
-    const mockUser = {
-      username: id || "albertdcm",
-      email: "albert@example.com",
-      tech_stack: "React, Python, SQL",
-      level: "MID_DEV",
-      github: "https://github.com/albertdcm",
-      linkedin: "https://linkedin.com/in/albertdcm",
-      portfolio: "https://albertdev.com",
-      join_date: "2024-12-03",
-      bio: "Full-stack developer passionate about open source and building impactful solutions."
+    if (!store.user) return navigate("/login");
+
+    const fetchPosts = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/posts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`Failed: ${res.status}`);
+        const json = await res.json();
+        const userPosts = (json.posts || []).filter(p => p.user_id === store.user.id);
+        setMyPosts(userPosts);
+      } catch (err) {
+        console.error("Fetch posts failed:", err.message);
+      }
     };
 
-    const mockFavorites = [
-      { id: 1, title: "React Portfolio", stack: "React", github: "https://github.com/example/react-portfolio" },
-      { id: 2, title: "API REST", stack: "Python", github: "https://github.com/example/api-rest" }
-    ];
+    const fetchFavorites = async () => {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const favs = await res.json();
+        const fullPosts = await Promise.all(
+          favs.map(async (f) => {
+            const r = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${f.post_id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            return r.ok ? (await r.json()).post : null;
+          })
+        );
+        setFavorites(fullPosts.filter(Boolean));
+      }
+    };
 
-    const mockMyPosts = [
-      { id: 3, title: "Chat App", stack: "JavaScript", github: "https://github.com/example/chat-app" },
-      { id: 4, title: "Landing Page", stack: "HTML", github: "https://github.com/example/landing-page" }
-    ];
+    fetchPosts();
+    fetchFavorites();
+  }, [store.user?.id, store.user?.my_posts?.length]);
 
-    setUser(mockUser);
-    setFavorites(mockFavorites);
-    setMyPosts(mockMyPosts);
-  }, [id]);
+  const handleCreateProject = async () => {
+    const { title, description, github, stack, level } = newProject;
+    if (!title || !description || !github) return toast.error("All fields required");
 
-  if (!user) return <p className="text-white p-5">Loading profile...</p>;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/post/${store.user.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${store.token}`,
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          repo_URL: github,
+          image_URL: "https://via.placeholder.com/300",
+          stack,
+          level,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.msg || "Failed to save project");
+      setMyPosts(prev => [data.post, ...prev]);
+      toast.success("Project created!");
+      setShowModal(false);
+      setNewProject({ title: "", description: "", github: "", stack: "", level: "" });
+    } catch (err) {
+      console.error("POST error:", err);
+      toast.error("Failed to save project: " + err.message);
+    }
+  };
+
+  const removePost = async (id) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setMyPosts(myPosts.filter(p => p.id !== id));
+  };
+
+  const startEdit = (post) => {
+    setEditId(post.id);
+    setFormData({ title: post.title, description: post.description, repo_URL: post.repo_URL });
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setFormData({ title: "", description: "", repo_URL: "" });
+  };
+
+  const saveEdit = async (id) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(formData),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setMyPosts(myPosts.map(p => p.id === id ? json.post : p));
+      cancelEdit();
+    }
+  };
+
+  const renderCard = (post, editable = false) => (
+    <motion.div
+      className="col"
+      key={post.id}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="icon-box h-100 d-flex flex-column justify-content-between">
+        {editable && editId === post.id ? (
+          <>
+            <input type="text" className="form-control mb-2" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+            <textarea className="form-control mb-2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+            <input type="url" className="form-control mb-2" value={formData.repo_URL} onChange={e => setFormData({ ...formData, repo_URL: e.target.value })} />
+            <div className="d-flex justify-content-between">
+              <button className="btn btn-sm btn-success" onClick={() => saveEdit(post.id)}>Save</button>
+              <button className="btn btn-sm btn-secondary" onClick={cancelEdit}>Cancel</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <h5 className="text-white">{post.title}</h5>
+              <p>{post.description}</p>
+              {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
+              {post.level && <span className="badge bg-info">{post.level}</span>}
+            </div>
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">View GitHub</a>
+              <div className="d-flex gap-2 align-items-center">
+                <FavoriteButton postId={post.id} whiteText={true} />
+                {editable && <>
+                  <button className="btn btn-sm btn-outline-primary" onClick={() => startEdit(post)}>Edit</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => removePost(post.id)}>Delete</button>
+                </>}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+
+  const renderList = () => {
+    const list = activeTab === "posts" ? myPosts : favorites;
+    const editable = activeTab === "posts";
+    const displayed = list.slice(0, visibleCount);
+
+    return (
+      <>
+        {editable && (
+          <div className="text-center mb-4">
+            <button className="btn btn-gitwise" onClick={() => setShowModal(true)}>+ Create New Project</button>
+          </div>
+        )}
+
+        {showModal && (
+          <section className="modal d-block bg-dark bg-opacity-75">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content bg-dark text-white p-4 rounded">
+                <h5 className="mb-3">New Project</h5>
+                <input type="text" className="form-control mb-2" placeholder="Project Title" value={newProject.title} onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
+                <textarea className="form-control mb-2" placeholder="Description" value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })}></textarea>
+                <input type="text" className="form-control mb-2" placeholder="GitHub Repo URL" value={newProject.github} onChange={e => setNewProject({ ...newProject, github: e.target.value })} />
+                <select className="form-select mb-2" value={newProject.stack} onChange={e => setNewProject({ ...newProject, stack: e.target.value })}>
+                  <option value="">Select Stack</option>
+                  {STACKS.map((stack, i) => <option key={i} value={stack}>{stack}</option>)}
+                </select>
+                <select className="form-select mb-3" value={newProject.level} onChange={e => setNewProject({ ...newProject, level: e.target.value })}>
+                  <option value="">Select Level</option>
+                  {LEVELS.map((level, i) => <option key={i} value={level}>{level}</option>)}
+                </select>
+                <div className="d-flex justify-content-between">
+                  <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                  <button className="btn btn-gitwise" onClick={handleCreateProject}>Save Project</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          {displayed.length > 0 ? displayed.map(p => renderCard(p, editable)) : <p className="text-light">No content yet.</p>}
+        </div>
+        {list.length > visibleCount && (
+          <div className="text-center mt-4">
+            <button className="btn btn-outline-light" onClick={() => setVisibleCount(c => c + 6)}>Load More</button>
+          </div>
+        )}
+      </>
+    );
+  };
 
   return (
-    <div className="bg-black text-white min-vh-100 p-3">
-      <div className="card bg-dark text-white shadow-lg">
-        {/* Banner */}
-        <div className="position-relative">
-          <img
-            src="https://images.unsplash.com/photo-1503264116251-35a269479413"
-            alt="Banner"
-            className="card-img-top"
-            style={{ height: "200px", objectFit: "cover" }}
-          />
+    <div className="container-fluid min-vh-100 d-flex flex-column justify-content-start py-5 hero-bg text-white">
+      <div className="text-center mb-5">
+        <h1 className="hero-title">Welcome, {user.username}</h1>
+        <p className="hero-subtitle">Manage your GitWise profile and track your contributions</p>
+      </div>
 
-          {/* Avatar */}
-          <img
-            src="https://avatars.githubusercontent.com/u/000000?v=4"
-            alt="Avatar"
-            className="rounded-circle border border-3 border-white position-absolute"
-            style={{
-              width: "120px",
-              height: "120px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              bottom: "-60px"
-            }}
-          />
+      <div className="icon-box mb-5 mx-auto" style={{ maxWidth: "600px", width: "100%" }}>
+        <div className="position-relative mb-4">
+          <img src="https://images.unsplash.com/photo-1503264116251-35a269479413" alt="Banner" className="w-100 rounded" style={{ height: "180px", objectFit: "cover" }} />
+          <img src={user.avatar_url} alt="Avatar" className="rounded-circle border border-3 border-white position-absolute" style={{ width: "100px", height: "100px", left: "50%", transform: "translateX(-50%)", bottom: "-50px" }} />
         </div>
-
-        {/* Info */}
-        <div className="card-body text-center mt-5 pt-4">
-          <h3 className="card-title">{user.username}</h3>
-          <p className="text-muted fst-italic">{user.bio}</p>
-
-          <div className="d-flex justify-content-center flex-wrap gap-2 my-3">
-            {user.tech_stack.split(",").map(skill => (
-              <span key={skill} className="badge bg-primary">{skill.trim()}</span>
-            ))}
-          </div>
-
-          <p className="mb-1"><strong>Level:</strong> {user.level}</p>
-          <p className="mb-1"><strong>Email:</strong> {user.email}</p>
-          <p className="mb-2 text-secondary">Member since: Dec 2024</p>
-
-          <div className="mt-3 d-flex justify-content-center gap-3">
-            <a href={user.github} target="_blank" rel="noreferrer">
-              <i className="fab fa-github fa-lg text-white"></i>
-            </a>
-            {user.linkedin && (
-              <a href={user.linkedin} target="_blank" rel="noreferrer">
-                <i className="fab fa-linkedin fa-lg text-white"></i>
-              </a>
-            )}
-            {user.portfolio && (
-              <a href={user.portfolio} target="_blank" rel="noreferrer">
-                <i className="fas fa-globe fa-lg text-white"></i>
-              </a>
-            )}
-          </div>
+        <div className="text-center pt-5">
+          <h3 className="fw-bold mb-1">{user.username}</h3>
+          <p className="mb-1 text-light">{user.email}</p>
+          {user.join_date && <p className="text-secondary">Member since: {new Date(user.join_date).toLocaleDateString()}</p>}
         </div>
       </div>
 
-      {/* My Posts */}
-      <div className="mt-5">
-        <h4 style={{ color: "#2563eb" }}>My Posts</h4>
-        {myPosts.length === 0 ? (
-          <p>No posts yet.</p>
-        ) : (
-          <ul className="list-group list-group-flush">
-            {myPosts.map(post => (
-              <li key={post.id} className="list-group-item bg-black text-white d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>{post.title}</strong> <small className="text-muted">({post.stack})</small>
-                </div>
-                <a href={post.github} className="btn btn-sm btn-outline-info" target="_blank" rel="noreferrer">
-                  View
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <div className="px-4 w-100">
+        <div className="d-flex justify-content-center gap-4 mb-4">
+          <button className={`btn ${activeTab === "posts" ? "btn-primary" : "btn-outline-light"}`} onClick={() => setActiveTab("posts")}>My Posts</button>
+          <button className={`btn ${activeTab === "favorites" ? "btn-primary" : "btn-outline-light"}`} onClick={() => setActiveTab("favorites")}>My Favorites</button>
+        </div>
 
-      {/* Favorites */}
-      <div className="mt-4">
-        <h4 style={{ color: "#2563eb" }}>My Favorites</h4>
-        {favorites.length === 0 ? (
-          <p>No favorites yet.</p>
-        ) : (
-          <ul className="list-group list-group-flush">
-            {favorites.map(post => (
-              <li key={post.id} className="list-group-item bg-black text-white d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>{post.title}</strong> <small className="text-muted">({post.stack})</small>
-                </div>
-                <a href={post.github} className="btn btn-sm btn-outline-info" target="_blank" rel="noreferrer">
-                  View
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
+        {renderList()}
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 // File: src/front/components/Navbar.jsx
+
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/img/logocompleto.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import { handleStripeCheckout } from "./StripeCheckout";
 
 export const Navbar = () => {
   const { store, actions } = useGlobalReducer();
@@ -9,9 +11,12 @@ export const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     actions.logout();
     navigate("/");
   };
+
+  const isAdmin = store.user?.is_admin === true;
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
@@ -31,44 +36,61 @@ export const Navbar = () => {
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-              <Link className="nav-link" to="/posts">Projects</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/AI-search">AI Search</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/admin">Admin</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/contact">Contact</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/contact">Contact</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/profile">Profile</Link>
-            </li>
+            {!store.user ? (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/contact">Contact</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link text-warning fw-bold donate-hover">
+                    <span onClick={() => handleStripeCheckout(10)} className="cursor-pointer">
+                      Donate
+                    </span>
+                  </Link>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/posts">Projects</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/profile">Profile</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/contact">Contact</Link>
+                </li>
+              </>
+            )}
+
+            {isAdmin && (
+              <li className="nav-item">
+                <Link className="nav-link" to="/admin/dashboard">Admin</Link>
+              </li>
+            )}
           </ul>
-{/* Sección superior con título, descripción  */}
+
           <div className="d-flex align-items-center">
             {!store.user ? (
               <>
-                <Link to="/login" className="btn btn-outline-primary me-2">Login</Link>
-                <Link to="/register" className="btn btn-primary">Register</Link>
+                <Link to="/login" className="btn btn-outline-light me-2 border border-purple">Login</Link>
+                <Link to="/register" className="btn btn-gitwise">Register</Link>
               </>
             ) : (
               <>
                 <span className="text-white me-2">{store.user.username}</span>
                 <Link to="/profile">
                   <img
-                    src="https://avatars.githubusercontent.com/u/000000?v=4"
+                    src={store.user.avatar_url || "https://avatars.githubusercontent.com/u/000000?v=4"}
                     alt="Avatar"
                     className="rounded-circle me-3"
                     style={{ width: "36px", height: "36px", objectFit: "cover" }}
                   />
                 </Link>
-                <button onClick={handleLogout} className="btn btn-outline-light btn-sm">
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-outline-light border border-purple"
+                >
                   Logout
                 </button>
               </>

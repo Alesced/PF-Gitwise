@@ -1,20 +1,23 @@
+// src/front/pages/Register.jsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import isotipo from "../assets/img/isotipo.png";
-
 import bannerImg from "../assets/img/mohammad-rahmani-_Fx34KeqIEw-unsplash.jpg";
+import Alert from "react-bootstrap/Alert";
 
 export const Register = () => {
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
-    first_name: "",
+    name: "",
     last_name: "",
     username: "",
     email: "",
     password: "",
-    stack: "",
-    level: "",
   });
+
+  const [status, setStatus] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,20 +25,26 @@ export const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setStatus(null);
+
     try {
-      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/register", {
+      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+
+      const data = await res.json();
+
       if (res.ok) {
-        alert("Account created successfully.");
-        navigate("/profile");
+        setStatus({ type: "success", message: "Account created successfully! Redirecting to login..." });
+        setTimeout(() => navigate("/login"), 2000);
       } else {
-        alert("Error creating account.");
+        setStatus({ type: "danger", message: data.error || "Error creating account." });
       }
     } catch (err) {
       console.error(err);
+      setStatus({ type: "danger", message: "Error creating account." });
     }
   };
 
@@ -62,12 +71,18 @@ export const Register = () => {
             </p>
           </div>
 
+          {status && (
+            <Alert variant={status.type} className="text-center">
+              {status.message}
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="row">
               <div className="col-md-6 mb-2">
                 <input
                   type="text"
-                  name="first_name"
+                  name="name"
                   placeholder="First name"
                   className="form-control bg-light border-0"
                   onChange={handleChange}
@@ -113,31 +128,7 @@ export const Register = () => {
               required
             />
 
-            <select
-              name="stack"
-              className="form-control my-2 bg-light border-0"
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select your main stack</option>
-              <option value="frontend">Frontend</option>
-              <option value="backend">Backend</option>
-              <option value="fullstack">Fullstack</option>
-            </select>
-
-            <select
-              name="level"
-              className="form-control my-2 bg-light border-0"
-              onChange={handleChange}
-              required
-            >
-              <option value="">Developer level</option>
-              <option value="junior">Junior</option>
-              <option value="semi-senior">Semi-Senior</option>
-              <option value="senior">Senior</option>
-            </select>
-
-            <button type="submit" className="btn btn-primary w-100 mt-3">
+            <button type="submit" className="btn btn-gitwise w-100 mt-3">
               Register
             </button>
           </form>

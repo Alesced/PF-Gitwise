@@ -1,198 +1,144 @@
-// File: src/front/pages/Posts.jsx
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { LikeButton } from "../components/LikeButton";
+import { motion, AnimatePresence } from "framer-motion";
 import { FavoriteButton } from "../components/FavoriteButton";
-import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-
-const mockPosts = [
-  {
-    id: 1,
-    title: "React",
-    description: "A JavaScript library for building user interfaces.",
-    stack: "JavaScript",
-    level: "MID_DEV",
-    github: "https://github.com/facebook/react"
-  },
-  {
-    id: 2,
-    title: "Django",
-    description: "The Web framework for perfectionists with deadlines.",
-    stack: "Python",
-    level: "SENIOR_DEV",
-    github: "https://github.com/django/django"
-  },
-  {
-    id: 3,
-    title: "Tailwind CSS",
-    description: "A utility-first CSS framework for rapid UI development.",
-    stack: "HTML",
-    level: "JUNIOR_DEV",
-    github: "https://github.com/tailwindlabs/tailwindcss"
-  },
-  {
-    id: 4,
-    title: "Next.js",
-    description: "React framework for production—hybrid static & server rendering.",
-    stack: "JavaScript",
-    level: "SENIOR_DEV",
-    github: "https://github.com/vercel/next.js"
-  },
-  {
-    id: 5,
-    title: "Flask",
-    description: "A micro web framework written in Python.",
-    stack: "Python",
-    level: "JUNIOR_DEV",
-    github: "https://github.com/pallets/flask"
-  },
-  {
-    id: 6,
-    title: "Bootstrap",
-    description: "The most popular HTML, CSS, and JS library in the world.",
-    stack: "HTML",
-    level: "STUDENT",
-    github: "https://github.com/twbs/bootstrap"
-  },
-  {
-    id: 7,
-    title: "Vite",
-    description: "Next generation frontend tooling. Lightning fast.",
-    stack: "JavaScript",
-    level: "MID_DEV",
-    github: "https://github.com/vitejs/vite"
-  },
-  {
-    id: 8,
-    title: "SQLModel",
-    description: "SQL databases in Python, designed for simplicity and performance.",
-    stack: "SQL",
-    level: "JUNIOR_DEV",
-    github: "https://github.com/tiangolo/sqlmodel"
-  },
-  {
-    id: 9,
-    title: "Astro",
-    description: "The web framework for content-driven websites.",
-    stack: "JavaScript",
-    level: "MID_DEV",
-    github: "https://github.com/withastro/astro"
-  },
-  {
-    id: 10,
-    title: "T3 Stack",
-    description: "Full-stack web apps with TypeScript, tRPC, Tailwind and Next.js.",
-    stack: "JavaScript",
-    level: "SENIOR_DEV",
-    github: "https://github.com/t3-oss/create-t3-app"
-  }
-];
+import { toast } from "react-toastify";
+import { Navigate } from "react-router-dom";
+import SmartSearch from "../components/SmartSearch";
+import { FaRegComment } from "react-icons/fa";
+import { CommentSection } from "../components/CommentSection";
 
 export const Posts = () => {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [stackFilter, setStackFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [openCommentPostId, setOpenCommentPostId] = useState(null);
+ 
+
+  const [showMainContent, setShowMainContent] = useState(true);
+
+
+  const { store } = useGlobalReducer();
   const postsPerPage = 6;
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "");
+
+  if (!store.token) return <Navigate to="/login" replace />;
 
   useEffect(() => {
-    setPosts(mockPosts);
-  }, []);
+    const fetchPosts = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/posts`);
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setPosts(data.posts);
+        } else {
+          toast.error(data.msg || "Error fetching posts");
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        toast.error("Failed to fetch posts");
+      }
+    };
+    fetchPosts();
+  }, [BASE_URL]);
 
   const filteredPosts = posts.filter(post => {
-    return (
-      (stackFilter ? post.stack === stackFilter : true) &&
-      (levelFilter ? post.level === levelFilter : true)
-    );
+    const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStack = stackFilter ? post.stack === stackFilter : true;
+    const matchesLevel = levelFilter ? post.level === levelFilter : true;
+    return matchesSearch && matchesStack && matchesLevel;
   });
 
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const currentPosts = filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
+
+  const uniqueStacks = [...new Set(posts.map(p => p.stack).filter(Boolean))];
+  const uniqueLevels = [...new Set(posts.map(p => p.level).filter(Boolean))];
 
   return (
-    <div className="min-vh-100 p-5" style={{ backgroundColor: "#0d0d0d" }}>
-      <h2 className="text-white mb-4">Published Projects</h2>
+    <div className="container-fluid hero-bg min-vh-100 py-5 px-3 d-flex flex-column align-items-center">
+      <section className="w-100 text-center" style={{ marginTop: "-20px" }}>
+        {/*<SmartSearch onSearchStart={() => setShowMainContent(false)} onSearchEnd={() => setShowMainContent(true)} />*/}
+        <h2 className="hero-title mt-4 mb-3">Explore</h2>
+        <p className="hero-subtitle mb-4">
+          Discover open-source projects, and connect with developers like you.
+        </p>
+      </section>
 
-      <div className="d-flex gap-3 mb-4">
-        <select
-          className="form-select bg-dark text-white border-secondary"
-          value={stackFilter}
-          onChange={e => setStackFilter(e.target.value)}
-        >
-          <option value="">All Stacks</option>
-          {[...new Set(mockPosts.map(p => p.stack))].map(stack => (
-            <option key={stack} value={stack}>{stack}</option>
-          ))}
-        </select>
-        <select
-          className="form-select bg-dark text-white border-secondary"
-          value={levelFilter}
-          onChange={e => setLevelFilter(e.target.value)}
-        >
-          <option value="">All Levels</option>
-          {[...new Set(mockPosts.map(p => p.level))].map(level => (
-            <option key={level} value={level}>{level}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="row row-cols-1 row-cols-md-3 g-4">
-        {currentPosts.map(post => (
+      <AnimatePresence>
+        {showMainContent && (
           <motion.div
-            className="col"
-            key={post.id}
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.4 }}
+            className="w-100 d-flex flex-column align-items-center"
           >
-            <div className="card bg-black text-white h-100 shadow">
-              <div className="card-body d-flex flex-column justify-content-between">
-                <div>
-                  <h5 className="card-title" style={{ color: "#2563eb" }}>{post.title}</h5>
-                  <p className="card-text">{post.description}</p>
-                  <span className="badge bg-secondary me-2">{post.stack}</span>
-                  <span className="badge bg-info">{post.level}</span>
-                </div>
+            <section className="w-100 d-flex gap-3 justify-content-center mb-4 flex-wrap">
+              <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={stackFilter} onChange={(e) => setStackFilter(e.target.value)}>
+                <option value="">Select Stack</option>
+                {uniqueStacks.map((stack, i) => <option key={`stack-filter-${i}`} value={stack}>{stack}</option>)}
+              </select>
 
-                <Link to={`/single/${post.id}`} className="btn btn-outline-light btn-sm mt-3 w-100">
-                  View details
-                </Link>
-              </div>
-
-              <div className="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <a
-                  href={post.github}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-sm"
-                  style={{ backgroundColor: "#2563eb", color: "white" }}
-                >
-                  View GitHub
-                </a>
-                <div className="d-flex gap-2">
-                  <LikeButton postId={post.id} />
-                  <FavoriteButton postId={post.id} />
-                </div>
-              </div>
-            </div>
+              <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+                <option value="">Select Level</option>
+                {uniqueLevels.map((level, i) => <option key={`level-filter-${i}`} value={level}>{level}</option>)}
+              </select>
+            </section>
           </motion.div>
-        ))}
-      </div>
+        )}
 
-      <div className="d-flex justify-content-center mt-4 gap-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-          <button
-            key={page}
-            className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`}
-            onClick={() => setCurrentPage(page)}
-          >
-            {page}
-          </button>
-        ))}
-      </div>
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 w-100 px-md-5">
+          {currentPosts.map(post => (
+            <motion.div key={post.id} className="col" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              <div className="position-relative">
+                <div
+                  className="icon-box d-flex flex-column justify-content-between"
+                  style={{ minHeight: "300px" }}
+                >
+                  <h5 style={{ color: "#fff" }}>{post.title}</h5>
+                  <p>{post.description}</p>
+                  {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
+                  {post.level && <span className="badge bg-info">{post.level}</span>}
+
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
+                    <div className="d-flex align-items-center gap-2">
+                      <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+                      <button
+                        className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center"
+                        style={{ width: "40px", height: "32px" }}
+                        onClick={() =>
+                          setOpenCommentPostId((prev) => (prev === post.id ? null : post.id))
+                        }
+                      >
+                        <FaRegComment />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {openCommentPostId === post.id && (
+                  <div className="mt-3 w-100">
+                    <CommentSection postId={post.id} visible={true} />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="d-flex justify-content-center mt-5 gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button key={page} className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`} onClick={() => setCurrentPage(page)}>
+              {page}
+            </button>
+          ))}
+        </div>
+      </AnimatePresence>
     </div>
   );
 };
