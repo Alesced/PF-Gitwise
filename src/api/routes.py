@@ -26,8 +26,6 @@ bcrypt = Bcrypt()
 CORS(api)
 
 # -------------------------Decorator Administrator------------------------
-
-
 def admin_required(fn):
     """
     Versión simplificada que no inyecta el admin
@@ -53,8 +51,6 @@ def admin_required(fn):
     return wrapper
 
 # ------------------------Routes for Hello World------------------------
-
-
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
 
@@ -64,8 +60,6 @@ def handle_hello():
 
     return jsonify(response_body), 200
 # ------------------------Routes for user registration and authentication------------------------
-
-
 @api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -119,8 +113,6 @@ def register_user():
     }), 201
 
 # ------------------------Routes for Contacts us------------------------
-
-
 @api.route('/contact', methods=['POST'])
 def handle_contact():
     data = request.get_json()
@@ -992,8 +984,6 @@ def admin_dashboard():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 # -----------------------------Routes for payment method-------------------------
-
-
 @api.route('/process-payment', methods=['POST'])
 def process_payment():
     """
@@ -1086,8 +1076,6 @@ def create_stripe_session():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 # -----------------------------Defs for OpenAI API-------------------------
-
-
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=os.getenv("GPTKey"))
 

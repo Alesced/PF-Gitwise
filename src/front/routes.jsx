@@ -16,8 +16,6 @@ import { PostForm } from "./pages/PostForm";
 import { AdminPosts } from "./pages/AdminPosts";
 import { UserProfile } from "./pages/UserProfile";
 import { Contact } from "./pages/Contact";
-import Free from "./pages/Free";
-import Premium from "./pages/Premium";
 import { SinglePost2 } from "./components/SinglePost2";
 import { ErrorPage } from "./pages/ErrorPage";
 import DonationCancel from "./components/DonationCancel";
@@ -37,8 +35,6 @@ export const router = createBrowserRouter(
       <Route path="/admin/dashboard" element={<AdminPosts />} />
       <Route path="/profile" element={<UserProfile />} />
       <Route path="/contact" element={<Contact />} />
-      <Route path="/free" element={<Free />} />
-      <Route path="/premium" element={<Premium />} />
       <Route path="/donation-success" element={<DonationSuccess />} />
       <Route path="/donation-cancel" element={<DonationCancel />} />
     </Route>

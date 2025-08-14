@@ -16,13 +16,8 @@ export const Posts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
-  const [newProject, setNewProject] = useState({
-    title: "",
-    description: "",
-    github: "",
-    stack: "",
-    level: ""
-  });
+ 
+
   const [showMainContent, setShowMainContent] = useState(true);
 
 
@@ -66,7 +61,7 @@ export const Posts = () => {
   return (
     <div className="container-fluid hero-bg min-vh-100 py-5 px-3 d-flex flex-column align-items-center">
       <section className="w-100 text-center" style={{ marginTop: "-20px" }}>
-        <SmartSearch onSearchStart={() => setShowMainContent(false)} onSearchEnd={() => setShowMainContent(true)} />
+        {/*<SmartSearch onSearchStart={() => setShowMainContent(false)} onSearchEnd={() => setShowMainContent(true)} />*/}
         <h2 className="hero-title mt-4 mb-3">Explore</h2>
         <p className="hero-subtitle mb-4">
           Discover open-source projects, and connect with developers like you.
@@ -93,47 +88,8 @@ export const Posts = () => {
                 {uniqueLevels.map((level, i) => <option key={`level-filter-${i}`} value={level}>{level}</option>)}
               </select>
             </section>
-
-            <section className="w-100 px-md-5">
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                {currentPosts.map(post => (
-                  <motion.div key={post.id} className="col" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                    <div className="icon-box h-100 d-flex flex-column justify-content-between">
-                      <h5 style={{ color: "#fff" }}>{post.title}</h5>
-                      <p>{post.description}</p>
-                      {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
-                      {post.level && <span className="badge bg-info">{post.level}</span>}
-                      <div className="d-flex justify-content-between align-items-center mt-3">
-                        <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
-                        <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </section>
-
-            <section className="d-flex justify-content-center mt-5 gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button key={page} className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`} onClick={() => setCurrentPage(page)}>
-                  {page}
-                </button>
-              ))}
-            </section>
           </motion.div>
         )}
-
-        <div className="d-flex gap-3 justify-content-center mb-4">
-          <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={stackFilter} onChange={(e) => setStackFilter(e.target.value)}>
-            <option value="">All Stacks</option>
-            {[...new Set(posts.map(p => p.stack).filter(Boolean))].map((stack, i) => <option key={`stack-filter-${i}`} value={stack}>{stack}</option>)}
-          </select>
-
-          <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
-            <option value="">All Levels</option>
-            {[...new Set(posts.map(p => p.level).filter(Boolean))].map((level, i) => <option key={`level-filter-${i}`} value={level}>{level}</option>)}
-          </select>
-        </div>
 
         <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 w-100 px-md-5">
           {currentPosts.map(post => (
