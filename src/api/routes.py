@@ -494,30 +494,44 @@ def get_user_post(user_id):
     if current_user_id != user_id:
         return jsonify({"error": "Unauthorized User"}), 403
 
-    #Optmize the query whit subquery to get comment count and likees
-    comment_count = db.session.query(
+    #subquery for caount the comment in each post
+    comment_count_subquery = db.session.query(
         Comments.post_id, 
         func.count(Comments.post_id).label('comment_count')
         ).group_by(Comments.post_id).subquery()
-
-    total_likes = db.session.query(
-        Comments.post_id, 
-        func.count(Likes.id).label('like_count')
-        ).join(Likes, Likes.comments_id == Comments.id).group_by(Comments.post_id).subquery()
     
+    #subquery for count the like in each post
+    post_like_subquery = db.session.query(
+        Likes.post_id,
+        func.count(Likes.id).label('post_likes')
+    ).filter(Likes.post_id.isnot(None)) \
+    .group_by(Likes.post_id).subquery()
+
+    #subquery for count the like in each comment
+    comment_likes_subquery = db.session.query(
+        Comments.post_id, 
+        func.count(Likes.id).label('comment_likes')
+        ).join(Likes, Likes.comments_id == Comments.id) \
+        .group_by(Comments.post_id).subquery()
+    
+    #we have here all the subquery with user's post table
     posts_query = db.session.query(
         Post,
-        comment_count.c.comment_count,
-        total_likes.c.like_count
-        ).outerjoin(comment_count,  Post.id == comment_count.c.post_id)\
-        .outerjoin(total_likes, Post.id == total_likes.c.post_id) \
-        .order_by(Post.id.desc())
+        comment_count_subquery.c.comment_count,
+        post_like_subquery.c.post_likes,
+        comment_likes_subquery.c.comment_likes
+    ).outerjoin(comment_count_subquery,  Post.id == comment_count_subquery.c.post_id)\
+    .outerjoin(post_like_subquery, Post.id == post_like_subquery.c.post_id) \
+    .outerjoin(comment_likes_subquery, Post.id == comment_likes_subquery.c.post_id)\
+    .filter(Post.user_id == user_id).order_by(Post.id.desc())
     
     results = posts_query.all()
 
     #If the list is empty we return 200 OK
     posts_data = []
-    for post, comment_count, total_likes in results:
+    for post, comment_count, post_likes, comment_likes in results:
+        #sum the total likes of posts and comments for obtain the total
+        total_likes = (post_likes or 0) + (comment_likes or 0)
         post_info = post.serialize()
         post_info['stats'] = {
             'comments': comment_count or 0,
@@ -540,7 +554,18 @@ def get_user_favorites():
     # obtein the favorites posts of the current user
     current_user_id = get_jwt_identity()
     favorites = Favorites.query.filter_by(user_id=current_user_id).all()
-    return jsonify([fav.serialize() for fav in favorites]), 200
+    
+    #obtein the complete information
+    posts_fav = []
+    for fav in favorites:
+        post = Post.query.get(fav.post)
+        if post:
+            post_data = post.serialize()
+            #add count of like for each post
+            post_data["likes_count"] = Likes.query.filter(post_id=post.id).count()
+            posts_fav.append(post_data)
+    
+    return jsonify({"favorites": posts_fav}), 200
 
 # ------------------------Routes for Add and Delete Favorites------------------------
 @api.route('/favorites/<int:post_id>', methods=['POST', 'DELETE'])
@@ -592,6 +617,35 @@ def handle_single_favorite(post_id):
         db.session.commit()
 
         return jsonify({"message": "Favorite removed successfully"}), 200
+#------------------------Routes for likes to Posts--------------------------
+@api.route('post/<int:post_id>/likes', methods=['POST', 'DELETE'])
+@jwt_required
+def handle_post_like(post_id):
+    current_user = int(get_jwt_identity())
+
+    #verificar si el post existe 
+    post = Post.query.get(post_id)
+    if not post: 
+        return jsonify({"error": "Post not found"}), 404
+
+    existing_like = Likes.query.filter_by(user_id=current_user, post_id=post_id).first()
+
+    if request.method == 'POST':
+        if existing_like:
+            return jsonify({"error": "Post already liked"}), 400
+    
+        new_like = Likes(user_id=current_user, post_id=post_id)
+        db.session.add(new_like)
+        db.session.commit()
+        return jsonify({"message": "Post liked", })
+
+    elif request.method == 'DELETE':
+        if not existing_like:
+            return jsonify({"error": "Post is not liked"}), 404
+    
+        db.session.delete(existing_like)
+        db.session.commit()
+        return jsonify({"msg": "Post unliked succesfully"}), 200
 
 # -----------------------Routes for Likes to Comments-----------------------
 @api.route('/comments/<int:comment_id>/like', methods=['POST', 'DELETE'])
