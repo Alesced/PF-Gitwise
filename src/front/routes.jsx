@@ -11,7 +11,8 @@ import { SinglePost } from "./pages/SinglePost";
 import { Demo } from "./pages/Demo";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
-import { Posts } from "./pages/Posts"; // 🔧 corregido
+import { Posts } from "./pages/Posts"; 
+import { AIsearch } from "./pages/AIsearch"
 import { PostForm } from "./pages/PostForm";
 import { AdminPosts } from "./pages/AdminPosts";
 import { UserProfile } from "./pages/UserProfile";
@@ -37,6 +38,7 @@ export const router = createBrowserRouter(
       <Route path="/contact" element={<Contact />} />
       <Route path="/donation-success" element={<DonationSuccess />} />
       <Route path="/donation-cancel" element={<DonationCancel />} />
+      <Route path="/aisearch" element={<AIsearch />} />
     </Route>
   )
 );

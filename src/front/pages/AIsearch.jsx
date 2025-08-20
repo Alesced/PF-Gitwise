@@ -8,7 +8,7 @@ import SmartSearch from "../components/SmartSearch";
 import { FaRegComment } from "react-icons/fa";
 import { CommentSection } from "../components/CommentSection";
 
-export const Posts = () => {
+export const AIsearch = () => {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [stackFilter, setStackFilter] = useState("");
@@ -55,18 +55,8 @@ export const Posts = () => {
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
   const currentPosts = filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
 
-  const uniqueStacks = [...new Set(posts.map(p => p.stack).filter(Boolean))];
-  const uniqueLevels = [...new Set(posts.map(p => p.level).filter(Boolean))];
-
   return (
     <div className="container-fluid hero-bg min-vh-100 py-5 px-3 d-flex flex-column align-items-center">
-      <section className="w-100 text-center" style={{ marginTop: "-20px" }}>
-        <h2 className="hero-title mt-4 mb-3">Explore</h2>
-        <p className="hero-subtitle mb-4">
-          Discover open-source projects, and connect with developers like you.
-        </p>
-      </section>
-
       <AnimatePresence>
         {showMainContent && (
           <motion.div
@@ -77,15 +67,7 @@ export const Posts = () => {
             className="w-100 d-flex flex-column align-items-center"
           >
             <section className="w-100 d-flex gap-3 justify-content-center mb-4 flex-wrap">
-              <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={stackFilter} onChange={(e) => setStackFilter(e.target.value)}>
-                <option value="">Select Stack</option>
-                {uniqueStacks.map((stack, i) => <option key={`stack-filter-${i}`} value={stack}>{stack}</option>)}
-              </select>
-
-              <select className="form-select bg-dark text-white border-secondary" style={{ maxWidth: "180px" }} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
-                <option value="">Select Level</option>
-                {uniqueLevels.map((level, i) => <option key={`level-filter-${i}`} value={level}>{level}</option>)}
-              </select>
+              <SmartSearch onSearchStart={() => setShowMainContent(false)} onSearchEnd={() => setShowMainContent(true)} />
             </section>
           </motion.div>
         )}

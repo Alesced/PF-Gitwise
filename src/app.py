@@ -21,13 +21,24 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 # 1. Esto es para stripe. Cargar variables de entorno.
 load_dotenv()
 
-# 2. Configurar Stripe.
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+stripe_secret_key = os.environ.get('VITE_STRIPE_SECRET_KEY')
+
+# IMPORTANT: Add a print statement to verify the key value.
+print(f"Stripe secret key retrieved: {stripe_secret_key}")
+
+# IMPORTANT: If the key is not found, raise an error to stop execution
+# and make the problem immediately obvious.
+if not stripe_secret_key:
+    raise ValueError("VITE_STRIPE_SECRET_KEY environment variable is not set. Please set it before running the server.")
+
+# Now, set the API key for the Stripe library.
+stripe.api_key = stripe_secret_key
 
 app = Flask(__name__)
 
 # 🔐 Seguridad
 app.config["JWT_SECRET_KEY"] = "secret-key"
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 3600  # 1 hora  
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 

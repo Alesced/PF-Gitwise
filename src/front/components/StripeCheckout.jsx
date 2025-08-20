@@ -19,7 +19,7 @@ export const handleStripeCheckout = async (amount = 10) => {
     }
 
     const { url } = await response.json();
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.location.href = url;
   } catch (error) {
     console.error("Error al procesar donación:", error);
     window.location.href = '/donation-cancel';

@@ -52,13 +52,13 @@ export const Navbar = () => {
             ) : (
               <>
                 <li className="nav-item">
+                  <Link className="nav-link" to="/aisearch">AI Search</Link>
+                </li>
+                <li className="nav-item">
                   <Link className="nav-link" to="/posts">Projects</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/profile">Profile</Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/contact">Contact</Link>
+                  <Link className="nav-link" to="/contact">Contact Us</Link>
                 </li>
               </>
             )}

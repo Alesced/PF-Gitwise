@@ -11,16 +11,15 @@ const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
 export const UserProfile = () => {
-  const { store } = useGlobalReducer();
+  const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
-  const [myPosts, setMyPosts] = useState([]);
-  const [favorites, setFavorites] = useState([]);
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({ title: "", description: "", repo_URL: "" });
   const [activeTab, setActiveTab] = useState("posts");
   const [visibleCount, setVisibleCount] = useState(6);
   const [showModal, setShowModal] = useState(false);
   const [newProject, setNewProject] = useState({ title: "", description: "", github: "", stack: "", level: "" });
+  const [loading, setLoading] = useState(true);
 
   const user = store.user || {
     username: "GuestDev",
@@ -32,20 +31,62 @@ export const UserProfile = () => {
   };
 
   useEffect(() => {
-    if (!store.user) return navigate("/login");
+    // Si el usuario no está en el store, redirigir al login
+    if (!store.user) {
+      setLoading(false);
+      return navigate("/login");
+    }
 
-    const fetchPosts = async () => {
+    // Funciones para hacer el fetch de datos del usuario y sus favoritos
+    const fetchAllData = async () => {
+      setLoading(true);
       const token = localStorage.getItem("token");
+
       try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/posts`, {
+        //obtener todos los post
+        const postsRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/${store.user.id}/posts`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error(`Failed: ${res.status}`);
-        const json = await res.json();
-        const userPosts = (json.posts || []).filter(p => p.user_id === store.user.id);
-        setMyPosts(userPosts);
-      } catch (err) {
-        console.error("Fetch posts failed:", err.message);
+
+        const postsData = await postsRes.json();
+        dispatch({ type: 'set_post', payload: postsData.posts});
+
+        // obtener los favoritos del usuario
+        const favoriteRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`,{
+          headers: {Authorization: `Bearer ${token}`},
+        });
+
+        const favoriteData = await favoriteRes.json();
+        const favoritePost = await Promise.all(
+          favoriteData.favorites.map(async (f) => {
+            const postRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${f.post_id}`, {
+              headers: {Authorization: `Bearer ${token}`},
+            });
+            return postRes.ok ? (await postRes.json()).post : null;
+          })
+        );
+        dispatch({ type: 'set_favorites', payload: favoritePost.filter(Boolean)});
+
+        //obtener los likes del usuario
+        const likeRes = await fetchAllData(`${import.meta.env.VITE_BACKEND_URL}/`)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        dispatch({
+          type: "set_user",
+          payload: { user: data.user, token: store.token }
+        });
+        const userPost = data.posts.filter(post => post.user_id === store.user.id)
+        setMyPosts(userPost);
+      } catch (error) {
+        console.error("Fetch user data failed:", error.message);
+        setMyPosts([]);
+        toast.error("Failed to load user data.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -67,10 +108,21 @@ export const UserProfile = () => {
         setFavorites(fullPosts.filter(Boolean));
       }
     };
-
-    fetchPosts();
+    
+    fetchUserData();
     fetchFavorites();
-  }, [store.user?.id, store.user?.my_posts?.length]);
+    
+  }, [store.user?.id]); // El array de dependencia es correcto
+
+  if (loading) {
+    return (
+      <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center text-white">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   const handleCreateProject = async () => {
     const { title, description, github, stack, level } = newProject;
@@ -243,7 +295,7 @@ export const UserProfile = () => {
       <div className="icon-box mb-5 mx-auto" style={{ maxWidth: "600px", width: "100%" }}>
         <div className="position-relative mb-4">
           <img src="https://images.unsplash.com/photo-1503264116251-35a269479413" alt="Banner" className="w-100 rounded" style={{ height: "180px", objectFit: "cover" }} />
-          <img src={user.avatar_url} alt="Avatar" className="rounded-circle border border-3 border-white position-absolute" style={{ width: "100px", height: "100px", left: "50%", transform: "translateX(-50%)", bottom: "-50px" }} />
+          <img src="https://avatars.githubusercontent.com/u/000000?v=4" alt="Avatar" className="rounded-circle border border-3 border-white position-absolute" style={{ width: "100px", height: "100px", left: "50%", transform: "translateX(-50%)", bottom: "-50px" }} />
         </div>
         <div className="text-center pt-5">
           <h3 className="fw-bold mb-1">{user.username}</h3>

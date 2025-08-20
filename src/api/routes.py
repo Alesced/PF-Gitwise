@@ -3,6 +3,8 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, Post, Comments, Level, Stack, Likes, Favorites
+from sqlalchemy.orm import joinedload 
+from sqlalchemy import func
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -142,8 +144,6 @@ def handle_contact():
 
 # ------------------------Routes for user login------------------------
 # Ruta de login: permite a un usuario autenticarse y obtener sus datos + token
-
-
 @api.route('/login', methods=['POST'])
 def login_user():
     # Obtiene datos enviados desde el frontend
@@ -246,8 +246,6 @@ def handle_new_post(user_id):
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Smart Search------------------------
-
-
 @api.route('/smart-search', methods=['POST'])
 @jwt_required()
 def smart_search():
@@ -276,8 +274,6 @@ def smart_search():
         return jsonify({"error": str(error)}), 500
 
 # ------------------------Routes for comments a post------------------------
-
-
 @api.route('/post/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def handle_comments(post_id):
@@ -303,7 +299,6 @@ def handle_comments(post_id):
     db.session.commit()
 
     return jsonify({"msg": "Comment added successfully", "comment": comments.serialize()}), 201
-
 
 # ------------------------Routes for Get, Edit and Delete Post by ID------------------------
 @api.route('/post/<int:post_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -350,8 +345,6 @@ def handle_post_by_id(post_id):
             return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
 # ------------------- Route GET and PUT user Profile--------------------------------------------
-
-
 @api.route('/users/profile/<int:user_id>', methods=['GET', 'PUT'])
 @jwt_required()
 def handle_user_profile(user_id):
@@ -435,8 +428,6 @@ def handle_user_profile(user_id):
     return jsonify({"error": "Unexpected error"}), 500
 
 # ------------------------Routes for Get all Posts------------------------
-
-
 @api.route('/posts', methods=['GET'])
 def get_all_posts():
     # This endpoint retrieves all posts with pagination, author info, and comment stats
@@ -492,7 +483,55 @@ def get_all_posts():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# ------------------------Routes for Get Post by UserID------------------------
+@api.route('/users/<int:user_id>/posts', methods=['GET'])
+@jwt_required()
+def get_user_post(user_id):
+    current_user_id = int(get_jwt_identity())
 
+    # Verify if the current user is the same as the user_id in the URL
+    if current_user_id != user_id:
+        return jsonify({"error": "Unauthorized User"}), 403
+
+    #Optmize the query whit subquery to get comment count and likees
+    comment_count = db.session.query(
+        Comments.post_id, 
+        func.count(Comments.post_id).label('comment_count')
+        ).group_by(Comments.post_id).subquery()
+
+    total_likes = db.session.query(
+        Comments.post_id, 
+        func.count(Likes.id).label('like_count')
+        ).join(Likes, Likes.comments_id == Comments.id).group_by(Comments.post_id).subquery()
+    
+    posts_query = db.session.query(
+        Post,
+        comment_count.c.comment_count,
+        total_likes.c.like_count
+        ).outerjoin(comment_count,  Post.id == comment_count.c.post_id)\
+        .outerjoin(total_likes, Post.id == total_likes.c.post_id) \
+        .order_by(Post.id.desc())
+    
+    results = posts_query.all()
+
+    #If the list is empty we return 200 OK
+    posts_data = []
+    for post, comment_count, total_likes in results:
+        post_info = post.serialize()
+        post_info['stats'] = {
+            'comments': comment_count or 0,
+            'likes': total_likes or 0
+        }
+        posts_data.append(post_info)
+
+    user = User.query.get(user_id)
+
+    return jsonify({
+        "success": True,
+        "posts": posts_data,
+        "user": user.serialize()
+    }), 200
 
 # ------------------------Routes GET Favorites by users------------------------
 @api.route('/favorites', methods=['GET'])
@@ -504,8 +543,6 @@ def get_user_favorites():
     return jsonify([fav.serialize() for fav in favorites]), 200
 
 # ------------------------Routes for Add and Delete Favorites------------------------
-
-
 @api.route('/favorites/<int:post_id>', methods=['POST', 'DELETE'])
 @jwt_required()
 def handle_single_favorite(post_id):
@@ -556,9 +593,7 @@ def handle_single_favorite(post_id):
 
         return jsonify({"message": "Favorite removed successfully"}), 200
 
-# -----------------------Routes for Likes to Comments------------------------
-
-
+# -----------------------Routes for Likes to Comments-----------------------
 @api.route('/comments/<int:comment_id>/like', methods=['POST', 'DELETE'])
 @jwt_required()
 def like_comment(comment_id):
@@ -619,8 +654,6 @@ def like_comment(comment_id):
         return jsonify({"error": str(e)}), 500
 
 # -------------------------Routes for Get all Users (Admin only)------------------------
-
-
 @api.route('/admin/users', methods=['GET'])
 @admin_required
 def get_all_users():
@@ -736,8 +769,6 @@ def get_all_users():
         return jsonify({"msg": "Error to obtain the Users' List", "error": str(e)}), 500
 
 # ------------------------Routes for Get User by ID (Admin only)------------------------
-
-
 @api.route('/admin/users/<int:user_id>', methods=['GET', 'DELETE'])
 @admin_required
 def admin_manage_user(user_id):
@@ -820,8 +851,6 @@ def admin_manage_user(user_id):
             "details": str(e)
         }), 500
 # ----------------------Routes for Get all Post (Admin only)------------------------
-
-
 @api.route('/admin/posts', methods=['GET'])
 @admin_required
 def admin_get_posts():
@@ -851,8 +880,6 @@ def admin_get_posts():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Post by ID (Admin only)------------------------
-
-
 @api.route('/admin/posts/<int:post_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_post(post_id):
@@ -891,8 +918,6 @@ def handle_single_admin_post(post_id):
             return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments (Admin only)------------------------
-
-
 @api.route('/admin/comments', methods=['GET'])
 @admin_required
 def admin_get_comments():
@@ -922,8 +947,6 @@ def admin_get_comments():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments by ID (Admin only)------------------------
-
-
 @api.route('/admin/comments/<int:comment_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_comment(comment_id):
@@ -959,8 +982,6 @@ def handle_single_admin_comment(comment_id):
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
 # ---------------------------Routes for Get Dashboard (Admin only)--------------------------
-
-
 @api.route('/admin/dashboard', methods=['GET'])
 @admin_required
 def admin_dashboard():
@@ -983,72 +1004,35 @@ def admin_dashboard():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-# -----------------------------Routes for payment method-------------------------
-@api.route('/process-payment', methods=['POST'])
-def process_payment():
-    """
-    Ruta básica para procesar pagos con Stripe
-    Requiere:
-    - token: Token de tarjeta generado por Stripe.js
-    - amount: Monto en centavos (ej: 1000 = $10.00)
-    - currency: Moneda (opcional, por defecto 'usd')
-    - description: Descripción del pago (opcional)
-    """
-    try:
-        data = request.get_json()
-
-        # Validación básica
-        if not data or 'token' not in data or 'amount' not in data:
-            return jsonify({"error": "Token and amount are required"}), 400
-
-        # Crear el cargo en Stripe
-        charge = stripe.Charge.create(
-            amount=data['amount'],
-            currency=data.get('currency', 'usd'),
-            source=data['token'],  # Obtenido con Stripe.js en el frontend
-            description=data.get('description', 'Payment for service')
-        )
-
-        # Respuesta exitosa (sin guardar en DB)
-        return jsonify({
-            "status": "success",
-            "message": "Payment processed",
-            "payment_id": charge.id,
-            "amount": charge.amount,
-            "currency": charge.currency
-        }), 200
-
-    except stripe.error.CardError as e:
-        # Error de tarjeta (declinada, etc.)
-        return jsonify({
-            "status": "error",
-            "type": "card_error",
-            "message": e.user_message
-        }), 400
-
-    except stripe.error.StripeError as e:
-        # Otros errores de Stripe
-        return jsonify({
-            "status": "error",
-            "type": "stripe_error",
-            "message": str(e)
-        }), 500
-
-    except Exception as e:
-        # Errores inesperados
-        return jsonify({
-            "status": "error",
-            "type": "server_error",
-            "message": "An unexpected error occurred"
-        }), 500
-
 #------------------------------Routes Stripe Checkout----------------------
 @api.route('/create-stripe-session', methods=['POST'])
 def create_stripe_session():
+    # Log the incoming request to see what the server is receiving.
+    print("Received request for Stripe session creation.")
     try:
         data = request.get_json()
+        print(f"Received data: {data}")
+        
+        # Check if the required 'amount' is present.
+        if 'amount' not in data:
+            print("Error: Missing 'amount' in request data.")
+            return jsonify({'error': 'Missing required data: amount'}), 400
+
         amount = data['amount']
-        frontend_url = data.get('frontend_url')
+        
+        # Get 'frontend_url' if it exists in the data, otherwise use a default.
+        # This makes the field optional in the request.
+        frontend_url = data.get('frontend_url', 'http://localhost:3000')
+
+        # Add 'https://' if the URL doesn't have a scheme.
+        if not frontend_url.startswith('http'):
+            frontend_url = 'https://' + frontend_url
+
+        # Convert amount to an integer to ensure it's in the correct format.
+        # This is a common point of failure.
+        amount_int = int(amount)
+        
+        print(f"Creating Stripe session with amount: {amount_int} and frontend_url: {frontend_url}")
 
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -1058,22 +1042,31 @@ def create_stripe_session():
                     'product_data': {
                         'name': 'GitWise Donation',
                     },
-                    'unit_amount': amount,
+                    'unit_amount': amount_int,
                 },
                 'quantity': 1,
             }],
             mode='payment',
             success_url=f'{frontend_url}/donation-success',
             cancel_url=f'{frontend_url}/donation-cancel',
+            # Add metadata to the Stripe session
+            metadata=data.get('metadata', {})
         )
 
-        # Devuelve BOTH sessionId Y la URL completa
+        print(f"Stripe session created successfully. URL: {session.url}")
+        
         return jsonify({
             'sessionId': session.id,
-            'url': session.url  # Esta es la URL mágica que necesitamos
+            'url': session.url
         }), 200
 
+    except ValueError:
+        # Handle the case where the amount isn't a valid number.
+        print("Error: 'amount' is not a valid number.")
+        return jsonify({'error': 'Invalid amount provided'}), 400
     except Exception as e:
+        # Log the specific exception to help with debugging.
+        print(f"An unexpected error occurred: {e}")
         return jsonify({'error': str(e)}), 500
 # -----------------------------Defs for OpenAI API-------------------------
 logger = logging.getLogger(__name__)

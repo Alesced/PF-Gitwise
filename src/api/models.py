@@ -82,6 +82,7 @@ class Post(db.Model):
     # relación one to many
     star: Mapped[List["Favorites"]] = relationship(back_populates="say")
     reply: Mapped[List["Comments"]] = relationship(back_populates="say")
+    Likes: Mapped[List["Likes"]] = relationship(back_populates="post")
 
     # relación many to one
     author: Mapped["User"] = relationship(back_populates="say")
@@ -151,8 +152,10 @@ class Likes(db.Model):
     __tablename__ = "likes"
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    comments_id: Mapped[int] = mapped_column(ForeignKey("comments.id"))
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=True)
+    comments_id: Mapped[int] = mapped_column(ForeignKey("comments.id"), nullable=True)
 
+    post: Mapped["Post"] = relationship(back_populates="likes")
     author: Mapped["User"] = relationship(back_populates="love")
     reply: Mapped["Comments"] = relationship(back_populates="love")
 
@@ -161,5 +164,6 @@ class Likes(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "post_id": self.post_id,
+            "comments_id": self.comments_id
         }
     
