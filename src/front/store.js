@@ -41,12 +41,25 @@ export default function storeReducer(store, action = {}) {
       };
     case 'toggle_like':
       if (!store.user) return store;
-      const updatedLikes = store.user.likes?.includes(action.payload)
-        ? store.user.likes.filter(id => id !== action.payload)
-        : [...(store.user.likes || []), action.payload];
+      const postIdtoToggle = action.payload;
+      
+       // Encuentra el like existente del usuario para este post
+      const existingLike = store.allLikes.find(
+        like => like.user_id === store.user.id && like.post_id === postIdtoToggle
+      );
+
+      let updatedAllLikes; 
+      if (existingLike) {
+        // Si el like existe, lo eliminamos
+        updatedAllLikes = store.allLikes.filter(like => like.id !== existingLike.id);
+      } else {
+        // Si no existe, lo agregamos (asumimos que la acción trae el objeto completo del like creado)
+        const newLike = action.payload.newLikeObject;
+        updatedAllLikes = [...store.allLikes, newLike];
+      }
       return {
         ...store,
-        user: { ...store.user, likes: updatedLikes },
+        allLikes: updatedAllLikes,
       };
 
     case 'toggle_favorite':
@@ -130,7 +143,7 @@ export default function storeReducer(store, action = {}) {
       //elimina un like por su id
       return {
         ...store, 
-        allLikes: store.allLikes.filter(like => like.post_id !== action.payload)
+        allLikes: store.allLikes.filter(like => like.id !== action.payload)
       };
     default:
       throw Error('Unknown action.');
