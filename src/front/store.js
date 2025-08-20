@@ -20,12 +20,14 @@ export const initialStore = () => {
 export default function storeReducer(store, action = {}) {
   switch (action.type) {
     case 'set_user':
-      localStorage.setItem("user", JSON.stringify(action.payload.user));
-      localStorage.setItem("token", action.payload.token);
+      if (action.payload.token) {
+        localStorage.setItem("user", JSON.stringify(action.payload.user));
+        localStorage.setItem("token", action.payload.token);
+      }
       return {
         ...store,
         user: action.payload.user,
-        token: action.payload.token,
+        token: action.payload.token || store.token,
       };
     case 'logout':
       localStorage.removeItem("user");

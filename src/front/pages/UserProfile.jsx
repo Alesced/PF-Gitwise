@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
-import { FavoriteButton } from "../components/FavoriteButton";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { FaHeart } from "react-icons/fa";
 
 const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -21,6 +21,11 @@ export const UserProfile = () => {
   const [newProject, setNewProject] = useState({ title: "", description: "", github: "", stack: "", level: "" });
   const [loading, setLoading] = useState(true);
 
+  // usamos el store para obtener los posts y favoritos 
+  const myPosts = store.allPosts.filter(post => post.user_id === store.user?.id);
+  const favorites = store.allFavorites;
+
+  // el user se obtiene directamente del store 
   const user = store.user || {
     username: "GuestDev",
     email: "guest@example.com",
@@ -40,7 +45,7 @@ export const UserProfile = () => {
     // Funciones para hacer el fetch de datos del usuario y sus favoritos
     const fetchAllData = async () => {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = store.token;
 
       try {
         //obtener todos los post
@@ -49,70 +54,45 @@ export const UserProfile = () => {
         });
 
         const postsData = await postsRes.json();
-        dispatch({ type: 'set_post', payload: postsData.posts});
+        if (!postsRes.ok) {
+          throw new Error(postsData.error || "Failed to fetch Post");
+        }
+
+        dispatch({ type: 'set_posts', payload: postsData.posts });
+
+        const allFetchedLikes = postsData.posts.flatMap(post => post.likes || []);
+        dispatch({ type: 'set_likes', payload: allFetchedLikes })
 
         // obtener los favoritos del usuario
-        const favoriteRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`,{
-          headers: {Authorization: `Bearer ${token}`},
+        const favoriteRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const favoriteData = await favoriteRes.json();
+        if (!favoriteRes.ok) {
+          throw new Error(favoriteData.error || "Failed to fetch favorites");
+        }
+
         const favoritePost = await Promise.all(
           favoriteData.favorites.map(async (f) => {
             const postRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${f.post_id}`, {
-              headers: {Authorization: `Bearer ${token}`},
+              headers: { Authorization: `Bearer ${token}` },
             });
             return postRes.ok ? (await postRes.json()).post : null;
           })
         );
-        dispatch({ type: 'set_favorites', payload: favoritePost.filter(Boolean)});
+        dispatch({ type: 'set_favorites', payload: favoritePost.filter(Boolean) });
 
-        //obtener los likes del usuario
-        const likeRes = await fetchAllData(`${import.meta.env.VITE_BACKEND_URL}/`)
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        dispatch({
-          type: "set_user",
-          payload: { user: data.user, token: store.token }
-        });
-        const userPost = data.posts.filter(post => post.user_id === store.user.id)
-        setMyPosts(userPost);
       } catch (error) {
         console.error("Fetch user data failed:", error.message);
-        setMyPosts([]);
-        toast.error("Failed to load user data.");
+        toast.error("Failed to load user data");
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchFavorites = async () => {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const favs = await res.json();
-        const fullPosts = await Promise.all(
-          favs.map(async (f) => {
-            const r = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${f.post_id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            return r.ok ? (await r.json()).post : null;
-          })
-        );
-        setFavorites(fullPosts.filter(Boolean));
-      }
-    };
-    
-    fetchUserData();
-    fetchFavorites();
-    
-  }, [store.user?.id]); // El array de dependencia es correcto
+    fetchAllData();
+  }, [store.user?.id, store.token, dispatch, navigate]);
 
   if (loading) {
     return (
@@ -146,10 +126,17 @@ export const UserProfile = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || data.msg || "Failed to save project");
-      setMyPosts(prev => [data.post, ...prev]);
+      // despachamos el store para agregar el post
+      dispatch({ type: "add_post", payload: data.post })
       toast.success("Project created!");
       setShowModal(false);
-      setNewProject({ title: "", description: "", github: "", stack: "", level: "" });
+      setNewProject({
+        title: "",
+        description: "",
+        github: "",
+        stack: "",
+        level: ""
+      });
     } catch (err) {
       console.error("POST error:", err);
       toast.error("Failed to save project: " + err.message);
@@ -157,17 +144,23 @@ export const UserProfile = () => {
   };
 
   const removePost = async (id) => {
-    const token = localStorage.getItem("token");
+    const token = store.token;
     const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.ok) setMyPosts(myPosts.filter(p => p.id !== id));
+    if (res.ok) {
+      dispatch({ type: 'delete_post', payload: id });
+    }
   };
 
   const startEdit = (post) => {
     setEditId(post.id);
-    setFormData({ title: post.title, description: post.description, repo_URL: post.repo_URL });
+    setFormData({
+      title: post.title,
+      description: post.description,
+      repo_URL: post.repo_URL
+    });
   };
 
   const cancelEdit = () => {
@@ -176,7 +169,7 @@ export const UserProfile = () => {
   };
 
   const saveEdit = async (id) => {
-    const token = localStorage.getItem("token");
+    const token = store.token;
     const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
       method: "PUT",
       headers: {
@@ -187,9 +180,77 @@ export const UserProfile = () => {
     });
     if (res.ok) {
       const json = await res.json();
-      setMyPosts(myPosts.map(p => p.id === id ? json.post : p));
+      dispatch({ type: 'edit_post', payload: json.post })
       cancelEdit();
     }
+  };
+
+  const LikeButton = ({ postId}) => {
+     const { store, dispatch } = useGlobalReducer();
+    
+    // 2. Filtramos el store para obtener los likes de este post específico
+    const likesForPost = store.allLikes.filter(like => like.post_id === postId);
+    
+    // 3. Verificamos si el usuario actual ha dado like
+    const isLiked = likesForPost.some(like => like.user_id === store.user?.id);
+    
+    // 4. Calculamos el conteo de likes en base a la longitud del array filtrado
+    const postLikesCount = likesForPost.length;
+
+    const handleToggleLike = async () => {
+      if (!store.user) {
+        toast.error("You must be logged in to like posts.");
+        return;
+      }
+
+      const token = store.token;
+      let method, url;
+      let likeId;
+
+      if (isLiked) {
+        //encontrar el id del like para eliminarlo
+        const like = store.allLikes.find(l => l.post_id === postId && l.user_id === store.user.id);
+        if (!like) return;
+        likeId = like.id;
+        method = "DELETE";
+        url = `${import.meta.env.VITE_BACKEND_URL}/api/likes/${likeId}`;
+      } else {
+        method = "POST";
+        url = `${import.meta.env.VITE_BACKEND_URL}/api/posts/${postId}/likes`;
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: method,
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) throw new Error("Failed to toggle like.");
+
+        if (isLiked) {
+          // si el like fue eliminado con exito, despachamos la accion
+          dispatch({ type: 'delete_like', payload: likeId });
+        } else {
+          // si el like fue agregado con exito, despachamos la accion 
+          const data = await res.json();
+          dispatch({ type: 'add_like', payload: data.like });
+        }
+      } catch (error) {
+        console.error("Error toggling like:", error);
+        toast.error("Ffailed to update like status.");
+      }
+    };
+
+    return (
+      <button
+        onClick={handleToggleLike}
+        className="btn btn-sm"
+      >
+        <FaHeart color={isLiked ? "red" : "gray"} /> {postLikesCount}
+      </button>
+    );
   };
 
   const renderCard = (post, editable = false) => (
@@ -222,7 +283,7 @@ export const UserProfile = () => {
             <div className="d-flex justify-content-between align-items-center mt-3">
               <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">View GitHub</a>
               <div className="d-flex gap-2 align-items-center">
-                <FavoriteButton postId={post.id} whiteText={true} />
+                <LikeButton postId={post.id} />
                 {editable && <>
                   <button className="btn btn-sm btn-outline-primary" onClick={() => startEdit(post)}>Edit</button>
                   <button className="btn btn-sm btn-outline-danger" onClick={() => removePost(post.id)}>Delete</button>
