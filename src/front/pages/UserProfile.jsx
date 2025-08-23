@@ -5,7 +5,11 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaHeart } from "react-icons/fa";
+import { LikeButton } from "../components/LikeButton"
+import { BsThreeDotsVertical } from "react-icons/bs";
+import { CommentSection } from "../components/CommentSection";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { FaRegComment } from "react-icons/fa";
 
 const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -20,10 +24,11 @@ export const UserProfile = () => {
   const [showModal, setShowModal] = useState(false);
   const [newProject, setNewProject] = useState({ title: "", description: "", github: "", stack: "", level: "" });
   const [loading, setLoading] = useState(true);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   // usamos el store para obtener los posts y favoritos 
-  const myPosts = store.allPosts.filter(post => post.user_id === store.user?.id);
-  const favorites = store.allFavorites;
+  const myPosts = (store.allPosts || []).filter(post => post.user_id === store.user?.id);
+  const favorites = (store.allFavorites || []);
 
   // el user se obtiene directamente del store 
   const user = store.user || {
@@ -185,74 +190,6 @@ export const UserProfile = () => {
     }
   };
 
-  const LikeButton = ({ postId}) => {
-     const { store, dispatch } = useGlobalReducer();
-    
-    // 2. Filtramos el store para obtener los likes de este post específico
-    const likesForPost = store.allLikes.filter(like => like.post_id === postId);
-    
-    // 3. Verificamos si el usuario actual ha dado like
-    const isLiked = likesForPost.some(like => like.user_id === store.user?.id);
-    
-    // 4. Calculamos el conteo de likes en base a la longitud del array filtrado
-    const postLikesCount = likesForPost.length;
-
-    const handleToggleLike = async () => {
-      if (!store.user) {
-        toast.error("You must be logged in to like posts.");
-        return;
-      }
-
-      const token = store.token;
-      let method, url;
-      let likeId;
-
-      if (isLiked) {
-        //encontrar el id del like para eliminarlo
-        const like = store.allLikes.find(l => l.post_id === postId && l.user_id === store.user.id);
-        if (!like) return;
-        likeId = like.id;
-        method = "DELETE";
-        url = `${import.meta.env.VITE_BACKEND_URL}/api/likes/${likeId}`;
-      } else {
-        method = "POST";
-        url = `${import.meta.env.VITE_BACKEND_URL}/api/posts/${postId}/likes`;
-      }
-
-      try {
-        const res = await fetch(url, {
-          method: method,
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-
-        if (!res.ok) throw new Error("Failed to toggle like.");
-
-        if (isLiked) {
-          // si el like fue eliminado con exito, despachamos la accion
-          dispatch({ type: 'delete_like', payload: likeId });
-        } else {
-          // si el like fue agregado con exito, despachamos la accion 
-          const data = await res.json();
-          dispatch({ type: 'add_like', payload: data.like });
-        }
-      } catch (error) {
-        console.error("Error toggling like:", error);
-        toast.error("Ffailed to update like status.");
-      }
-    };
-
-    return (
-      <button
-        onClick={handleToggleLike}
-        className="btn btn-sm"
-      >
-        <FaHeart color={isLiked ? "red" : "gray"} /> {postLikesCount}
-      </button>
-    );
-  };
-
   const renderCard = (post, editable = false) => (
     <motion.div
       className="col"
@@ -261,7 +198,7 @@ export const UserProfile = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="icon-box h-100 d-flex flex-column justify-content-between">
+      <div className="icon-box h-100 d-flex flex-column justify-content-between position-relative">
         {editable && editId === post.id ? (
           <>
             <input type="text" className="form-control mb-2" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
@@ -274,6 +211,29 @@ export const UserProfile = () => {
           </>
         ) : (
           <>
+            {editable && (
+              <div className="dropdown position-absolute top-0 end-0 m-2" style={{ zIndex: 1000 }}> {/* <-- Nuevo: zIndex */}
+                <button
+                  className="btn btn-link text-white p-0"
+                  type="button"
+                  onClick={() => setOpenDropdownId(openDropdownId === post.id ? null : post.id)}
+                >
+                  <BsThreeDotsVertical size={20} />
+                </button>
+                <ul
+                  className={`dropdown-menu dropdown-menu-dark${openDropdownId === post.id ? " show" : ""}`}
+                  style={{ left: "auto", right: "0" }} // <-- Agrega este estilo en línea
+                >
+                  <li>
+                    <a className="dropdown-item" href="#" onClick={() => { startEdit(post); setOpenDropdownId(null); }}>Edit</a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item" href="#" onClick={() => { removePost(post.id); setOpenDropdownId(null); }}>Delete</a>
+                  </li>
+                </ul>
+              </div>
+            )}
+
             <div>
               <h5 className="text-white">{post.title}</h5>
               <p>{post.description}</p>
@@ -284,10 +244,16 @@ export const UserProfile = () => {
               <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">View GitHub</a>
               <div className="d-flex gap-2 align-items-center">
                 <LikeButton postId={post.id} />
-                {editable && <>
-                  <button className="btn btn-sm btn-outline-primary" onClick={() => startEdit(post)}>Edit</button>
-                  <button className="btn btn-sm btn-outline-danger" onClick={() => removePost(post.id)}>Delete</button>
-                </>}
+                <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+                <button
+                  className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center"
+                  style={{ width: "40px", height: "32px" }}
+                  onClick={() =>
+                    setOpenCommentPostId((prev) => (prev === post.id ? null : post.id))
+                  }
+                >
+                  <FaRegComment />
+                </button>
               </div>
             </div>
           </>

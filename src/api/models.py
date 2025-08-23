@@ -42,7 +42,7 @@ class User(db.Model):
     member_since: Mapped[date] = mapped_column(
         # no incluir en formulario, se llena automáticamente
         Date(), nullable=False, default=datetime.now(UTC))
-    stack: Mapped[enum.Enum] = mapped_column(Enum(Stack), nullable=True) 
+    stack: Mapped[enum.Enum] = mapped_column(Enum(Stack), nullable=True)
     level: Mapped[enum.Enum] = mapped_column(Enum(Level), nullable=True)
 
 # relaciones User one to many
@@ -66,8 +66,6 @@ class User(db.Model):
             "member_since": self.member_since,
             # do not serialize the password, its a security breach
         }
-        
-        
 
 
 class Post(db.Model):
@@ -140,7 +138,7 @@ class Comments(db.Model):
             "title": self.title,
             "text": self.text,
             "date_added": self.date_added,
-            "author": { # se añadio esta parte para los comments 27/7
+            "author": {  # se añadio esta parte para los comments 27/7
                 "id": self.author.id,
                 "name": self.author.name,
                 "username": self.author.username
@@ -153,9 +151,10 @@ class Likes(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=True)
-    comments_id: Mapped[int] = mapped_column(ForeignKey("comments.id"), nullable=True)
+    comments_id: Mapped[int] = mapped_column(
+        ForeignKey("comments.id"), nullable=True)
 
-    post: Mapped["Post"] = relationship(back_populates="likes")
+    post: Mapped["Post"] = relationship(back_populates="Likes")
     author: Mapped["User"] = relationship(back_populates="love")
     reply: Mapped["Comments"] = relationship(back_populates="love")
 
@@ -166,4 +165,3 @@ class Likes(db.Model):
             "post_id": self.post_id,
             "comments_id": self.comments_id
         }
-    

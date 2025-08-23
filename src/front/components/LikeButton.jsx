@@ -1,74 +1,78 @@
 // File: src/front/components/LikeButton.jsx
-import { useState, useEffect } from "react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { toast } from 'react-toastify';
+import { useMemo } from 'react';
 
-export const LikeButton = ({ postId }) => {
+
+export const LikeButton = ({ postId}) => {
   const { store, dispatch } = useGlobalReducer();
-  const [liked, setLiked] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [likeCount, setLikeCount] = useState(() => {
-    const stored = localStorage.getItem(`like-${postId}`);
-    return stored ? parseInt(stored, 10) : 0;
-  });
 
-  useEffect(() => {
-    if (store.user?.likes?.includes(postId)) setLiked(true);
+  // 1. Usamos useMemo para calcular los datos relacionados con los likes.
+  //    Esto solo se volverá a ejecutar si `store.allLikes` o `postId` cambian.
+  const { isLiked, likeCount, currentUserLikeId } = useMemo(() => {
+    if (!store.allLikes || !store.user) {
+      return { isLiked: false, likeCount: 0, currentUserLikeId: null };
+    }
+    
+    // Filtramos los likes para este post una sola vez.
+    const likesForPost = store.allLikes.filter(like => like.post_id === postId);
+    const likeCount = likesForPost.length;
 
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${postId}/likes`)
-      .then(res => res.json())
-      .then(data => {
-        setLikeCount(data.count || 0);
-        localStorage.setItem(`like-${postId}`, data.count || 0);
-      })
-      .catch(() => setLikeCount(0));
-  }, [store.user, postId]);
+    // Buscamos el like del usuario actual en el array ya filtrado.
+    const currentUserLike = likesForPost.find(like => like.user_id === store.user.id);
+    
+    return {
+      isLiked: !!currentUserLike, // Convertimos el resultado a booleano
+      likeCount,
+      currentUserLikeId: currentUserLike ? currentUserLike.id : null,
+    };
+  }, [store.allLikes, store.user, postId]);
 
-  const handleLike = async () => {
-    if (!store.user) return toast.error("Please login to like posts.");
-    setLoading(true);
-    setError(null);
+  const handleToggleLike = async () => {
+    if (!store.user) {
+      toast.error("Debes iniciar sesión para dar me gusta.");
+      return;
+    }
 
-    const method = liked ? "DELETE" : "POST";
+    const token = store.token;
+    const url = `${import.meta.env.VITE_BACKEND_URL}/api/post/${postId}/likes`;
+    const method = isLiked ? "DELETE" : "POST";
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${postId}/like`, {
+      const res = await fetch(url, {
         method,
         headers: {
+          "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
-          Authorization: `Bearer ${store.token}`,
         },
       });
 
-      const contentType = res.headers.get("content-type");
-      if (!contentType?.includes("application/json")) throw new Error("Unexpected response format (not JSON)");
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error("La solicitud para cambiar el 'me gusta' falló.");
+      }
 
-      if (res.ok) {
-        setLiked(!liked);
-        const updated = likeCount + (liked ? -1 : 1);
-        setLikeCount(updated);
-        localStorage.setItem(`like-${postId}`, updated);
-        dispatch({ type: "toggle_like", payload: postId });
-      } else throw new Error(data.error || "Unknown error");
-    } catch (err) {
-      setError(err.message);
-      toast.error("Like failed: " + err.message);
-    } finally {
-      setLoading(false);
+      if (isLiked) {
+        // Si se eliminó, despachamos la acción con el ID del like.
+        dispatch({ type: 'delete_like', payload: currentUserLikeId });
+      } else {
+        // Si se agregó, despachamos la acción con el nuevo like del servidor.
+        const data = await res.json();
+        dispatch({ type: 'add_like', payload: data.like });
+      }
+    } catch (error) {
+      console.error("Error al cambiar el 'me gusta':", error);
+      toast.error("No se pudo actualizar el estado del 'me gusta'.");
     }
   };
 
   return (
-    <button
-      className="btn-icon d-flex align-items-center gap-1"
-      onClick={handleLike}
-      disabled={loading}
-      title={liked ? "Unlike" : "Like"}
-    >
-      {liked ? <FaHeart className="text-danger" /> : <FaRegHeart className="text-light" />}
-      <span>{likeCount}</span>
+    <button onClick={handleToggleLike} className={`btn btn-sm border rounded d-flex align-items-center`}>
+      <FaHeart  style={{
+          color: isLiked ? "#cf0707ff" : "#999",
+          transition: "transform 0.3s ease",
+        }}
+        className="me-1" /> {likeCount}
     </button>
   );
 };

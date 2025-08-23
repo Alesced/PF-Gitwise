@@ -558,11 +558,11 @@ def get_user_favorites():
     #obtein the complete information
     posts_fav = []
     for fav in favorites:
-        post = Post.query.get(fav.post)
+        post = Post.query.get(fav.post_id)
         if post:
             post_data = post.serialize()
             #add count of like for each post
-            post_data["likes_count"] = Likes.query.filter(post_id=post.id).count()
+            post_data["likes_count"] = Likes.query.filter_by(post_id=post.id).count()
             posts_fav.append(post_data)
     
     return jsonify({"favorites": posts_fav}), 200
@@ -619,7 +619,7 @@ def handle_single_favorite(post_id):
         return jsonify({"message": "Favorite removed successfully"}), 200
 #------------------------Routes for likes to Posts--------------------------
 @api.route('post/<int:post_id>/likes', methods=['POST', 'DELETE'])
-@jwt_required
+@jwt_required()
 def handle_post_like(post_id):
     current_user = int(get_jwt_identity())
 
@@ -637,7 +637,7 @@ def handle_post_like(post_id):
         new_like = Likes(user_id=current_user, post_id=post_id)
         db.session.add(new_like)
         db.session.commit()
-        return jsonify({"message": "Post liked", })
+        return jsonify({"message": "Post liked", "like": new_like.serialize()}), 200
 
     elif request.method == 'DELETE':
         if not existing_like:

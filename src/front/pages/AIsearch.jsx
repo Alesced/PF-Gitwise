@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { LikeButton } from "../components/LikeButton"
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { toast } from "react-toastify";
 import { Navigate } from "react-router-dom";
@@ -88,6 +89,7 @@ export const AIsearch = () => {
                   <div className="d-flex justify-content-between align-items-center mt-3">
                     <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
                     <div className="d-flex align-items-center gap-2">
+                      <LikeButton postId={post.id} />
                       <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
                       <button
                         className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center"

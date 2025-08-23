@@ -31,7 +31,7 @@ export const router = createBrowserRouter(
       <Route path="/demo" element={<Demo />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/posts" element={<Posts />} /> {/* 🔧 corregido */}
+      <Route path="/posts" element={<Posts />} /> 
       <Route path="/post-form" element={<PostForm />} />
       <Route path="/admin/dashboard" element={<AdminPosts />} />
       <Route path="/profile" element={<UserProfile />} />
