@@ -25,6 +25,7 @@ export const UserProfile = () => {
   const [newProject, setNewProject] = useState({ title: "", description: "", github: "", stack: "", level: "" });
   const [loading, setLoading] = useState(true);
   const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [openCommentPostId, setOpenCommentPostId] = useState(null);
 
   // usamos el store para obtener los posts y favoritos 
   const myPosts = (store.allPosts || []).filter(post => post.user_id === store.user?.id);
@@ -86,7 +87,7 @@ export const UserProfile = () => {
             return postRes.ok ? (await postRes.json()).post : null;
           })
         );
-        dispatch({ type: 'set_favorites', payload: favoritePost.filter(Boolean) });
+        dispatch({ type: 'set_favorite', payload: favoritePost.filter(Boolean) });
 
       } catch (error) {
         console.error("Fetch user data failed:", error.message);
@@ -211,6 +212,7 @@ export const UserProfile = () => {
           </>
         ) : (
           <>
+            {/* ... (código para la vista normal del post) */}
             {editable && (
               <div className="dropdown position-absolute top-0 end-0 m-2" style={{ zIndex: 1000 }}> {/* <-- Nuevo: zIndex */}
                 <button
@@ -222,7 +224,7 @@ export const UserProfile = () => {
                 </button>
                 <ul
                   className={`dropdown-menu dropdown-menu-dark${openDropdownId === post.id ? " show" : ""}`}
-                  style={{ left: "auto", right: "0" }} // <-- Agrega este estilo en línea
+                  style={{ left: "auto", right: "0" }}
                 >
                   <li>
                     <a className="dropdown-item" href="#" onClick={() => { startEdit(post); setOpenDropdownId(null); }}>Edit</a>
@@ -242,7 +244,7 @@ export const UserProfile = () => {
             </div>
             <div className="d-flex justify-content-between align-items-center mt-3">
               <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">View GitHub</a>
-              <div className="d-flex gap-2 align-items-center">
+              <div className="d-flex align-items-center gap-2">
                 <LikeButton postId={post.id} />
                 <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
                 <button
@@ -256,10 +258,16 @@ export const UserProfile = () => {
                 </button>
               </div>
             </div>
+            {/* Sección de comentarios */}
+            <div className={`comment-section-anim${openCommentPostId === post.id ? " open" : ""}`}>
+              {openCommentPostId === post.id && (
+                <CommentSection postId={post.id} />
+              )}
+            </div>
           </>
         )}
       </div>
-    </motion.div>
+    </motion.div >
   );
 
   const renderList = () => {

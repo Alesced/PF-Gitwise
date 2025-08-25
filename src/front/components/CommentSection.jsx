@@ -5,21 +5,23 @@ import { Link } from "react-router-dom";
 import { FaHeart, FaTrashAlt } from "react-icons/fa";
 
 export const CommentSection = ({ postId }) => {
-  const { store } = useGlobalReducer();
-  const [comments, setComments] = useState([]);
+  const { store, dispatch } = useGlobalReducer();
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "");
 
-  // Obtener comentarios desde la API
+  // Filtramos los comentarios del store global para mostrar solo los de este post
+  const comments = (store.allComments || []).filter(comment => comment.post_id === postId);
+
   const fetchComments = async () => {
     if (!postId) return;
     try {
       const res = await fetch(`${BASE_URL}/api/post/${postId}/comments`);
       const data = await res.json();
       if (res.ok) {
-        setComments(data.comments || []);
+        // Despacha los comentarios para que el store los procese
+        dispatch({ type: 'set_comments', payload: data.comments });
       } else {
         toast.error(data.msg || "Error loading comments");
       }
@@ -28,15 +30,13 @@ export const CommentSection = ({ postId }) => {
     }
   };
 
-  // Cargar comentarios al montar componente o cambiar usuario/token
   useEffect(() => {
+    // Cargar comentarios al montar el componente, cambiar de post o al cambiar el token
     if (postId) fetchComments();
-  }, [postId, store.token]);
+  }, [postId, dispatch, store.token]);
 
-  // ➕ Enviar nuevo comentario
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-
     setLoading(true);
     try {
       const res = await fetch(`${BASE_URL}/api/post/${postId}/comments`, {
@@ -47,11 +47,12 @@ export const CommentSection = ({ postId }) => {
         },
         body: JSON.stringify({ text: newComment }),
       });
-
       const data = await res.json();
       if (res.ok) {
-        setComments([data.comment, ...comments]);
+        dispatch({ type: 'add_comment', payload: { ...data.comment, post_id: postId } });
         setNewComment("");
+        // Después de agregar, volvemos a cargar para tener la lista completa y actualizada
+        fetchComments();
       } else {
         toast.error(data.msg || "Failed to add comment");
       }
@@ -62,31 +63,56 @@ export const CommentSection = ({ postId }) => {
     }
   };
 
-  // Dar o quitar like
   const handleLike = async (commentId) => {
+    const comment = store.allComments.find(c => c.id === commentId);
+    if (!comment) return;
+
+    const method = comment.has_liked ? "DELETE" : "POST";
     try {
       const res = await fetch(`${BASE_URL}/api/comments/${commentId}/like`, {
-        method: "POST",
+        method,
         headers: {
           Authorization: `Bearer ${store.token}`,
         },
       });
-
       const data = await res.json();
-      if (res.ok) {
-        fetchComments(); // Actualizar likes
+
+      if (res.ok || res.status === 201) {
+        // Actualiza el estado localmente con la respuesta del backend
+        dispatch({
+          type: "set_comments",
+          payload: store.allComments.map(c =>
+            c.id === commentId
+              ? {
+                ...c,
+                has_liked: method === "POST",
+                like_count: data.like_count ?? (method === "POST"
+                  ? (c.like_count || 0) + 1
+                  : Math.max((c.like_count || 1) - 1, 0)),
+              }
+              : c
+          ),
+        });
+      } else if (res.status === 400 && data.error?.includes("already liked")) {
+        // Ya estaba dado like, actualiza el estado localmente
+        dispatch({
+          type: "set_comments",
+          payload: store.allComments.map(c =>
+            c.id === commentId
+              ? { ...c, has_liked: true }
+              : c
+          ),
+        });
       } else {
-        toast.error(data.msg || "Error toggling like");
+        toast.error(data.error || "Error toggling like");
       }
     } catch (err) {
       toast.error("Server error toggling like");
     }
   };
 
-  // Borrar comentario
   const handleDelete = async (commentId) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) return;
-
+    if (!window.confirm("¿Seguro que quieres eliminar este comentario?")) return;
     try {
       const res = await fetch(`${BASE_URL}/api/comments/${commentId}`, {
         method: "DELETE",
@@ -94,26 +120,26 @@ export const CommentSection = ({ postId }) => {
           Authorization: `Bearer ${store.token}`,
         },
       });
-
       const data = await res.json();
       if (res.ok) {
-        toast.success("Comment deleted");
-        setComments(comments.filter((c) => c.id !== commentId));
+        dispatch({ type: "delete_comment", payload: commentId });
+        toast.success("Comentario eliminado");
+      } else if (res.status === 403) {
+        toast.error("No tienes permiso para eliminar este comentario");
       } else {
-        toast.error(data.msg || "Failed to delete comment");
+        toast.error(data.error || "Error al eliminar el comentario");
       }
     } catch (err) {
-      toast.error("Server error deleting comment");
+      toast.error("Error del servidor al eliminar el comentario");
     }
   };
 
   const isAdmin = store?.user?.is_admin;
+  const currentUserId = store?.user?.id;
 
   return (
     <div className="mt-5">
       <h5 className="mb-4 text-light">Comments</h5>
-
-      {/* Formulario de nuevo comentario */}
       {store.token ? (
         <div className="mb-4">
           <textarea
@@ -135,7 +161,6 @@ export const CommentSection = ({ postId }) => {
         <p className="text-light">You must be logged in to leave a comment.</p>
       )}
 
-      {/* Lista de comentarios */}
       <ul className="list-group border-0 bg-transparent">
         {comments.length === 0 && (
           <li className="list-group-item bg-dark text-center text-light">
@@ -149,7 +174,6 @@ export const CommentSection = ({ postId }) => {
             className="list-group-item bg-dark text-light border-secondary mb-2 rounded"
           >
             <div className="d-flex" style={{ width: "100%" }}>
-              {/* Avatar y username */}
               <div className="me-3 text-center" style={{ width: "60px" }}>
                 <img
                   src={
@@ -169,22 +193,22 @@ export const CommentSection = ({ postId }) => {
                 </Link>
               </div>
 
-              {/* Texto del comentario */}
               <div className="flex-grow-1 d-flex justify-content-between align-items-start">
                 <p className="mb-0">{comment.text}</p>
 
-                {/* Botones */}
                 <div className="ms-3 d-flex flex-column align-items-center">
                   <button
-                    className="btn btn-sm btn-outline-light d-flex align-items-center justify-content-center mb-2"
+                    className={`btn btn-sm d-flex align-items-center justify-content-center mb-2 ${comment.has_liked ? "btn-danger" : "btn-outline-light"}`}
                     style={{ width: "40px", height: "40px" }}
                     onClick={() => handleLike(comment.id)}
                     disabled={!store.token}
                     title="Like"
                   >
-                    <FaHeart />
+                    <FaHeart style={{ color: comment.has_liked ? 'red' : 'white' }} />
+                    <span className="text-white ms-1">{Number.isFinite(comment.like_count) ? comment.like_count : 0}</span>
                   </button>
-                  {isAdmin && (
+
+                  {(isAdmin || comment.user_id === currentUserId) && (
                     <button
                       className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center"
                       style={{ width: "40px", height: "40px" }}

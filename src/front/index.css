@@ -227,6 +227,20 @@ body {
   transition: background-color 0.3s ease;
 }
 
+.comment-section-anim {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+  pointer-events: none;
+}
+
+.comment-section-anim.open {
+  max-height: 600px; 
+  opacity: 1;
+  transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+}
+
 /* ------------------ STRIPE CHECKOUT ------------------ */
 .donation-center {
   display: flex;
