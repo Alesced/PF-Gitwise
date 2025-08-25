@@ -199,7 +199,7 @@ export const UserProfile = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="icon-box h-100 d-flex flex-column justify-content-between position-relative">
+      <div className="icon-box d-flex flex-column justify-content-between position-relative">
         {editable && editId === post.id ? (
           <>
             <input type="text" className="form-control mb-2" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
@@ -259,11 +259,11 @@ export const UserProfile = () => {
               </div>
             </div>
             {/* Sección de comentarios */}
-            <div className={`comment-section-anim${openCommentPostId === post.id ? " open" : ""}`}>
-              {openCommentPostId === post.id && (
+            {openCommentPostId === post.id && (
+              <div className="comment-section-anim open">
                 <CommentSection postId={post.id} />
-              )}
-            </div>
+              </div>
+            )}
           </>
         )}
       </div>
