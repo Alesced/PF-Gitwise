@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "36a5206e073bdc07919ddec2fcc3061e1f8d3502250df1271e4f9b76abcabd61"
+            "sha256": "ce1518b2eea827e80ead506abc809df10a9f289e9a7b237772634005eb2504ed"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,15 @@
         ]
     },
     "default": {
+        "aiopen": {
+            "hashes": [
+                "sha256:3ae3f2aba9ae5be59d0e42576727b25326697ff627f53750ec9b27e46b250375",
+                "sha256:bd650ff4be74ec2054e5341277fc2c078f54be5d6d26e3c50ec5c718d7959897"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.9'",
+            "version": "==0.7.1"
+        },
         "alembic": {
             "hashes": [
                 "sha256:b05e51e8e82efc1abd14ba2af6392897e145930c3e0a2faf2b0da2f7f7fd660d",
@@ -307,6 +316,14 @@
             ],
             "index": "pypi",
             "version": "==0.2.14"
+        },
+        "funkify": {
+            "hashes": [
+                "sha256:80fb90f5870b0ddbc2cf1d9e66629a144c53d96ca7e958fbbfbc842004d95831",
+                "sha256:d4b98a9c22a20ae94263431479e3c4023fcfe2aa5b5361576d3d8bee27ed6f8d"
+            ],
+            "markers": "python_version >= '3.9' and python_version < '4.0'",
+            "version": "==0.6.0"
         },
         "greenlet": {
             "hashes": [

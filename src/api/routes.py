@@ -652,7 +652,9 @@ def handle_post_like(post_id):
 @jwt_required()
 def like_comment(comment_id):
     try:
-        user_id = get_jwt_identity()
+        current_user = int(get_jwt_identity())
+
+        #verificar si el comentario existe
         comment = Comments.query.get(comment_id)
 
         if not comment:
@@ -660,7 +662,7 @@ def like_comment(comment_id):
 
         # Check if the user has already liked this comment
         existing_like = Likes.query.filter_by(
-            user_id=user_id,
+            user_id=current_user,
             comments_id=comment_id
         ).first()
 
@@ -673,7 +675,7 @@ def like_comment(comment_id):
                 }), 400
 
             new_like = Likes(
-                user_id=user_id,
+                user_id=current_user,
                 comments_id=comment_id
             )
             db.session.add(new_like)
@@ -1272,23 +1274,22 @@ Only use the format provided. No extra commentary.
         }
 
 # -----------------------------Se añadio Delete Comments 27/7 -------------------------
-
 @api.route('/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(comment_id):
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
 
-    if not user or not user.is_admin:
-        return jsonify({"error": "Unauthorized. Admin access required"}), 403
-
     comment = Comments.query.get(comment_id)
     if not comment:
         return jsonify({"error": "Comment not found"}), 404
+
+    # Permitir borrar si es admin o autor del comentario
+    if not user or (not user.is_admin and comment.user_id != user.id):
+        return jsonify({"error": "Unauthorized. Only admin or author can delete"}), 403
 
     db.session.delete(comment)
     db.session.commit()
 
     return jsonify({"message": "Comment deleted successfully"}), 200
-
 
