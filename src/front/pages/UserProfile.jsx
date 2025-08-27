@@ -1,20 +1,28 @@
-// File: src/front/pages/UserProfile.jsx
-
 import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { LikeButton } from "../components/LikeButton"
+import { LikeButton } from "../components/LikeButton";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { CommentSection } from "../components/CommentSection";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { FaRegComment } from "react-icons/fa";
 
+// Importamos las nuevas acciones refactorizadas
+import {
+  fetchUserPosts,
+  fetchUserFavorites,
+  createPost,
+  deletePost,
+  editPost,
+} from "../hooks/actions";
+
 const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
 export const UserProfile = () => {
+  // Usa el hook para obtener el 'store' y las 'actions'
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
   const [editId, setEditId] = useState(null);
@@ -27,11 +35,11 @@ export const UserProfile = () => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
 
-  // usamos el store para obtener los posts y favoritos 
+  // Derivamos el estado de forma reactiva del store
+  // Aquí usamos directamente store.allPosts y store.allFavorites
   const myPosts = (store.allPosts || []).filter(post => post.user_id === store.user?.id);
   const favorites = (store.allFavorites || []);
 
-  // el user se obtiene directamente del store 
   const user = store.user || {
     username: "GuestDev",
     email: "guest@example.com",
@@ -42,53 +50,19 @@ export const UserProfile = () => {
   };
 
   useEffect(() => {
-    // Si el usuario no está en el store, redirigir al login
+    // Si el usuario no está logeado, lo redirigimos
     if (!store.user) {
       setLoading(false);
       return navigate("/login");
     }
 
-    // Funciones para hacer el fetch de datos del usuario y sus favoritos
-    const fetchAllData = async () => {
+    // La lógica de fetching se ha movido a las acciones
+    const fetchUserData = async () => {
       setLoading(true);
-      const token = store.token;
-
       try {
-        //obtener todos los post
-        const postsRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/${store.user.id}/posts`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const postsData = await postsRes.json();
-        if (!postsRes.ok) {
-          throw new Error(postsData.error || "Failed to fetch Post");
-        }
-
-        dispatch({ type: 'set_posts', payload: postsData.posts });
-
-        const allFetchedLikes = postsData.posts.flatMap(post => post.likes || []);
-        dispatch({ type: 'set_likes', payload: allFetchedLikes })
-
-        // obtener los favoritos del usuario
-        const favoriteRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/favorites`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const favoriteData = await favoriteRes.json();
-        if (!favoriteRes.ok) {
-          throw new Error(favoriteData.error || "Failed to fetch favorites");
-        }
-
-        const favoritePost = await Promise.all(
-          favoriteData.favorites.map(async (f) => {
-            const postRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${f.post_id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            return postRes.ok ? (await postRes.json()).post : null;
-          })
-        );
-        dispatch({ type: 'set_favorite', payload: favoritePost.filter(Boolean) });
-
+        // Llamamos a las nuevas acciones para obtener los datos
+        await fetchUserPosts(dispatch, store.token, store.user.id);
+        await fetchUserFavorites(dispatch, store.token);
       } catch (error) {
         console.error("Fetch user data failed:", error.message);
         toast.error("Failed to load user data");
@@ -97,8 +71,8 @@ export const UserProfile = () => {
       }
     };
 
-    fetchAllData();
-  }, [store.user?.id, store.token, dispatch, navigate]);
+    fetchUserData();
+  }, [store.user?.id, store.token, dispatch, navigate]); // Aseguramos que el efecto se ejecute cuando cambien estas dependencias
 
   if (loading) {
     return (
@@ -110,39 +84,32 @@ export const UserProfile = () => {
     );
   }
 
+  // Ahora, las funciones que modifican datos llaman a las nuevas acciones
   const handleCreateProject = async () => {
     const { title, description, github, stack, level } = newProject;
-    if (!title || !description || !github) return toast.error("All fields required");
+    if (!title || !description || !github) return toast.error("Todos los campos son requeridos");
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/post/${store.user.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${store.token}`,
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          repo_URL: github,
-          image_URL: "https://via.placeholder.com/300",
-          stack,
-          level,
-        }),
+      // Llamamos a la acción 'createPost'
+      const success = await createPost(dispatch, store.token, store.user.id, {
+        title,
+        description,
+        repo_URL: github,
+        image_URL: "https://via.placeholder.com/300",
+        stack,
+        level,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.msg || "Failed to save project");
-      // despachamos el store para agregar el post
-      dispatch({ type: "add_post", payload: data.post })
-      toast.success("Project created!");
-      setShowModal(false);
-      setNewProject({
-        title: "",
-        description: "",
-        github: "",
-        stack: "",
-        level: ""
-      });
+
+      if (success) {
+        setShowModal(false);
+        setNewProject({
+          title: "",
+          description: "",
+          github: "",
+          stack: "",
+          level: ""
+        });
+      }
     } catch (err) {
       console.error("POST error:", err);
       toast.error("Failed to save project: " + err.message);
@@ -150,14 +117,8 @@ export const UserProfile = () => {
   };
 
   const removePost = async (id) => {
-    const token = store.token;
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      dispatch({ type: 'delete_post', payload: id });
-    }
+    // Llamamos a la acción 'deletePost'
+    await deletePost(dispatch, store.token, id);
   };
 
   const startEdit = (post) => {
@@ -175,20 +136,9 @@ export const UserProfile = () => {
   };
 
   const saveEdit = async (id) => {
-    const token = store.token;
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/post/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(formData),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      dispatch({ type: 'edit_post', payload: json.post })
-      cancelEdit();
-    }
+    // Llamamos a la acción 'editPost'
+    await editPost(dispatch, store.token, id, formData);
+    cancelEdit();
   };
 
   const renderCard = (post, editable = false) => (
@@ -212,9 +162,8 @@ export const UserProfile = () => {
           </>
         ) : (
           <>
-            {/* ... (código para la vista normal del post) */}
             {editable && (
-              <div className="dropdown position-absolute top-0 end-0 m-2" style={{ zIndex: 1000 }}> {/* <-- Nuevo: zIndex */}
+              <div className="dropdown position-absolute top-0 end-0 m-2" style={{ zIndex: 1000 }}>
                 <button
                   className="btn btn-link text-white p-0"
                   type="button"
@@ -258,7 +207,6 @@ export const UserProfile = () => {
                 </button>
               </div>
             </div>
-            {/* Sección de comentarios */}
             {openCommentPostId === post.id && (
               <div className="comment-section-anim open">
                 <CommentSection postId={post.id} />
@@ -267,7 +215,7 @@ export const UserProfile = () => {
           </>
         )}
       </div>
-    </motion.div >
+    </motion.div>
   );
 
   const renderList = () => {

@@ -1,78 +1,85 @@
-// File: src/front/components/LikeButton.jsx
+import { useEffect, useRef } from "react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { toast } from "react-toastify";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { toast } from 'react-toastify';
-import { useMemo } from 'react';
 
+// Define el archivo de sonido para el clic
+const clickSoundFile = "/sounds/pop.mp3";
 
-export const LikeButton = ({ postId}) => {
-  const { store, dispatch } = useGlobalReducer();
+/**
+ * Componente de botón para dar "me gusta" a un post.
+ * @param {number} postId - El ID del post.
+ */
+export const LikeButton = ({ postId }) => {
+  // Obtenemos el store y las acciones de nuestro hook global
+  const { store, actions } = useGlobalReducer();
+  
+  // Referencia para el elemento del botón, para manejar la animación
+  const buttonRef = useRef(null);
+  // Referencia para el objeto de audio, para evitar que se recree en cada render
+  const audioRef = useRef(null);
 
-  // 1. Usamos useMemo para calcular los datos relacionados con los likes.
-  //    Esto solo se volverá a ejecutar si `store.allLikes` o `postId` cambian.
-  const { isLiked, likeCount, currentUserLikeId } = useMemo(() => {
-    if (!store.allLikes || !store.user) {
-      return { isLiked: false, likeCount: 0, currentUserLikeId: null };
+  // Verificamos si el usuario ha dado "me gusta" y contamos los likes del post.
+  // Es más simple y claro calcular estos valores directamente sin useMemo para un MVP.
+  const likesForPost = store.allLikes.filter(like => like.post_id === postId);
+  const isLiked = likesForPost.some(like => like.user_id === store.user?.id);
+  const likeCount = likesForPost.length;
+
+  useEffect(() => {
+    // Inicializar el objeto de audio una sola vez al montar el componente
+    if (!audioRef.current) {
+      audioRef.current = new Audio(clickSoundFile);
     }
-    
-    // Filtramos los likes para este post una sola vez.
-    const likesForPost = store.allLikes.filter(like => like.post_id === postId);
-    const likeCount = likesForPost.length;
+  }, []);
 
-    // Buscamos el like del usuario actual en el array ya filtrado.
-    const currentUserLike = likesForPost.find(like => like.user_id === store.user.id);
-    
-    return {
-      isLiked: !!currentUserLike, // Convertimos el resultado a booleano
-      likeCount,
-      currentUserLikeId: currentUserLike ? currentUserLike.id : null,
-    };
-  }, [store.allLikes, store.user, postId]);
+  /**
+   * Dispara la animación de "pop" en el botón.
+   */
+  const triggerPop = () => {
+    // Se asegura de que la referencia existe antes de usarla
+    if (buttonRef.current) {
+      buttonRef.current.classList.add("pop-animation");
+      setTimeout(() => buttonRef.current.classList.remove("pop-animation"), 300);
+    }
+  };
 
+  /**
+   * Maneja la lógica para dar o quitar un "me gusta".
+   */
   const handleToggleLike = async () => {
-    if (!store.user) {
-      toast.error("Debes iniciar sesión para dar me gusta.");
+    // Si el usuario no está autenticado, muestra una advertencia y sale de la función.
+    if (!store.token) {
+      toast.error("You must be logged in to like a post.");
       return;
     }
 
-    const token = store.token;
-    const url = `${import.meta.env.VITE_BACKEND_URL}/api/post/${postId}/likes`;
-    const method = isLiked ? "DELETE" : "POST";
-
     try {
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      // Delegamos toda la lógica de la API a la acción global del reducer
+      await actions.togglePostLike(postId, isLiked);
+      
+      // Si la acción es exitosa, activamos la animación y el sonido.
+      triggerPop();
+      audioRef.current?.play().catch(e => console.warn("Failed to play audio", e));
 
-      if (!res.ok) {
-        throw new Error("La solicitud para cambiar el 'me gusta' falló.");
-      }
-
-      if (isLiked) {
-        // Si se eliminó, despachamos la acción con el ID del like.
-        dispatch({ type: 'delete_like', payload: currentUserLikeId });
-      } else {
-        // Si se agregó, despachamos la acción con el nuevo like del servidor.
-        const data = await res.json();
-        dispatch({ type: 'add_like', payload: data.like });
-      }
     } catch (error) {
-      console.error("Error al cambiar el 'me gusta':", error);
-      toast.error("No se pudo actualizar el estado del 'me gusta'.");
+      console.error("Error toggling like:", error);
+      toast.error(error.message || "Failed to update like status.");
     }
   };
 
   return (
-    <button onClick={handleToggleLike} className={`btn btn-sm border rounded d-flex align-items-center`}>
-      <FaHeart  style={{
-          color: isLiked ? "#cf0707ff" : "#999",
-          transition: "transform 0.3s ease",
-        }}
-        className="me-1" /> {likeCount}
+    <button
+      ref={buttonRef} // Usamos la referencia local para la animación
+      onClick={handleToggleLike}
+      className={`btn btn-sm border rounded d-flex align-items-center`}
+    >
+      {/* Icono del corazón cambia según si el post tiene "me gusta" o no */}
+      {isLiked ? (
+        <FaHeart style={{ color: "#cf0707ff", transition: "transform 0.3s ease" }} className="me-1" />
+      ) : (
+        <FaRegHeart style={{ color: "#999", transition: "transform 0.3s ease" }} className="me-1" />
+      )}
+      {likeCount}
     </button>
   );
 };

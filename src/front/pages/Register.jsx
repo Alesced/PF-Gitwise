@@ -1,5 +1,3 @@
-// src/front/pages/Register.jsx
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import isotipo from "../assets/img/isotipo.png";

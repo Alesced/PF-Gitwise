@@ -1,122 +1,71 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-toastify";
-import { Navigate } from "react-router-dom";
 import { FaRegComment } from "react-icons/fa";
 import { CommentSection } from "../components/CommentSection";
 import { FavoriteButton } from "../components/FavoriteButton";
-import { LikeButton } from "../components/LikeButton"
-
-const useGlobalReducer = () => {
-  // Simulación del hook useGlobalReducer
-  const [store, setStore] = useState({
-    token: "fake-token", // Asumimos un token para evitar la redirección
-    posts: [], // Se inicializa como un array vacío para ser llenado por el fetch
-  });
-  const dispatch = (action) => {
-    if (action.type === 'set_posts') {
-      setStore(prev => ({ ...prev, posts: action.payload }));
-    }
-  };
-  return { store, dispatch };
-};
-
+import { LikeButton } from "../components/LikeButton";
+import useGlobalReducer from "../hooks/useGlobalReducer";
+import { toast } from "react-toastify";
 
 // Componente principal para mostrar y filtrar posts
 export const Posts = () => {
-  const { store, dispatch } = useGlobalReducer();
+  const { store, actions } = useGlobalReducer();
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Estados para los filtros y la paginación
   const [stackFilter, setStackFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
-
+  
+  // Estado para la cantidad de posts a mostrar
+  const [visiblePostCount, setVisiblePostCount] = useState(6);
   const postsPerPage = 6;
-  // Usamos una URL de ejemplo para demostrar que el código funciona.
-  // IMPORTANTE: Debes reemplazar esta URL con la tuya real.
-  const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}`; 
 
-  // Hook para cerrar el modal de comentarios al hacer clic fuera
+  // Llama a la acción para cargar posts solo una vez al inicio
   useEffect(() => {
-    const handleOutsideClick = (event) => {
-      // Usamos un selector para verificar si el clic está fuera de la sección de comentarios
-      const commentSection = document.querySelector('.comment-section-container');
-      if (openCommentPostId && commentSection && !commentSection.contains(event.target)) {
-        setOpenCommentPostId(null);
-      }
+    const fetchInitialData = async () => {
+      setLoading(true);
+      await actions.fetchAllPosts();
+      setLoading(false);
     };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    };
-  }, [openCommentPostId]);
+    fetchInitialData();
+  }, [actions]);
 
-  // Hook para cargar todos los posts
-  useEffect(() => {
-    const fetchAllPosts = async () => {
-      let allPosts = [];
-      let page = 1;
-      let hasMore = true;
-      try {
-        while (hasMore) {
-          // CORRECCIÓN CLAVE: Agregamos el parámetro de paginación a la URL
-          const res = await fetch(`${BASE_URL}/api/posts?page=${page}&per_page=${postsPerPage}`);
-          
-          if (!res.ok) {
-            // Manejamos errores de la API, por ejemplo un 404
-            const errorData = await res.json();
-            toast.error(errorData.msg || "Error fetching posts");
-            hasMore = false;
-            setLoading(false);
-            return; // Salimos de la función
-          }
-          
-          const data = await res.json();
-          if (data.posts && data.posts.length > 0) {
-            allPosts = [...allPosts, ...data.posts];
-            // Tu lógica de paginación está bien, la mantenemos
-            if (data.posts.length < postsPerPage) {
-              hasMore = false;
-            } else {
-              page++;
-            }
-          } else {
-            hasMore = false;
-          }
-        }
-        dispatch({ type: 'set_posts', payload: allPosts });
-        setLoading(false);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        // Este error de sintaxis (<!) se maneja aquí
-        toast.error("Failed to fetch posts. Please check the backend URL and server status.");
-        setLoading(false);
-      }
-    };
-    fetchAllPosts();
-  }, [dispatch, postsPerPage]);
-
-  // Muestra un mensaje de carga mientras se obtienen los posts
-  if (loading) {
-    return <div className="text-center mt-5">Cargando...</div>;
-  }
-
-  // Lógica de filtrado de posts en el frontend
-  const filteredPosts = (store.posts || []).filter(post => {
+  // Lógica de filtrado en el frontend (más concisa)
+  const filteredPosts = (store.allPosts || []).filter(post => {
     const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStack = stackFilter ? post.stack === stackFilter : true;
-    const matchesLevel = levelFilter ? post.level === levelFilter : true;
+    const matchesStack = stackFilter === "" || post.stack === stackFilter;
+    const matchesLevel = levelFilter === "" || post.level === levelFilter;
     return matchesSearch && matchesStack && matchesLevel;
   });
 
-  // Lógica de paginación
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-  const currentPosts = filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
+  // Paginación: solo muestra la cantidad de posts visibles
+  const postsToDisplay = filteredPosts.slice(0, visiblePostCount);
+  const hasMore = visiblePostCount < filteredPosts.length;
+  
+  // Resetea la cantidad de posts visibles cuando cambian los filtros
+  useEffect(() => {
+    setVisiblePostCount(postsPerPage);
+  }, [stackFilter, levelFilter, searchTerm]);
 
+  const handleLoadMore = () => {
+    setVisiblePostCount(prevCount => prevCount + postsPerPage);
+  };
+  
   // Opciones únicas para los filtros
-  const uniqueStacks = [...new Set((store.posts || []).map(p => p.stack).filter(Boolean))];
-  const uniqueLevels = [...new Set((store.posts || []).map(p => p.level).filter(Boolean))];
+  const uniqueStacks = [...new Set((store.allPosts || []).map(p => p.stack).filter(Boolean))];
+  const uniqueLevels = [...new Set((store.allPosts || []).map(p => p.level).filter(Boolean))];
+
+  if (loading) {
+    return (
+      <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center text-white">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-fluid hero-bg min-vh-100 py-5 px-3 d-flex flex-column align-items-center">
@@ -172,7 +121,7 @@ export const Posts = () => {
       {/* Lista de posts */}
       <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 w-100 px-md-5">
         <AnimatePresence>
-          {currentPosts.map(post => (
+          {postsToDisplay.map(post => (
             <motion.div key={post.id} className="col" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
               <div className="position-relative">
                 <div
@@ -202,28 +151,44 @@ export const Posts = () => {
                   </div>
                 </div>
 
-                {/* Sección de comentarios */}
-                <div className={`mt-3 w-100 comment-section-container ${openCommentPostId === post.id ? 'd-block' : 'd-none'}`}>
-                  <CommentSection postId={post.id} visible={true} />
-                </div>
+                {/* Sección de comentarios con animación de AnimatePresence */}
+                <AnimatePresence>
+                  {openCommentPostId === post.id && (
+                    <motion.div
+                      className="mt-3 w-100"
+                      initial={{ opacity: 0, y: -20, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -20, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <CommentSection postId={post.id} visible={true} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Paginación */}
-      <div className="d-flex justify-content-center mt-5 gap-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+      {hasMore && (
+        <div className="d-flex justify-content-center mt-5">
           <button
-            key={page}
-            className={`btn btn-sm ${page === currentPage ? "btn-primary" : "btn-outline-secondary"}`}
-            onClick={() => setCurrentPage(page)}
+            className="btn btn-gitwise"
+            onClick={handleLoadMore}
           >
-            {page}
+            Load More
           </button>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Mensaje si no hay posts encontrados */}
+      {filteredPosts.length === 0 && !loading && (
+        <div className="text-white text-center mt-5">
+          <p>No se encontraron posts con los filtros aplicados.</p>
+        </div>
+      )}
     </div>
   );
 };

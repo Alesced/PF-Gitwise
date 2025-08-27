@@ -547,76 +547,57 @@ def get_user_post(user_id):
         "user": user.serialize()
     }), 200
 
-# ------------------------Routes GET Favorites by users------------------------
-@api.route('/favorites', methods=['GET'])
+# ------------------------Routes GET and POST Favorites by users------------------------
+#SE MODIFICO ESTA RUTA 
+@api.route('/favorites', methods=['POST', 'GET'])
 @jwt_required()
-def get_user_favorites():
-    # obtein the favorites posts of the current user
-    current_user_id = get_jwt_identity()
-    favorites = Favorites.query.filter_by(user_id=current_user_id).all()
-    
-    #obtein the complete information
-    posts_fav = []
-    for fav in favorites:
-        post = Post.query.get(fav.post_id)
-        if post:
-            post_data = post.serialize()
-            #add count of like for each post
-            post_data["likes_count"] = Likes.query.filter_by(post_id=post.id).count()
-            posts_fav.append(post_data)
-    
-    return jsonify({"favorites": posts_fav}), 200
+def handle_favorites():
+    user_id = get_jwt_identity()
 
-# ------------------------Routes for Add and Delete Favorites------------------------
-@api.route('/favorites/<int:post_id>', methods=['POST', 'DELETE'])
-@jwt_required()
-def handle_single_favorite(post_id):
-    # for add and delete favorite
-    current_user_id = get_jwt_identity()
-
-    # Verificar si el post existe
-    post = Post.query.get(post_id)
-    if not post:
-        return jsonify({"error": "Post not found"}), 404
+    if request.method == 'GET':
+        # Obtener todos los favoritos del usuario actual
+        favorites = Favorites.query.filter_by(user_id=user_id).all()
+        serialized_favorites = [fav.serialize() for fav in favorites]
+        return jsonify({"favorites": serialized_favorites}), 200
 
     if request.method == 'POST':
-        # Verificar si ya es favorito
-        existing_fav = Favorites.query.filter_by(
-            user_id=current_user_id,
-            post_id=post_id
-        ).first()
+        # Agregar un nuevo favorito
+        data = request.get_json()
+        post_id = data.get('post_id')
 
-        if existing_fav:
-            return jsonify({"error": "Post already in favorites"}), 400
+        if not post_id:
+            return jsonify({"error": "Post ID is required"}), 400
 
-        # Crear nuevo favorito
-        new_favorite = Favorites(
-            user_id=current_user_id,
-            post_id=post_id
-        )
+        # Verificar si el post ya es favorito del usuario
+        existing_favorite = Favorites.query.filter_by(user_id=user_id, post_id=post_id).first()
+        if existing_favorite:
+            return jsonify({"error": "Post already in favorites"}), 409
 
+        new_favorite = Favorites(user_id=user_id, post_id=post_id)
         db.session.add(new_favorite)
         db.session.commit()
+        
+        return jsonify({"message": "Favorite added", "favorite": new_favorite.serialize()}), 201
 
-        return jsonify({
-            "message": "Post added to favorites",
-            "favorite": new_favorite.serialize()
-        }), 201
+# ------------------------Routes for Delete Favorites by id------------------------
+#SE MODIFICO ESTA RUTA 
+@api.route('/favorites/<int:favorite_id>', methods=['DELETE'])
+@jwt_required()
+def delete_favorite(favorite_id):
+    user_id = get_jwt_identity()
+    favorite = Favorites.query.get(favorite_id)
 
-    elif request.method == 'DELETE':
-        # Buscar el favorito
-        favorite = Favorites.query.filter_by(
-            user_id=current_user_id,
-            post_id=post_id
-        ).first()
+    if not favorite:
+        return jsonify({"error": "Favorite not found"}), 404
 
-        if not favorite:
-            return jsonify({"error": "Favorite not found"}), 404
+    # Verificar que el usuario del token es el dueño del favorito
+    if favorite.user_id != int(user_id):
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    db.session.delete(favorite)
+    db.session.commit()
 
-        db.session.delete(favorite)
-        db.session.commit()
-
-        return jsonify({"message": "Favorite removed successfully"}), 200
+    return jsonify({"message": "Favorite deleted"}), 200
 #------------------------Routes for likes to Posts--------------------------
 @api.route('post/<int:post_id>/likes', methods=['POST', 'DELETE'])
 @jwt_required()

@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Date, Integer, ForeignKey, Enum
+from sqlalchemy import String, Boolean, Date, Integer, ForeignKey, Enum, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 import enum
@@ -86,15 +86,32 @@ class Post(db.Model):
     author: Mapped["User"] = relationship(back_populates="say")
 
     def serialize(self):
-        return {
-            "id": self. id,
-            "user_id": self.user_id,
-            "title": self.title,
-            "image_URL": self.image_URL,
-            "description": self.description,
-            "repo_URL": self.repo_URL
-        }
+        #NUEVOS CAMBIOS CONTEO DE FAVORITOS, LIKES Y COMENTARIOS
+        # Calcula el conteo de favoritos
+        favorite_count = db.session.query(func.count(Favorites.id)).filter_by(post_id=self.id).scalar()
+        
+        # Calcula el conteo de likes
+        like_count = db.session.query(func.count(Likes.id)).filter_by(post_id=self.id).scalar()
 
+        # Calcula el conteo de comentarios
+        comment_count = db.session.query(func.count(Comments.id)).filter_by(post_id=self.id).scalar()
+        
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "repo_URL": self.repo_URL,
+            "image_URL": self.image_URL,
+            "user_id": self.user_id,
+            "date_added": self.date_added.isoformat(),
+            "stack": self.stack,
+            "level": self.level,
+            "author_username": self.author.username, 
+            # NUEVOS CAMBIOS A PARTIR DE AQUI
+            "favorite_count": favorite_count, # Conteo de favoritos
+            "like_count": like_count, # Conteo de likes
+            "comment_count": comment_count # Conteo de comentarios
+        }
 
 class Favorites(db.Model):
     __tablename__ = "favorites"
