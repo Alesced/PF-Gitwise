@@ -30,7 +30,7 @@ export const Posts = () => {
       setLoading(false);
     };
     fetchInitialData();
-  }, [actions]);
+  }, []);
 
   // Lógica de filtrado en el frontend (más concisa)
   const filteredPosts = (store.allPosts || []).filter(post => {

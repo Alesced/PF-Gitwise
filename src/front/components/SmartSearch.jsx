@@ -2,18 +2,20 @@ import { useEffect, useState } from "react"
 import { color, motion } from "framer-motion"
 import { toast } from "react-toastify"
 import { FavoriteButton } from "../components/FavoriteButton";
-// import isotipo from "../assets/img/isotipo.png"; <-- no longer needed
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 
 const SmartSearch = () => {
+    const { store, actions } = useGlobalReducer(); // Usar el store global
+    const { allPosts: posts } = store; // Obtener los posts del store
     const [userRequest, setUserRequest] = useState("")
     const [results, setResults] = useState([])
     const [loading, setLoading] = useState(false)
     const [debug, setDebug] = useState(null)
     const BASE_URL = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
-    const token = localStorage.getItem("token")
-    const [posts, setPosts] = useState([]) // para que se traiga todos los posts para poder referenciar
     const [OgPost, setOgPost] = useState(null) // ahí sí el post específico original del botón que se hunde
+
+    const token = store.token; // Obtener token del store
 
     const fetchOgPost = (post_id) => {
         const foundPost = posts.find((p) => p.id == post_id) // == y no === para que no dé error por tipo por si ponemos algún "(e.target.value)" que devolvería el id en string
@@ -23,6 +25,7 @@ const SmartSearch = () => {
         }
         setOgPost(foundPost)
     }
+    
     const renderCard = (post) => {
         if (!post) return null;
 
@@ -79,32 +82,6 @@ const SmartSearch = () => {
         }
     }
 
-    useEffect(() => {
-        const fetchAllPosts = async () => {
-            try {
-                const response1 = await fetch(`${BASE_URL}/api/posts?page=1`, {
-                    headers: {
-                        ...(token && { "Authorization": `Bearer ${token}` })
-                    }
-                })
-                const data1 = await response1.json()
-
-                const response2 = await fetch(`${BASE_URL}/api/posts?page=2`, {
-                    headers: {
-                        ...(token && { "Authorization": `Bearer ${token}` })
-                    }
-                })
-                const data2 = await response2.json()
-
-                setPosts([...data1.posts, ...data2.posts])
-
-            } catch (error) {
-                console.error("failed to fetch full posts", error)
-                toast.error("Could not load original post data")
-            }
-        }
-        fetchAllPosts()
-    }, [])
     return (
         <div className="container-fluid hero-bg min-vh-100 py-1 px-3 d-flex flex-column align-items-center text-white">
             <div className="w-100 w-md-75 w-lg-50 text-center">

@@ -36,9 +36,6 @@ export function StoreProvider({ children }) {
     }
     // Cargamos todos los datos públicos para todos los usuarios
     globalActions.fetchAllPosts(dispatch);
-    globalActions.fetchAllLikes(dispatch);
-    globalActions.fetchAllFavorites(dispatch);
-    globalActions.fetchAllComments(dispatch);
   }, []);
 
   // Proporciona el store y dispatch a los componentes hijos.
@@ -57,20 +54,31 @@ export default function useGlobalReducer() {
   const actions = {
     // Acciones de autenticación
     setAuth: (token, user) => dispatch({ type: 'set_user', payload: { token, user } }),
-    logout: () => dispatch({ type: 'logout' }),
-    
+    login: (body) => globalActions.login(dispatch, body),
+    signup: (body) => globalActions.signup(dispatch, body), // Nueva acción agregada
+    logout: () => globalActions.logout(dispatch), // Corregido: Ahora llama a la función de actions.js
+
     // Acciones para manejar los estados, que llaman a la lógica del store
     addPost: (post) => dispatch({ type: 'add_post', payload: post }),
     editPost: (post) => dispatch({ type: 'edit_post', payload: post }),
     deletePost: (id) => dispatch({ type: 'delete_post', payload: id }),
-    
+
+    // Acciones de la API que usan la lógica definida en actions.js
+    fetchAllPosts: () => globalActions.fetchAllPosts(dispatch), // Nueva acción agregada
+    fetchMorePosts: (page, perPage) => globalActions.fetchMorePosts(dispatch, page, perPage), // Nueva acción agregada
+    fetchAllFavorites: () => globalActions.fetchAllFavorites(dispatch, store.token), // Nueva acción agregada
+    fetchUserPosts: (userId) => globalActions.fetchUserPosts(dispatch, store.token, userId), // Nueva acción agregada
+    createPost: (userId, body) => globalActions.createPost(dispatch, store.token, userId, body), // Nueva acción agregada
+    deletePostApi: (postId) => globalActions.deletePost(dispatch, store.token, postId), // Nueva acción agregada y renombrada para evitar conflicto
+    editPostApi: (postId, body) => globalActions.editPost(dispatch, store.token, postId, body), // Nueva acción agregada y renombrada para evitar conflicto
+
     // Acciones de API que usan la lógica definida en actions.js
     // Ahora las acciones de comentarios también están disponibles
     loadComments: (postId) => globalActions.loadComments(dispatch, postId),
     addComment: (commentText, postId) => globalActions.addComment(dispatch, store, commentText, postId),
     deleteComment: (commentId) => globalActions.deleteComment(dispatch, store, commentId),
     toggleCommentLike: (commentId) => globalActions.toggleCommentLike(dispatch, store, commentId),
-    
+
     // Acciones de la API para posts y favoritos
     togglePostLike: (postId, isLiked) => globalActions.togglePostLike(dispatch, store, postId, isLiked),
     toggleFavorite: (postId) => globalActions.toggleFavorite(dispatch, store, postId),

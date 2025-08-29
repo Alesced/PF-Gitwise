@@ -1,10 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Date, Integer, ForeignKey, Enum, func
+# Corrected imports for SQLAlchemy types and Python types
+from sqlalchemy import String, Boolean, Date, Integer, ForeignKey, Enum, func, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 import enum
-import datetime
-from datetime import date, datetime, UTC
+# Corrected date and datetime imports
+from datetime import date, datetime, timezone
 db = SQLAlchemy()
 
 
@@ -39,9 +40,7 @@ class User(db.Model):
         Boolean(), nullable=False, default=True)  # no incluir en formulario
     is_admin: Mapped[bool] = mapped_column(
         Boolean(), nullable=False, default=False)  # no incluir en formulario
-    member_since: Mapped[date] = mapped_column(
-        # no incluir en formulario, se llena automáticamente
-        Date(), nullable=False, default=datetime.now(UTC))
+    member_since: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now(timezone.utc))
     stack: Mapped[enum.Enum] = mapped_column(Enum(Stack), nullable=True)
     level: Mapped[enum.Enum] = mapped_column(Enum(Level), nullable=True)
 
@@ -61,9 +60,9 @@ class User(db.Model):
             "username": self.username,
             "is_active": self.is_active,
             "is_admin": self.is_admin,
-            "stack": self.stack if self.stack else None,
-            "level": self.level if self.level else None,
-            "member_since": self.member_since,
+            "stack": self.stack.value if self.stack else None,
+            "level": self.level.value if self.level else None,
+            "member_since": self.member_since.isoformat(),
             # do not serialize the password, its a security breach
         }
 
@@ -76,7 +75,9 @@ class Post(db.Model):
     image_URL: Mapped[str] = mapped_column(String(2083), nullable=True)
     description: Mapped[str] = mapped_column(String(200), nullable=False)
     repo_URL: Mapped[str] = mapped_column(String(2083), nullable=False)
-
+    date_added: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), nullable=True)
+    stack: Mapped[Stack] = mapped_column(Enum(Stack), nullable=True)
+    level: Mapped[Level] = mapped_column(Enum(Level), nullable=True)
     # relación one to many
     star: Mapped[List["Favorites"]] = relationship(back_populates="say")
     reply: Mapped[List["Comments"]] = relationship(back_populates="say")
@@ -103,9 +104,9 @@ class Post(db.Model):
             "repo_URL": self.repo_URL,
             "image_URL": self.image_URL,
             "user_id": self.user_id,
-            "date_added": self.date_added.isoformat(),
-            "stack": self.stack,
-            "level": self.level,
+            "date_added": self.date_added.isoformat() if self.date_added else None,
+            "stack": self.stack.value if self.stack else None, 
+            "level": self.level.value if self.level else None,
             "author_username": self.author.username, 
             # NUEVOS CAMBIOS A PARTIR DE AQUI
             "favorite_count": favorite_count, # Conteo de favoritos
@@ -138,9 +139,7 @@ class Comments(db.Model):
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
     title: Mapped[str] = mapped_column(String(40), nullable=True)
     text: Mapped[str] = mapped_column(String(120), nullable=False)
-    date_added: Mapped[date] = mapped_column(
-        # cambiar a que muestre hora (datetime en los corchetes no funcionó)
-        nullable=False, default=datetime.now(UTC))
+    date_added: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now(timezone.utc))
 
     # Many to one
     author: Mapped["User"] = relationship(back_populates="reply")
@@ -154,7 +153,7 @@ class Comments(db.Model):
             "post_id": self.post_id,
             "title": self.title,
             "text": self.text,
-            "date_added": self.date_added,
+            "date_added": self.date_added.isoformat(),
             "author": {  # se añadio esta parte para los comments 27/7
                 "id": self.author.id,
                 "name": self.author.name,

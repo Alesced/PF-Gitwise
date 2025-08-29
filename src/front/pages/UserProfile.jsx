@@ -9,21 +9,12 @@ import { CommentSection } from "../components/CommentSection";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { FaRegComment } from "react-icons/fa";
 
-// Importamos las nuevas acciones refactorizadas
-import {
-  fetchUserPosts,
-  fetchUserFavorites,
-  createPost,
-  deletePost,
-  editPost,
-} from "../hooks/actions";
-
 const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
 export const UserProfile = () => {
   // Usa el hook para obtener el 'store' y las 'actions'
-  const { store, dispatch } = useGlobalReducer();
+  const { store, dispatch, actions } = useGlobalReducer();
   const navigate = useNavigate();
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({ title: "", description: "", repo_URL: "" });
@@ -61,8 +52,8 @@ export const UserProfile = () => {
       setLoading(true);
       try {
         // Llamamos a las nuevas acciones para obtener los datos
-        await fetchUserPosts(dispatch, store.token, store.user.id);
-        await fetchUserFavorites(dispatch, store.token);
+        await actions.fetchUserPosts(store.user.id);
+        await actions.fetchAllFavorites();
       } catch (error) {
         console.error("Fetch user data failed:", error.message);
         toast.error("Failed to load user data");
@@ -91,7 +82,7 @@ export const UserProfile = () => {
 
     try {
       // Llamamos a la acción 'createPost'
-      const success = await createPost(dispatch, store.token, store.user.id, {
+      const success = await actions.createPost({
         title,
         description,
         repo_URL: github,
@@ -117,8 +108,8 @@ export const UserProfile = () => {
   };
 
   const removePost = async (id) => {
-    // Llamamos a la acción 'deletePost'
-    await deletePost(dispatch, store.token, id);
+    // Llamamos a la acción 'deletePostAPI'
+    await actions.deletePostApi(id);
   };
 
   const startEdit = (post) => {
@@ -136,8 +127,8 @@ export const UserProfile = () => {
   };
 
   const saveEdit = async (id) => {
-    // Llamamos a la acción 'editPost'
-    await editPost(dispatch, store.token, id, formData);
+    // Llamamos a la acción 'editPostAPI'
+    await actions.editPostApi(id, formData);
     cancelEdit();
   };
 
@@ -195,7 +186,7 @@ export const UserProfile = () => {
               <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">View GitHub</a>
               <div className="d-flex align-items-center gap-2">
                 <LikeButton postId={post.id} />
-                <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
+                <FavoriteButton postId={post.id} count={post.favorites} whiteText />
                 <button
                   className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center"
                   style={{ width: "40px", height: "32px" }}
@@ -298,3 +289,4 @@ export const UserProfile = () => {
     </div>
   );
 };
+

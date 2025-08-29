@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { FaBookmark } from "react-icons/fa";
+import { FaBookmark, FaRegBookmark } from "react-icons/fa";
 import { toast } from "react-toastify";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
@@ -15,76 +15,85 @@ const clickSoundFile = "/sounds/pop.mp3";
  */
 export const FavoriteButton = ({ postId, whiteText = false, count: countProp = 0 }) => {
   // Obtenemos el store y las acciones de nuestro hook global
-  const { store, actions } = useGlobalReducer();
+    const { store, actions } = useGlobalReducer();
   
   // Referencia para el elemento del botón, utilizada para la animación
-  const buttonRef = useRef(null);
+    const buttonRef = useRef(null);
   // Referencia para el objeto de audio, para evitar que se recree en cada render
-  const audioRef = useRef(null);
+    const audioRef = useRef(null);
 
-  // Derivamos si el post es favorito del estado global. Esto es una buena práctica.
-  const isFavorite = store.allFavorites.some(fav => fav.post_id === postId);
+    // Corregimos esta línea para que verifique tanto el post_id como el user_id.
+    const isFavorite = store.allFavorites.some(
+        fav => fav.post_id === postId && fav.user_id === store.user?.id
+    );
 
-  useEffect(() => {
+    useEffect(() => {
     // Inicializar el objeto de audio una sola vez al montar el componente
-    if (!audioRef.current) {
-      audioRef.current = new Audio(clickSoundFile);
-    }
-  }, []);
+        if (!audioRef.current) {
+            audioRef.current = new Audio(clickSoundFile);
+        }
+    }, []);
 
   /**
    * Dispara la animación de "pop" en el botón.
    */
-  const triggerPop = () => {
+    const triggerPop = () => {
     // Se asegura de que la referencia existe antes de usarla
-    if (buttonRef.current) {
-      buttonRef.current.classList.add("pop-animation");
-      setTimeout(() => buttonRef.current.classList.remove("pop-animation"), 300);
-    }
-  };
+        if (buttonRef.current) {
+            buttonRef.current.classList.add("pop-animation");
+            setTimeout(() => buttonRef.current.classList.remove("pop-animation"), 300);
+        }
+    };
 
   /**
    * Maneja la lógica para agregar o quitar el post de favoritos.
    */
-  const toggleFavorite = async () => {
+    const toggleFavorite = async () => {
     // Si el usuario no está autenticado, muestra una advertencia y sale de la función.
-    if (!store.token) {
-      toast.warn("You must be logged in to toggle favorites.");
-      return;
-    }
+        if (!store.token) {
+            toast.warn("You must be logged in to toggle favorites.");
+            return;
+        }
 
-    try {
+        try {
       // Llama a la acción global para manejar la lógica de la API
-      await actions.toggleFavorite(postId);
+            await actions.toggleFavorite(postId);
 
       // Si la acción es exitosa, activamos la animación y el sonido.
-      triggerPop();
-      audioRef.current?.play().catch(e => console.warn("Failed to play audio", e));
-
-    } catch (err) {
-      console.error("Failed to toggle favorites:", err);
+            triggerPop();
+            audioRef.current?.play().catch(e => console.warn("Failed to play audio", e));
+        } catch (err) {
+            console.error("Failed to toggle favorites:", err);
       // La acción ya debería manejar el toast, pero lo mantenemos aquí como fallback
-      toast.error(err.message || "Failed to toggle favorite. Please try again.");
-    }
-  };
+            toast.error(err.message || "Failed to toggle favorite. Please try again.");
+        }
+    };
 
-  return (
-    <button
-      ref={buttonRef} // Usamos la referencia local para la animación
-      disabled={!store.token} // Deshabilita el botón si no hay token
-      className={`btn btn-sm border rounded d-flex align-items-center ${whiteText ? "text-white" : ""}`}
-      onClick={toggleFavorite}
-    >
-      <FaBookmark
-        style={{
-          // Cambia el color del icono según el estado de favorito
-          color: isFavorite ? "#fafafaff" : "#999",
-          transition: "transform 0.3s ease",
-        }}
-        className="me-1"
-      />
-      {/* Muestra el número de favoritos, pasado como prop */}
-      <span style={{ color: whiteText ? "#fff" : undefined }}>{countProp}</span>
-    </button>
-  );
+    return (
+        <button
+            ref={buttonRef}
+            disabled={!store.token}
+            className={`btn btn-sm border rounded d-flex align-items-center ${whiteText ? "text-white" : ""}`}
+            onClick={toggleFavorite}
+        >
+            {isFavorite ? (
+                <FaBookmark
+                    style={{
+                        color: "#ffc107",
+                        transition: "transform 0.3s ease",
+                    }}
+                    className="me-1"
+                />
+            ) : (
+                <FaRegBookmark
+                    style={{
+                        color: whiteText ? "#fff" : "#999",
+                        transition: "transform 0.3s ease",
+                    }}
+                    className="me-1"
+                />
+            )}
+            <span>{countProp}</span>
+        </button>
+    );
 };

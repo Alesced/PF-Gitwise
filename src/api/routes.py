@@ -447,6 +447,16 @@ def get_all_posts():
         for post in posts_paginated.items:
             author = User.query.get(post.user_id)
 
+            # Si el autor no existe (fue borrado), proporcionamos datos por defecto
+            # en lugar de dejar que la aplicación se estrelle.
+            author_info = {
+                "username": "Usuario Desconocido",
+                "avatar": None 
+            }
+            if author:
+                author_info["username"] = author.username
+                author_info["avatar"] = author.image_URL if hasattr(author, 'image_URL') else None
+
             # get the comments for the post and count them
             comments = Comments.query.filter_by(post_id=post.id).all()
             comment_count = len(comments)
@@ -482,6 +492,7 @@ def get_all_posts():
         }), 200
 
     except Exception as e:
+        print(f"Error en get_all_posts: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
 # ------------------------Routes for Get Post by UserID------------------------
@@ -555,10 +566,23 @@ def handle_favorites():
     user_id = get_jwt_identity()
 
     if request.method == 'GET':
-        # Obtener todos los favoritos del usuario actual
         favorites = Favorites.query.filter_by(user_id=user_id).all()
-        serialized_favorites = [fav.serialize() for fav in favorites]
-        return jsonify({"favorites": serialized_favorites}), 200
+        
+        # Nueva lista para almacenar los datos combinados
+        combined_favorites = []
+        for fav in favorites:
+            post = Post.query.get(fav.post_id)
+            if post:
+                # Obtenemos los datos del post
+                post_data = post.serialize()
+                
+                # Añadimos el 'id' de la relación de favorito al diccionario del post
+                post_data['favorite_id'] = fav.id
+                
+                combined_favorites.append(post_data)
+        
+        # Devolvemos la lista de posts con el 'favorite_id' incluido
+        return jsonify({"favorites": combined_favorites}), 200
 
     if request.method == 'POST':
         # Agregar un nuevo favorito

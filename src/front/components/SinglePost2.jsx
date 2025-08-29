@@ -9,7 +9,7 @@ export const SinglePost2 = () => {
   // Obtenemos el ID del post de los parámetros de la URL
   const { theId } = useParams();
   // Obtenemos el store y las acciones del hook global
-  const { store, actions } = useGlobalReducer();
+  const { store} = useGlobalReducer();
 
   // Mantenemos el estado de carga local para este componente
   const [loading, setLoading] = useState(true);

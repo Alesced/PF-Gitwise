@@ -28,6 +28,7 @@ export const Login = () => {
       toast.error("Email and password are required.");
       return;
     }
+
     if (!isValidEmail(form.email)) {
       toast.error("Please enter a valid email address.");
       return;
@@ -37,46 +38,16 @@ export const Login = () => {
       return;
     }
 
-    const loginPromise = new Promise(async (resolve, reject) => {
-      try {
-        const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
+     // Llamamos a la acción de login que ya maneja la API y las notificaciones
+  const success = await actions.login(form);
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          reject(data.error || "Invalid email or password.");
-          return;
-        }
-
-        // Llamamos a la acción setAuth que ya tienes en tu hook useGlobalReducer.
-        // Esto se encargará de actualizar el estado y localStorage por nosotros.
-        actions.setAuth(data.token, data.user);
-
-        resolve("Login successful! Redirecting...");
-      } catch (err) {
-        console.error(err);
-        reject("Error logging in. Please check your network connection.");
-      }
-    });
-
-    toast.promise(
-      loginPromise,
-      {
-        pending: 'Signing in...',
-        success: {
-          render({ data }) {
-            setTimeout(() => navigate("/profile"), 1000);
-            return data;
-          },
-        },
-        error: 'Login failed. Please try again.',
-      }
-    );
-  };
+  if (success) {
+    // Si el login es exitoso, la acción ya habrá actualizado el store.
+    // Navegamos al perfil del usuario.
+    setTimeout(() => navigate("/profile"), 1000);
+  }
+  // La acción `actions.login` ya se encarga de mostrar el toast de error en caso de fallo.
+};
 
   return (
     <div className="vh-100 vw-100 d-flex overflow-hidden">
