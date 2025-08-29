@@ -81,8 +81,8 @@ export const UserProfile = () => {
     if (!title || !description || !github) return toast.error("Todos los campos son requeridos");
 
     try {
-      // Llamamos a la acción 'createPost'
-      const success = await actions.createPost({
+      // Llamamos a la acción 'createPost' con los parámetros correctos
+      const success = await actions.createPost(store.user.id, {
         title,
         description,
         repo_URL: github,
@@ -107,6 +107,7 @@ export const UserProfile = () => {
     }
   };
 
+  
   const removePost = async (id) => {
     // Llamamos a la acción 'deletePostAPI'
     await actions.deletePostApi(id);
