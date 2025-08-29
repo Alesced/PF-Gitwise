@@ -1,69 +1,53 @@
-// File: src/front/pages/Login.jsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import isotipo from "../assets/img/isotipo.png";
 import bannerImg from "../assets/img/ferenc-almasi-oCm8nPkE40k-unsplash.jpg";
-import Alert from "react-bootstrap/Alert";
+import { toast } from "react-toastify";
 
 export const Login = () => {
-  const { dispatch } = useGlobalReducer();
+  // Ahora usamos 'actions' en lugar de 'dispatch' para una mejor legibilidad
+  // y para llamar a la acción 'setAuth' que ya tienes definida.
+  const { actions } = useGlobalReducer();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ email: "", password: "" });
-  const [status, setStatus] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setStatus(null);
   };
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus(null);
 
+    // Validaciones del formulario
     if (!form.email || !form.password) {
-      return setStatus({ type: "danger", message: "Email and password are required." });
+      toast.error("Email and password are required.");
+      return;
     }
 
     if (!isValidEmail(form.email)) {
-      return setStatus({ type: "danger", message: "Please enter a valid email address." });
+      toast.error("Please enter a valid email address.");
+      return;
     }
-
     if (form.password.length < 6) {
-      return setStatus({ type: "danger", message: "Password must be at least 6 characters." });
+      toast.error("Password must be at least 6 characters.");
+      return;
     }
 
-    try {
-      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+     // Llamamos a la acción de login que ya maneja la API y las notificaciones
+  const success = await actions.login(form);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        return setStatus({ type: "danger", message: data.error || "Invalid email or password." });
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      dispatch({
-        type: "set_user",
-        payload: { user: data.user, token: data.token },
-      });
-
-      setStatus({ type: "success", message: "Login successful! Redirecting..." });
-      setTimeout(() => navigate("/profile"), 1500);
-    } catch (err) {
-      console.error(err);
-      setStatus({ type: "danger", message: "Error logging in." });
-    }
-  };
+  if (success) {
+    // Si el login es exitoso, la acción ya habrá actualizado el store.
+    // Navegamos al perfil del usuario.
+    setTimeout(() => navigate("/profile"), 1000);
+  }
+  // La acción `actions.login` ya se encarga de mostrar el toast de error en caso de fallo.
+};
 
   return (
     <div className="vh-100 vw-100 d-flex overflow-hidden">
@@ -81,12 +65,6 @@ export const Login = () => {
               Discover inspiring projects and connect with developers like you.
             </p>
           </div>
-
-          {status && (
-            <Alert variant={status.type} className="text-center">
-              {status.message}
-            </Alert>
-          )}
 
           <form onSubmit={handleSubmit}>
             <input
@@ -114,3 +92,5 @@ export const Login = () => {
     </div>
   );
 };
+
+export default Login;

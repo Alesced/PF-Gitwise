@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const AdminPosts = () => {
-  const [posts, setPosts] = useState([])
   const [stackFilter, setStackFilter] = useState("")
   const [levelFilter, setLevelFilter] = useState("")
   const [search, setSearch] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [postToDelete, setPostToDelete] = useState(null)
+  const { store, actions } = useGlobalReducer();
+  const { allPosts: posts } = store; // Usar los posts del store global
 
   const navigate = useNavigate()
   const postsPerPage = 7
@@ -18,29 +20,10 @@ export const AdminPosts = () => {
   const BASE_URL = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
   const token = localStorage.getItem("token")
 
+  // Cargar los posts usando la acción global
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const headers = {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` })
-
-        }
-        const response1 = await fetch(`${BASE_URL}/api/posts?page=1`, { headers })
-        const data1 = await response1.json()
-        const response2 = await fetch(`${BASE_URL}/api/posts?page=2`, { headers })
-        const data2 = await response2.json()
-
-        const allPosts = [...(data1.posts || []), ...(data2.posts || [])]
-        setPosts(allPosts)
-      } catch (error) {
-        console.error("Error fetching posts:", error)
-        toast.error("could not load posts.")
-      }
-    }
-
-    fetchPosts()
-  }, [])
+    actions.fetchAllPosts();
+  }, []); // El array de dependencias vacío asegura que se ejecute solo una vez
 
   const filtered = posts.filter(post => {
     return (
@@ -56,10 +39,13 @@ export const AdminPosts = () => {
     currentPage * postsPerPage
   )
 
-  const handleDelete = () => {
-    setPosts(prev => prev.filter(p => p.id !== postToDelete))
-    setPostToDelete(null)
-  }
+  const handleDelete = async () => {
+    if (postToDelete) {
+      await actions.deletePost(postToDelete); // Llama a la acción que se comunica con la API
+      setPostToDelete(null);
+      // El reducer ya se encarga de actualizar el `store.allPosts`, por lo que la UI se actualizará automáticamente.
+    }
+  };
 
   return (
     <div className="p-5 bg-black min-vh-100 text-white">
