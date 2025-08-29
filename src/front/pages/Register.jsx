@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import isotipo from "../assets/img/isotipo.png";
 import bannerImg from "../assets/img/mohammad-rahmani-_Fx34KeqIEw-unsplash.jpg";
 import Alert from "react-bootstrap/Alert";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Register = () => {
   const navigate = useNavigate();
-
+  const { actions } = useGlobalReducer();
   const [form, setForm] = useState({
     name: "",
     last_name: "",
@@ -26,22 +27,12 @@ export const Register = () => {
     setStatus(null);
 
     try {
-      const res = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
+      const success = await actions.signup(form);
+      if (success) {
         setStatus({ type: "success", message: "Account created successfully! Redirecting to login..." });
         setTimeout(() => navigate("/login"), 2000);
-      } else {
-        setStatus({ type: "danger", message: data.error || "Error creating account." });
       }
     } catch (err) {
-      console.error(err);
       setStatus({ type: "danger", message: "Error creating account." });
     }
   };
@@ -124,6 +115,7 @@ export const Register = () => {
               className="form-control my-2 bg-light border-0"
               onChange={handleChange}
               required
+              autoComplete="current-password" 
             />
 
             <button type="submit" className="btn btn-gitwise w-100 mt-3">
