@@ -23,8 +23,8 @@ flask-bcrypt = "*"
 email-validator = "*"
 python-dotenv = "*"
 openai = "*"
-aiopen = "*"
 stripe = "*"
+aiopen = "*"
 
 [requires]
 python_version = "3.13"

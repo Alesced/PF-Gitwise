@@ -74,7 +74,7 @@ export default function useGlobalReducer() {
 
     // Acciones de API que usan la lógica definida en actions.js
     // Ahora las acciones de comentarios también están disponibles
-    loadComments: (postId) => globalActions.loadComments(dispatch, postId),
+    loadComments: (postId) => globalActions.loadComments(dispatch, postId, store.token),
     addComment: (commentText, postId) => globalActions.addComment(dispatch, store, commentText, postId),
     deleteComment: (commentId) => globalActions.deleteComment(dispatch, store, commentId),
     toggleCommentLike: (commentId) => globalActions.toggleCommentLike(dispatch, store, commentId),
