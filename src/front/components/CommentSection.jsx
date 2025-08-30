@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
@@ -17,15 +17,16 @@ export const CommentSection = ({ postId }) => {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // Filtramos los comentarios del store global para este post
-  const comments = (store.allComments || []).filter(comment => comment.post_id === postId);
+  const comments = useMemo(() => {
+    return (store.allComments || []).filter(comment => comment.post_id === postId);
+  }, [store.allComments, postId]);
 
   // Cargar comentarios del post al montar el componente
   useEffect(() => {
-    // Si la acción existe y tenemos un postId válido, cargamos los comentarios.
-    if (actions.loadComments && postId) {
-      actions.loadComments(postId);
-    }
-  }, [postId, actions]);
+  if (store.token && postId) {
+    actions.loadComments(postId);
+  }
+}, [postId, actions, store.token]);
 
   const handleAddComment = async () => {
     // Verificamos que el comentario no esté vacío y que el usuario esté logueado
@@ -52,14 +53,15 @@ export const CommentSection = ({ postId }) => {
       return;
     }
     try {
-      // Delegamos la lógica de 'me gusta' a una acción del reducer
       await actions.toggleCommentLike(commentId);
+      // No es necesario recargar todos los comentarios porque el estado se actualiza directamente
     } catch (err) {
       toast.error(err.message || "Error toggling like.");
     }
   };
 
   const handleDelete = async (commentId) => {
+    console.log("Deleting comment:", commentId);
     // Si ya hay una confirmación pendiente, la procesamos.
     if (confirmDeleteId === commentId) {
       try {
@@ -176,6 +178,11 @@ export const CommentSection = ({ postId }) => {
           </li>
         ))}
       </ul>
+      {!store.token && (
+        <p className="text-light mt-3 text-center">
+          Inicia sesión para ver los comentarios
+        </p>
+      )}
     </div>
   );
 };

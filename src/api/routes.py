@@ -3,7 +3,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, Post, Comments, Level, Stack, Likes, Favorites
-from sqlalchemy.orm import joinedload 
+from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -28,6 +28,8 @@ bcrypt = Bcrypt()
 CORS(api)
 
 # -------------------------Decorator Administrator------------------------
+
+
 def admin_required(fn):
     """
     Versión simplificada que no inyecta el admin
@@ -53,6 +55,8 @@ def admin_required(fn):
     return wrapper
 
 # ------------------------Routes for Hello World------------------------
+
+
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
 
@@ -62,6 +66,8 @@ def handle_hello():
 
     return jsonify(response_body), 200
 # ------------------------Routes for user registration and authentication------------------------
+
+
 @api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -115,6 +121,8 @@ def register_user():
     }), 201
 
 # ------------------------Routes for Contacts us------------------------
+
+
 @api.route('/contact', methods=['POST'])
 def handle_contact():
     data = request.get_json()
@@ -144,6 +152,8 @@ def handle_contact():
 
 # ------------------------Routes for user login------------------------
 # Ruta de login: permite a un usuario autenticarse y obtener sus datos + token
+
+
 @api.route('/login', methods=['POST'])
 def login_user():
     # Obtiene datos enviados desde el frontend
@@ -246,6 +256,8 @@ def handle_new_post(user_id):
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Smart Search------------------------
+
+
 @api.route('/smart-search', methods=['POST'])
 @jwt_required()
 def smart_search():
@@ -274,33 +286,86 @@ def smart_search():
         return jsonify({"error": str(error)}), 500
 
 # ------------------------Routes for comments a post------------------------
-@api.route('/post/<int:post_id>/comments', methods=['POST'])
-@jwt_required()
-def handle_comments(post_id):
-    user_id = get_jwt_identity()
-    data = request.get_json()
-    title = data.get('title')
-    text = data.get('text')
 
-    if not text:
-        return jsonify({"msg": "Text is required"}), 400
+@api.route('/post/<int:post_id>/comments', methods=['GET', 'POST'])
+@jwt_required()  # Requiere autenticación para ambos métodos
+def handle_post_comments(post_id):
+    if request.method == 'GET':
+        try:
+            # Verificar que el post existe
+            post = Post.query.get(post_id)
+            if not post:
+                return jsonify({"error": "Post not found"}), 404
 
-    post = Post.query.get(post_id)
-    if not post:
-        return jsonify({"msg": "Post not found"}), 404
+            # Obtener comentarios con información del autor
+            comments = Comments.query.filter_by(post_id=post_id).options(joinedload(Comments.author)).all()
+            
+            # Serializar los comentarios
+            comments_data = []
+            for comment in comments:
+                comment_data = comment.serialize()
+                
+                # Agregar información de likes si no está incluida en serialize
+                if not hasattr(comment_data, 'like_count'):
+                    # Obtener el conteo de likes para este comentario
+                    like_count = Likes.query.filter_by(comments_id=comment.id).count()
+                    comment_data['like_count'] = like_count
+                    
+                    # Verificar si el usuario actual ha dado like a este comentario
+                    current_user_id = get_jwt_identity()
+                    if current_user_id:
+                        user_has_liked = Likes.query.filter_by(
+                            user_id=current_user_id, 
+                            comments_id=comment.id
+                        ).first() is not None
+                        comment_data['has_liked'] = user_has_liked
+                
+                comments_data.append(comment_data)
 
-    comments = Comments(
-        user_id=user_id,
-        post_id=post_id,
-        title=title,
-        text=text
-    )
-    db.session.add(comments)
-    db.session.commit()
+            return jsonify({
+                "success": True,
+                "comments": comments_data
+            }), 200
 
-    return jsonify({"msg": "Comment added successfully", "comment": comments.serialize()}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    elif request.method == 'POST':
+        try:
+            current_user_id = get_jwt_identity()
+            data = request.get_json()
+            title = data.get('title')
+            text = data.get('text')
+
+            if not text:
+                return jsonify({"msg": "Text is required"}), 400
+
+            post = Post.query.get(post_id)
+            if not post:
+                return jsonify({"msg": "Post not found"}), 404
+
+            comment = Comments(
+                user_id=current_user_id,
+                post_id=post_id,
+                title=title,
+                text=text
+            )
+            db.session.add(comment)
+            db.session.commit()
+
+            # Para devolver el comentario recién creado, cargamos el autor
+            db.session.refresh(comment)
+            comment = Comments.query.options(joinedload(Comments.author)).get(comment.id)
+
+            return jsonify({"msg": "Comment added successfully", "comment": comment.serialize()}), 201
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get, Edit and Delete Post by ID------------------------
+
+
 @api.route('/post/<int:post_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def handle_post_by_id(post_id):
@@ -345,6 +410,8 @@ def handle_post_by_id(post_id):
             return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
 # ------------------- Route GET and PUT user Profile--------------------------------------------
+
+
 @api.route('/users/profile/<int:user_id>', methods=['GET', 'PUT'])
 @jwt_required()
 def handle_user_profile(user_id):
@@ -428,6 +495,8 @@ def handle_user_profile(user_id):
     return jsonify({"error": "Unexpected error"}), 500
 
 # ------------------------Routes for Get all Posts------------------------
+
+
 @api.route('/posts', methods=['GET'])
 def get_all_posts():
     # This endpoint retrieves all posts with pagination, author info, and comment stats
@@ -451,11 +520,12 @@ def get_all_posts():
             # en lugar de dejar que la aplicación se estrelle.
             author_info = {
                 "username": "Usuario Desconocido",
-                "avatar": None 
+                "avatar": None
             }
             if author:
                 author_info["username"] = author.username
-                author_info["avatar"] = author.image_URL if hasattr(author, 'image_URL') else None
+                author_info["avatar"] = author.image_URL if hasattr(
+                    author, 'image_URL') else None
 
             # get the comments for the post and count them
             comments = Comments.query.filter_by(post_id=post.id).all()
@@ -494,8 +564,10 @@ def get_all_posts():
     except Exception as e:
         print(f"Error en get_all_posts: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
+
 # ------------------------Routes for Get Post by UserID------------------------
+
+
 @api.route('/users/<int:user_id>/posts', methods=['GET'])
 @jwt_required()
 def get_user_post(user_id):
@@ -505,43 +577,43 @@ def get_user_post(user_id):
     if current_user_id != user_id:
         return jsonify({"error": "Unauthorized User"}), 403
 
-    #subquery for caount the comment in each post
+    # subquery for caount the comment in each post
     comment_count_subquery = db.session.query(
-        Comments.post_id, 
+        Comments.post_id,
         func.count(Comments.post_id).label('comment_count')
-        ).group_by(Comments.post_id).subquery()
-    
-    #subquery for count the like in each post
+    ).group_by(Comments.post_id).subquery()
+
+    # subquery for count the like in each post
     post_like_subquery = db.session.query(
         Likes.post_id,
         func.count(Likes.id).label('post_likes')
     ).filter(Likes.post_id.isnot(None)) \
-    .group_by(Likes.post_id).subquery()
+        .group_by(Likes.post_id).subquery()
 
-    #subquery for count the like in each comment
+    # subquery for count the like in each comment
     comment_likes_subquery = db.session.query(
-        Comments.post_id, 
+        Comments.post_id,
         func.count(Likes.id).label('comment_likes')
-        ).join(Likes, Likes.comments_id == Comments.id) \
+    ).join(Likes, Likes.comments_id == Comments.id) \
         .group_by(Comments.post_id).subquery()
-    
-    #we have here all the subquery with user's post table
+
+    # we have here all the subquery with user's post table
     posts_query = db.session.query(
         Post,
         comment_count_subquery.c.comment_count,
         post_like_subquery.c.post_likes,
         comment_likes_subquery.c.comment_likes
     ).outerjoin(comment_count_subquery,  Post.id == comment_count_subquery.c.post_id)\
-    .outerjoin(post_like_subquery, Post.id == post_like_subquery.c.post_id) \
-    .outerjoin(comment_likes_subquery, Post.id == comment_likes_subquery.c.post_id)\
-    .filter(Post.user_id == user_id).order_by(Post.id.desc())
-    
+        .outerjoin(post_like_subquery, Post.id == post_like_subquery.c.post_id) \
+        .outerjoin(comment_likes_subquery, Post.id == comment_likes_subquery.c.post_id)\
+        .filter(Post.user_id == user_id).order_by(Post.id.desc())
+
     results = posts_query.all()
 
-    #If the list is empty we return 200 OK
+    # If the list is empty we return 200 OK
     posts_data = []
     for post, comment_count, post_likes, comment_likes in results:
-        #sum the total likes of posts and comments for obtain the total
+        # sum the total likes of posts and comments for obtain the total
         total_likes = (post_likes or 0) + (comment_likes or 0)
         post_info = post.serialize()
         post_info['stats'] = {
@@ -559,7 +631,9 @@ def get_user_post(user_id):
     }), 200
 
 # ------------------------Routes GET and POST Favorites by users------------------------
-#SE MODIFICO ESTA RUTA 
+# SE MODIFICO ESTA RUTA
+
+
 @api.route('/favorites', methods=['POST', 'GET'])
 @jwt_required()
 def handle_favorites():
@@ -567,7 +641,7 @@ def handle_favorites():
 
     if request.method == 'GET':
         favorites = Favorites.query.filter_by(user_id=user_id).all()
-        
+
         # Nueva lista para almacenar los datos combinados
         combined_favorites = []
         for fav in favorites:
@@ -575,12 +649,12 @@ def handle_favorites():
             if post:
                 # Obtenemos los datos del post
                 post_data = post.serialize()
-                
+
                 # Añadimos el 'id' de la relación de favorito al diccionario del post
                 post_data['favorite_id'] = fav.id
-                
+
                 combined_favorites.append(post_data)
-        
+
         # Devolvemos la lista de posts con el 'favorite_id' incluido
         return jsonify({"favorites": combined_favorites}), 200
 
@@ -593,18 +667,18 @@ def handle_favorites():
             return jsonify({"error": "Post ID is required"}), 400
 
         # Verificar si el post ya es favorito del usuario
-        existing_favorite = Favorites.query.filter_by(user_id=user_id, post_id=post_id).first()
+        existing_favorite = Favorites.query.filter_by(
+            user_id=user_id, post_id=post_id).first()
         if existing_favorite:
             return jsonify({"error": "Post already in favorites"}), 409
 
         new_favorite = Favorites(user_id=user_id, post_id=post_id)
         db.session.add(new_favorite)
         db.session.commit()
-        
+
         return jsonify({"message": "Favorite added", "favorite": new_favorite.serialize()}), 201
 
 # ------------------------Routes for Delete Favorites by id------------------------
-#SE MODIFICO ESTA RUTA 
 @api.route('/favorites/<int:favorite_id>', methods=['DELETE'])
 @jwt_required()
 def delete_favorite(favorite_id):
@@ -617,28 +691,29 @@ def delete_favorite(favorite_id):
     # Verificar que el usuario del token es el dueño del favorito
     if favorite.user_id != int(user_id):
         return jsonify({"error": "Unauthorized"}), 403
-    
+
     db.session.delete(favorite)
     db.session.commit()
 
     return jsonify({"message": "Favorite deleted"}), 200
-#------------------------Routes for likes to Posts--------------------------
+# ------------------------Routes for likes to Posts--------------------------
 @api.route('post/<int:post_id>/likes', methods=['POST', 'DELETE'])
 @jwt_required()
 def handle_post_like(post_id):
     current_user = int(get_jwt_identity())
 
-    #verificar si el post existe 
+    # verificar si el post existe
     post = Post.query.get(post_id)
-    if not post: 
+    if not post:
         return jsonify({"error": "Post not found"}), 404
 
-    existing_like = Likes.query.filter_by(user_id=current_user, post_id=post_id).first()
+    existing_like = Likes.query.filter_by(
+        user_id=current_user, post_id=post_id).first()
 
     if request.method == 'POST':
         if existing_like:
             return jsonify({"error": "Post already liked"}), 400
-    
+
         new_like = Likes(user_id=current_user, post_id=post_id)
         db.session.add(new_like)
         db.session.commit()
@@ -647,7 +722,7 @@ def handle_post_like(post_id):
     elif request.method == 'DELETE':
         if not existing_like:
             return jsonify({"error": "Post is not liked"}), 404
-    
+
         db.session.delete(existing_like)
         db.session.commit()
         return jsonify({"msg": "Post unliked succesfully"}), 200
@@ -657,21 +732,18 @@ def handle_post_like(post_id):
 @jwt_required()
 def like_comment(comment_id):
     try:
-        current_user = int(get_jwt_identity())
-
-        #verificar si el comentario existe
+        current_user_id = get_jwt_identity()
         comment = Comments.query.get(comment_id)
-
+        
         if not comment:
             return jsonify({"error": "Comment not found"}), 404
 
-        # Check if the user has already liked this comment
+        # Buscar like existente
         existing_like = Likes.query.filter_by(
-            user_id=current_user,
+            user_id=current_user_id,
             comments_id=comment_id
         ).first()
 
-        # handle POST request to like a comment
         if request.method == 'POST':
             if existing_like:
                 return jsonify({
@@ -680,41 +752,49 @@ def like_comment(comment_id):
                 }), 400
 
             new_like = Likes(
-                user_id=current_user,
+                user_id=current_user_id,
                 comments_id=comment_id
             )
             db.session.add(new_like)
-            action = "liked"
+            message = "Comment liked successfully"
 
-        # handle DELETE request to unlike a comment
         elif request.method == 'DELETE':
             if not existing_like:
                 return jsonify({
                     "error": "You have not liked this comment",
                     "comment_id": comment_id
                 }), 404
-
+            
             db.session.delete(existing_like)
-            action = "unliked"
+            message = "Comment unliked successfully"
 
         db.session.commit()
 
-        # Return the updated like count for the comment
+        # Obtener información actualizada
         like_count = Likes.query.filter_by(comments_id=comment_id).count()
+        
+        # Verificar si el usuario actual ha dado like después de la operación
+        current_user_has_liked = Likes.query.filter_by(
+            user_id=current_user_id,
+            comments_id=comment_id
+        ).first() is not None
 
         return jsonify({
             "success": True,
-            "message": f"You have successfully {action} the comment",
+            "message": message,
             "comment_id": comment_id,
             "like_count": like_count,
-            # This will indicate if the user has liked the comment
-            "has_liked": request.method == 'POST'
-        }), 200 if request.method == "DELETE" else 201
+            "has_liked": current_user_has_liked
+        }), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        db.session.rollback()
+        print(f"Error in like_comment: {str(e)}")  # Para debugging
+        return jsonify({"error": "Internal server error"}), 500
 
 # -------------------------Routes for Get all Users (Admin only)------------------------
+
+
 @api.route('/admin/users', methods=['GET'])
 @admin_required
 def get_all_users():
@@ -830,6 +910,8 @@ def get_all_users():
         return jsonify({"msg": "Error to obtain the Users' List", "error": str(e)}), 500
 
 # ------------------------Routes for Get User by ID (Admin only)------------------------
+
+
 @api.route('/admin/users/<int:user_id>', methods=['GET', 'DELETE'])
 @admin_required
 def admin_manage_user(user_id):
@@ -912,6 +994,8 @@ def admin_manage_user(user_id):
             "details": str(e)
         }), 500
 # ----------------------Routes for Get all Post (Admin only)------------------------
+
+
 @api.route('/admin/posts', methods=['GET'])
 @admin_required
 def admin_get_posts():
@@ -941,6 +1025,8 @@ def admin_get_posts():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Post by ID (Admin only)------------------------
+
+
 @api.route('/admin/posts/<int:post_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_post(post_id):
@@ -979,6 +1065,8 @@ def handle_single_admin_post(post_id):
             return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments (Admin only)------------------------
+
+
 @api.route('/admin/comments', methods=['GET'])
 @admin_required
 def admin_get_comments():
@@ -1008,6 +1096,8 @@ def admin_get_comments():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments by ID (Admin only)------------------------
+
+
 @api.route('/admin/comments/<int:comment_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_comment(comment_id):
@@ -1043,6 +1133,8 @@ def handle_single_admin_comment(comment_id):
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
 # ---------------------------Routes for Get Dashboard (Admin only)--------------------------
+
+
 @api.route('/admin/dashboard', methods=['GET'])
 @admin_required
 def admin_dashboard():
@@ -1065,7 +1157,9 @@ def admin_dashboard():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-#------------------------------Routes Stripe Checkout----------------------
+# ------------------------------Routes Stripe Checkout----------------------
+
+
 @api.route('/create-stripe-session', methods=['POST'])
 def create_stripe_session():
     # Log the incoming request to see what the server is receiving.
@@ -1073,14 +1167,14 @@ def create_stripe_session():
     try:
         data = request.get_json()
         print(f"Received data: {data}")
-        
+
         # Check if the required 'amount' is present.
         if 'amount' not in data:
             print("Error: Missing 'amount' in request data.")
             return jsonify({'error': 'Missing required data: amount'}), 400
 
         amount = data['amount']
-        
+
         # Get 'frontend_url' if it exists in the data, otherwise use a default.
         # This makes the field optional in the request.
         frontend_url = data.get('frontend_url', 'http://localhost:3000')
@@ -1092,8 +1186,9 @@ def create_stripe_session():
         # Convert amount to an integer to ensure it's in the correct format.
         # This is a common point of failure.
         amount_int = int(amount)
-        
-        print(f"Creating Stripe session with amount: {amount_int} and frontend_url: {frontend_url}")
+
+        print(
+            f"Creating Stripe session with amount: {amount_int} and frontend_url: {frontend_url}")
 
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -1115,7 +1210,7 @@ def create_stripe_session():
         )
 
         print(f"Stripe session created successfully. URL: {session.url}")
-        
+
         return jsonify({
             'sessionId': session.id,
             'url': session.url
@@ -1129,6 +1224,8 @@ def create_stripe_session():
         # Log the specific exception to help with debugging.
         print(f"An unexpected error occurred: {e}")
         return jsonify({'error': str(e)}), 500
+
+
 # -----------------------------Defs for OpenAI API-------------------------
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=os.getenv("GPTKey"))
@@ -1278,23 +1375,27 @@ Only use the format provided. No extra commentary.
             }
         }
 
-# -----------------------------Se añadio Delete Comments 27/7 -------------------------
+# -----------------------------Se añadio Delete Comments -------------------------
 @api.route('/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(comment_id):
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
 
-    comment = Comments.query.get(comment_id)
-    if not comment:
-        return jsonify({"error": "Comment not found"}), 404
+        comment = Comments.query.get(comment_id)
+        if not comment:
+            return jsonify({"error": "Comment not found"}), 404
 
-    # Permitir borrar si es admin o autor del comentario
-    if not user or (not user.is_admin and comment.user_id != user.id):
-        return jsonify({"error": "Unauthorized. Only admin or author can delete"}), 403
+        # Permitir borrar si es admin o autor del comentario
+        if not user or (not user.is_admin and comment.user_id != user.id):
+            return jsonify({"error": "Unauthorized. Only admin or author can delete"}), 403
 
-    db.session.delete(comment)
-    db.session.commit()
+        db.session.delete(comment)
+        db.session.commit()
 
-    return jsonify({"message": "Comment deleted successfully"}), 200
+        return jsonify({"message": "Comment deleted successfully"}), 200
 
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

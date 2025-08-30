@@ -91,7 +91,10 @@ export default function storeReducer(store, action = {}) {
       };
 
     case "add_favorite":
-      return { ...store, allFavorites: [...store.allFavorites, action.payload] };
+      return {
+        ...store,
+        allFavorites: [...store.allFavorites, action.payload],
+      };
 
     case "delete_favorite":
       return {
@@ -100,10 +103,10 @@ export default function storeReducer(store, action = {}) {
           (fav) => fav.id !== action.payload
         ),
       };
-    
+
     case "set_likes":
       return { ...store, allLikes: action.payload };
-      
+
     case "add_like":
       return { ...store, allLikes: [...store.allLikes, action.payload] };
 
@@ -112,39 +115,20 @@ export default function storeReducer(store, action = {}) {
         ...store,
         allLikes: store.allLikes.filter((like) => like.id !== action.payload),
       };
-      
-    case "add_comment_like":
-      // Encuentra el comentario y agrega el nuevo like
-      const commentIdToAddLike = action.payload.comment_id;
+    case "update_comment_likes":
       return {
         ...store,
         allComments: store.allComments.map((comment) =>
-          comment.id === commentIdToAddLike
+          comment.id === action.payload.commentId
             ? {
                 ...comment,
-                comment_likes: [...(comment.comment_likes || []), action.payload],
+                comment_likes: action.payload.likes,
+                like_count: action.payload.likeCount,
+                has_liked: action.payload.hasLiked,
               }
             : comment
         ),
       };
-
-    case "delete_comment_like":
-      // Encuentra el comentario y elimina el like
-      const { commentId, userId } = action.payload;
-      return {
-        ...store,
-        allComments: store.allComments.map((comment) =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                comment_likes: (comment.comment_likes || []).filter(
-                  (like) => like.user_id !== userId
-                ),
-              }
-            : comment
-        ),
-      };
-
     default:
       throw new Error(`Unhandled action type: ${action.type}`);
   }
