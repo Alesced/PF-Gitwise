@@ -5,6 +5,23 @@ import bannerImg from "../assets/img/mohammad-rahmani-_Fx34KeqIEw-unsplash.jpg";
 import Alert from "react-bootstrap/Alert";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
+// Estos valores deben coincidir con tus Enums de base de datos
+const STACKS = ["HTML", "CSS", "JAVASCRIPT", "PYTHON", "SQL"];
+const LEVELS = ["student", "junior_dev", "mid_dev", "senior_dev"];
+
+// Función para formatear los valores para visualización
+const formatValue = (value) => {
+  if (!value) return '';
+  
+  if (value === "JAVASCRIPT") return "JavaScript";
+  if (value === "student") return "Student";
+  if (value === "junior_dev") return "Junior Dev";
+  if (value === "mid_dev") return "Mid Dev";
+  if (value === "senior_dev") return "Senior Dev";
+  
+  return value;
+};
+
 export const Register = () => {
   const navigate = useNavigate();
   const { actions } = useGlobalReducer();
@@ -14,6 +31,8 @@ export const Register = () => {
     username: "",
     email: "",
     password: "",
+    stack: "",
+    level: ""
   });
 
   const [status, setStatus] = useState(null);
@@ -117,6 +136,37 @@ export const Register = () => {
               required
               autoComplete="current-password" 
             />
+
+            <div className="row">
+              <div className="col-md-6 mb-2">
+                <select
+                  name="stack"
+                  className="form-select bg-light border-0"
+                  onChange={handleChange}
+                  required
+                  value={form.stack}
+                >
+                  <option value="">Select Stack</option>
+                  {STACKS.map((stack, i) => (
+                    <option key={i} value={stack}>{formatValue(stack)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6 mb-2">
+                <select
+                  name="level"
+                  className="form-select bg-light border-0"
+                  onChange={handleChange}
+                  required
+                  value={form.level}
+                >
+                  <option value="">Select Level</option>
+                  {LEVELS.map((level, i) => (
+                    <option key={i} value={level}>{formatValue(level)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <button type="submit" className="btn btn-gitwise w-100 mt-3">
               Register

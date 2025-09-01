@@ -76,6 +76,8 @@ def register_user():
     name = data.get('name')
     last_name = data.get('last_name')
     username = data.get('username')
+    stack = data.get('stack')
+    level = data.get('level')
 
     # Solo esta línea adicional para convertir a booleano
     is_admin = True if str(data.get('is_admin', 'False')
@@ -97,8 +99,8 @@ def register_user():
         last_name=last_name,
         username=username,
         is_admin=is_admin,
-        stack=Stack[data.get('stack').upper()] if data.get('stack') else None,
-        level=Level[data.get('level').upper()] if data.get('level') else None,
+        stack=Stack[stack.upper()] if stack else None,
+        level=Level[level.upper()] if level else None,
         member_since=datetime.now(UTC)
     )
 
@@ -234,6 +236,8 @@ def handle_new_post(user_id):
         title = data.get('title')
         description = data.get('description')
         repo_URL = data.get('repo_URL')
+        level = data.get('level')
+        stack = data.get('stack')
 
         if not all([title, description, repo_URL]):
             return jsonify({"error": "Faltan campos requeridos"}), 400
@@ -243,7 +247,9 @@ def handle_new_post(user_id):
             title=title,
             description=description,
             repo_URL=repo_URL,
-            image_URL=data.get('image_URL')
+            image_URL=data.get('image_URL'),
+            stack=Stack[stack.upper()] if stack else None,
+            level=Level[level.upper()] if level else None
         )
 
         db.session.add(new_post)
@@ -287,6 +293,7 @@ def smart_search():
 
 # ------------------------Routes for comments a post------------------------
 
+
 @api.route('/post/<int:post_id>/comments', methods=['GET', 'POST'])
 @jwt_required()  # Requiere autenticación para ambos métodos
 def handle_post_comments(post_id):
@@ -298,28 +305,30 @@ def handle_post_comments(post_id):
                 return jsonify({"error": "Post not found"}), 404
 
             # Obtener comentarios con información del autor
-            comments = Comments.query.filter_by(post_id=post_id).options(joinedload(Comments.author)).all()
-            
+            comments = Comments.query.filter_by(post_id=post_id).options(
+                joinedload(Comments.author)).all()
+
             # Serializar los comentarios
             comments_data = []
             for comment in comments:
                 comment_data = comment.serialize()
-                
+
                 # Agregar información de likes si no está incluida en serialize
                 if not hasattr(comment_data, 'like_count'):
                     # Obtener el conteo de likes para este comentario
-                    like_count = Likes.query.filter_by(comments_id=comment.id).count()
+                    like_count = Likes.query.filter_by(
+                        comments_id=comment.id).count()
                     comment_data['like_count'] = like_count
-                    
+
                     # Verificar si el usuario actual ha dado like a este comentario
                     current_user_id = get_jwt_identity()
                     if current_user_id:
                         user_has_liked = Likes.query.filter_by(
-                            user_id=current_user_id, 
+                            user_id=current_user_id,
                             comments_id=comment.id
                         ).first() is not None
                         comment_data['has_liked'] = user_has_liked
-                
+
                 comments_data.append(comment_data)
 
             return jsonify({
@@ -355,7 +364,8 @@ def handle_post_comments(post_id):
 
             # Para devolver el comentario recién creado, cargamos el autor
             db.session.refresh(comment)
-            comment = Comments.query.options(joinedload(Comments.author)).get(comment.id)
+            comment = Comments.query.options(
+                joinedload(Comments.author)).get(comment.id)
 
             return jsonify({"msg": "Comment added successfully", "comment": comment.serialize()}), 201
 
@@ -394,6 +404,8 @@ def handle_post_by_id(post_id):
             post.image_URL = data.get('image_URL', post.image_URL)
             post.description = data.get('description', post.description)
             post.repo_URL = data.get('repo_URL', post.repo_URL)
+            post.level = data.get('level', post.level)
+            post.stack = data.get('stack', post.stack)
             db.session.commit()
             return jsonify({"msg": "Post updated successfully", "post": post.serialize()}), 200
         except KeyError as e:
@@ -679,6 +691,8 @@ def handle_favorites():
         return jsonify({"message": "Favorite added", "favorite": new_favorite.serialize()}), 201
 
 # ------------------------Routes for Delete Favorites by id------------------------
+
+
 @api.route('/favorites/<int:favorite_id>', methods=['DELETE'])
 @jwt_required()
 def delete_favorite(favorite_id):
@@ -697,6 +711,8 @@ def delete_favorite(favorite_id):
 
     return jsonify({"message": "Favorite deleted"}), 200
 # ------------------------Routes for likes to Posts--------------------------
+
+
 @api.route('post/<int:post_id>/likes', methods=['POST', 'DELETE'])
 @jwt_required()
 def handle_post_like(post_id):
@@ -728,13 +744,15 @@ def handle_post_like(post_id):
         return jsonify({"msg": "Post unliked succesfully"}), 200
 
 # -----------------------Routes for Likes to Comments-----------------------
+
+
 @api.route('/comments/<int:comment_id>/like', methods=['POST', 'DELETE'])
 @jwt_required()
 def like_comment(comment_id):
     try:
         current_user_id = get_jwt_identity()
         comment = Comments.query.get(comment_id)
-        
+
         if not comment:
             return jsonify({"error": "Comment not found"}), 404
 
@@ -764,7 +782,7 @@ def like_comment(comment_id):
                     "error": "You have not liked this comment",
                     "comment_id": comment_id
                 }), 404
-            
+
             db.session.delete(existing_like)
             message = "Comment unliked successfully"
 
@@ -772,7 +790,7 @@ def like_comment(comment_id):
 
         # Obtener información actualizada
         like_count = Likes.query.filter_by(comments_id=comment_id).count()
-        
+
         # Verificar si el usuario actual ha dado like después de la operación
         current_user_has_liked = Likes.query.filter_by(
             user_id=current_user_id,
@@ -1376,6 +1394,8 @@ Only use the format provided. No extra commentary.
         }
 
 # -----------------------------Se añadio Delete Comments -------------------------
+
+
 @api.route('/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(comment_id):
