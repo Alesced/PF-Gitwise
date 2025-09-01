@@ -9,15 +9,29 @@ import { CommentSection } from "../components/CommentSection";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { FaRegComment } from "react-icons/fa";
 
-const STACKS = ["React", "Vue", "Angular", "MERN", "Next.js", "Svelte"];
-const LEVELS = ["Beginner", "Intermediate", "Advanced"];
+// Estos valores deben coincidir con tus Enums de base de datos
+const STACKS = ["HTML", "CSS", "JAVASCRIPT", "PYTHON", "SQL"];
+const LEVELS = ["student", "junior_dev", "mid_dev", "senior_dev"];
+
+// Función para formatear los valores para visualización
+const formatValue = (value) => {
+  if (!value) return '';
+  
+  if (value === "JAVASCRIPT") return "JavaScript";
+  if (value === "student") return "Student";
+  if (value === "junior_dev") return "Junior Dev";
+  if (value === "mid_dev") return "Mid Dev";
+  if (value === "senior_dev") return "Senior Dev";
+  
+  return value;
+};
 
 export const UserProfile = () => {
   // Usa el hook para obtener el 'store' y las 'actions'
   const { store, dispatch, actions } = useGlobalReducer();
   const navigate = useNavigate();
   const [editId, setEditId] = useState(null);
-  const [formData, setFormData] = useState({ title: "", description: "", repo_URL: "" });
+  const [formData, setFormData] = useState({ title: "", description: "", repo_URL: "", stack: "", level: "" });
   const [activeTab, setActiveTab] = useState("posts");
   const [visibleCount, setVisibleCount] = useState(6);
   const [showModal, setShowModal] = useState(false);
@@ -27,7 +41,6 @@ export const UserProfile = () => {
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
 
   // Derivamos el estado de forma reactiva del store
-  // Aquí usamos directamente store.allPosts y store.allFavorites
   const myPosts = (store.allPosts || []).filter(post => post.user_id === store.user?.id);
   const favorites = (store.allFavorites || []);
 
@@ -63,7 +76,7 @@ export const UserProfile = () => {
     };
 
     fetchUserData();
-  }, [store.user?.id, store.token, dispatch, navigate]); // Aseguramos que el efecto se ejecute cuando cambien estas dependencias
+  }, [store.user?.id, store.token, dispatch, navigate]);
 
   if (loading) {
     return (
@@ -75,10 +88,11 @@ export const UserProfile = () => {
     );
   }
 
-  // Ahora, las funciones que modifican datos llaman a las nuevas acciones
   const handleCreateProject = async () => {
     const { title, description, github, stack, level } = newProject;
-    if (!title || !description || !github) return toast.error("Todos los campos son requeridos");
+    if (!title || !description || !github || !stack || !level) {
+      return toast.error("Todos los campos son requeridos");
+    }
 
     try {
       // Llamamos a la acción 'createPost' con los parámetros correctos
@@ -100,6 +114,7 @@ export const UserProfile = () => {
           stack: "",
           level: ""
         });
+        toast.success("Project created successfully!");
       }
     } catch (err) {
       console.error("POST error:", err);
@@ -107,7 +122,6 @@ export const UserProfile = () => {
     }
   };
 
-  
   const removePost = async (id) => {
     // Llamamos a la acción 'deletePostAPI'
     await actions.deletePostApi(id);
@@ -118,13 +132,15 @@ export const UserProfile = () => {
     setFormData({
       title: post.title,
       description: post.description,
-      repo_URL: post.repo_URL
+      repo_URL: post.repo_URL,
+      stack: post.stack || "",
+      level: post.level || ""
     });
   };
 
   const cancelEdit = () => {
     setEditId(null);
-    setFormData({ title: "", description: "", repo_URL: "" });
+    setFormData({ title: "", description: "", repo_URL: "", stack: "", level: "" });
   };
 
   const saveEdit = async (id) => {
@@ -147,6 +163,22 @@ export const UserProfile = () => {
             <input type="text" className="form-control mb-2" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
             <textarea className="form-control mb-2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
             <input type="url" className="form-control mb-2" value={formData.repo_URL} onChange={e => setFormData({ ...formData, repo_URL: e.target.value })} />
+            
+            <div className="row mb-2">
+              <div className="col">
+                <select className="form-select" value={formData.stack} onChange={e => setFormData({ ...formData, stack: e.target.value })}>
+                  <option value="">Select Stack</option>
+                  {STACKS.map((stack, i) => <option key={i} value={stack}>{formatValue(stack)}</option>)}
+                </select>
+              </div>
+              <div className="col">
+                <select className="form-select" value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })}>
+                  <option value="">Select Level</option>
+                  {LEVELS.map((level, i) => <option key={i} value={level}>{formatValue(level)}</option>)}
+                </select>
+              </div>
+            </div>
+            
             <div className="d-flex justify-content-between">
               <button className="btn btn-sm btn-success" onClick={() => saveEdit(post.id)}>Save</button>
               <button className="btn btn-sm btn-secondary" onClick={cancelEdit}>Cancel</button>
@@ -180,20 +212,20 @@ export const UserProfile = () => {
             <div>
               <h5 className="text-white">{post.title}</h5>
               <p>{post.description}</p>
-              {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
-              {post.level && <span className="badge bg-info">{post.level}</span>}
+              <div className="d-flex gap-2 mb-2">
+                {post.stack && <span className="badge bg-secondary">{formatValue(post.stack)}</span>}
+                {post.level && <span className="badge bg-info">{formatValue(post.level)}</span>}
+              </div>
             </div>
             <div className="d-flex justify-content-between align-items-center mt-3">
               <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">View GitHub</a>
               <div className="d-flex align-items-center gap-2">
                 <LikeButton postId={post.id} />
-                <FavoriteButton postId={post.id} count={post.favorites} whiteText />
+                <FavoriteButton postId={post.id} count={post.favorite_count || 0} whiteText />
                 <button
                   className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center"
                   style={{ width: "40px", height: "32px" }}
-                  onClick={() =>
-                    setOpenCommentPostId((prev) => (prev === post.id ? null : post.id))
-                  }
+                  onClick={() => setOpenCommentPostId(prev => prev === post.id ? null : post.id)}
                 >
                   <FaRegComment />
                 </button>
@@ -231,14 +263,17 @@ export const UserProfile = () => {
                 <input type="text" className="form-control mb-2" placeholder="Project Title" value={newProject.title} onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
                 <textarea className="form-control mb-2" placeholder="Description" value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })}></textarea>
                 <input type="text" className="form-control mb-2" placeholder="GitHub Repo URL" value={newProject.github} onChange={e => setNewProject({ ...newProject, github: e.target.value })} />
+                
                 <select className="form-select mb-2" value={newProject.stack} onChange={e => setNewProject({ ...newProject, stack: e.target.value })}>
                   <option value="">Select Stack</option>
-                  {STACKS.map((stack, i) => <option key={i} value={stack}>{stack}</option>)}
+                  {STACKS.map((stack, i) => <option key={i} value={stack}>{formatValue(stack)}</option>)}
                 </select>
+                
                 <select className="form-select mb-3" value={newProject.level} onChange={e => setNewProject({ ...newProject, level: e.target.value })}>
                   <option value="">Select Level</option>
-                  {LEVELS.map((level, i) => <option key={i} value={level}>{level}</option>)}
+                  {LEVELS.map((level, i) => <option key={i} value={level}>{formatValue(level)}</option>)}
                 </select>
+                
                 <div className="d-flex justify-content-between">
                   <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                   <button className="btn btn-gitwise" onClick={handleCreateProject}>Save Project</button>
@@ -276,6 +311,10 @@ export const UserProfile = () => {
           <h3 className="fw-bold mb-1">{user.username}</h3>
           <p className="mb-1 text-light">{user.email}</p>
           {user.join_date && <p className="text-secondary">Member since: {new Date(user.join_date).toLocaleDateString()}</p>}
+          <div className="d-flex justify-content-center gap-2 mt-2">
+            {user.stack && <span className="badge bg-success rounded-pill px-3 py-2 fs-6">{formatValue(user.stack)}</span>}
+            {user.level && <span className="badge bg-primary rounded-pill px-3 py-2 fs-6">{formatValue(user.level)}</span>}
+          </div>
         </div>
       </div>
 
@@ -290,4 +329,3 @@ export const UserProfile = () => {
     </div>
   );
 };
-

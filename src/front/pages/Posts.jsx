@@ -5,24 +5,35 @@ import { CommentSection } from "../components/CommentSection";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { LikeButton } from "../components/LikeButton";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { toast } from "react-toastify";
 
-// Componente principal para mostrar y filtrar posts
+// Estos valores deben coincidir con tus Enums de base de datos
+const STACKS = ["HTML", "CSS", "JAVASCRIPT", "PYTHON", "SQL"];
+const LEVELS = ["student", "junior_dev", "mid_dev", "senior_dev"];
+
+// Función para formatear los valores para visualización
+const formatValue = (value) => {
+  if (!value) return '';
+  
+  // Convertir a formato legible
+  if (value === "JAVASCRIPT") return "JavaScript";
+  if (value === "student") return "Student";
+  if (value === "junior_dev") return "Junior Dev";
+  if (value === "mid_dev") return "Mid Dev";
+  if (value === "senior_dev") return "Senior Dev";
+  
+  return value;
+};
+
 export const Posts = () => {
   const { store, actions } = useGlobalReducer();
   const [loading, setLoading] = useState(true);
-  
-  // Estados para los filtros y la paginación
   const [stackFilter, setStackFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
-  
-  // Estado para la cantidad de posts a mostrar
   const [visiblePostCount, setVisiblePostCount] = useState(6);
   const postsPerPage = 6;
 
-  // Llama a la acción para cargar posts solo una vez al inicio
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
@@ -32,19 +43,18 @@ export const Posts = () => {
     fetchInitialData();
   }, []);
 
-  // Lógica de filtrado en el frontend (más concisa)
   const filteredPosts = (store.allPosts || []).filter(post => {
-    const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         post.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStack = stackFilter === "" || post.stack === stackFilter;
     const matchesLevel = levelFilter === "" || post.level === levelFilter;
+    
     return matchesSearch && matchesStack && matchesLevel;
   });
 
-  // Paginación: solo muestra la cantidad de posts visibles
   const postsToDisplay = filteredPosts.slice(0, visiblePostCount);
   const hasMore = visiblePostCount < filteredPosts.length;
-  
-  // Resetea la cantidad de posts visibles cuando cambian los filtros
+
   useEffect(() => {
     setVisiblePostCount(postsPerPage);
   }, [stackFilter, levelFilter, searchTerm]);
@@ -52,8 +62,8 @@ export const Posts = () => {
   const handleLoadMore = () => {
     setVisiblePostCount(prevCount => prevCount + postsPerPage);
   };
-  
-  // Opciones únicas para los filtros
+
+  // Obtener valores únicos para los filtros
   const uniqueStacks = [...new Set((store.allPosts || []).map(p => p.stack).filter(Boolean))];
   const uniqueLevels = [...new Set((store.allPosts || []).map(p => p.level).filter(Boolean))];
 
@@ -82,9 +92,7 @@ export const Posts = () => {
         transition={{ duration: 0.4 }}
         className="w-100 d-flex flex-column align-items-center"
       >
-        {/* Sección de filtros */}
         <section className="w-100 d-flex gap-3 justify-content-center mb-4 flex-wrap">
-          {/* Campo de búsqueda */}
           <input
             type="text"
             className="form-control bg-dark text-white border-secondary"
@@ -94,7 +102,6 @@ export const Posts = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
 
-          {/* Filtro por Stack */}
           <select
             className="form-select bg-dark text-white border-secondary"
             style={{ maxWidth: "180px" }}
@@ -102,10 +109,13 @@ export const Posts = () => {
             onChange={(e) => setStackFilter(e.target.value)}
           >
             <option value="">Select Stack</option>
-            {uniqueStacks.map((stack) => <option key={stack} value={stack}>{stack}</option>)}
+            {STACKS.map((stack) => (
+              <option key={stack} value={stack}>
+                {formatValue(stack)}
+              </option>
+            ))}
           </select>
 
-          {/* Filtro por Nivel */}
           <select
             className="form-select bg-dark text-white border-secondary"
             style={{ maxWidth: "180px" }}
@@ -113,12 +123,15 @@ export const Posts = () => {
             onChange={(e) => setLevelFilter(e.target.value)}
           >
             <option value="">Select Level</option>
-            {uniqueLevels.map((level) => <option key={level} value={level}>{level}</option>)}
+            {LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {formatValue(level)}
+              </option>
+            ))}
           </select>
         </section>
       </motion.div>
 
-      {/* Lista de posts */}
       <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 w-100 px-md-5">
         <AnimatePresence>
           {postsToDisplay.map(post => (
@@ -130,8 +143,16 @@ export const Posts = () => {
                 >
                   <h5 style={{ color: "#fff" }}>{post.title}</h5>
                   <p>{post.description}</p>
-                  {post.stack && <span className="badge bg-secondary me-2">{post.stack}</span>}
-                  {post.level && <span className="badge bg-info">{post.level}</span>}
+                  {post.stack && (
+                    <span className="badge bg-secondary me-2">
+                      {formatValue(post.stack)}
+                    </span>
+                  )}
+                  {post.level && (
+                    <span className="badge bg-info">
+                      {formatValue(post.level)}
+                    </span>
+                  )}
 
                   <div className="d-flex justify-content-between align-items-center mt-3">
                     <a href={post.repo_URL} target="_blank" rel="noreferrer" className="btn btn-gitwise btn-sm">GitHub</a>
@@ -141,9 +162,7 @@ export const Posts = () => {
                       <button
                         className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center"
                         style={{ width: "40px", height: "32px" }}
-                        onClick={() =>
-                          setOpenCommentPostId((prev) => (prev === post.id ? null : post.id))
-                        }
+                        onClick={() => setOpenCommentPostId(prev => prev === post.id ? null : post.id)}
                       >
                         <FaRegComment />
                       </button>
@@ -151,7 +170,6 @@ export const Posts = () => {
                   </div>
                 </div>
 
-                {/* Sección de comentarios con animación de AnimatePresence */}
                 <AnimatePresence>
                   {openCommentPostId === post.id && (
                     <motion.div
@@ -174,16 +192,12 @@ export const Posts = () => {
 
       {hasMore && (
         <div className="d-flex justify-content-center mt-5">
-          <button
-            className="btn btn-gitwise"
-            onClick={handleLoadMore}
-          >
+          <button className="btn btn-gitwise" onClick={handleLoadMore}>
             Load More
           </button>
         </div>
       )}
 
-      {/* Mensaje si no hay posts encontrados */}
       {filteredPosts.length === 0 && !loading && (
         <div className="text-white text-center mt-5">
           <p>No se encontraron posts con los filtros aplicados.</p>

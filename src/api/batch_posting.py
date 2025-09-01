@@ -1,6 +1,6 @@
 import requests
 
-BASE_URL = "https://fantastic-doodle-pjw4647v49p936xwr-3001.app.github.dev/api"
+BASE_URL = "https://silver-spork-v6rxvqqqr74gfx79-3001.app.github.dev"
 TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MzMxMTMyMSwianRpIjoiYWQzZGJjOWQtNzBmNi00OWNiLTg3MGEtNjMxZmY2YzliZjAxIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTMzMTEzMjEsImNzcmYiOiJjNjcxZmI1My04YTk1LTQzZmEtYTg5Ny0yZTQyNTQ4MjlmMmQiLCJleHAiOjE3NTMzMTIyMjF9.KKTzngG6Fh5L4VNocaZ5cfQD-mI5wGnrPRXLITbWqsk"  # replace this with your actual token
 
 headers = {
@@ -74,6 +74,6 @@ posts = [
 # Submit each post
 for post in posts:
     res = requests.post(
-        f"{BASE_URL}/user/post/1", json=post, headers=headers
+        f"{BASE_URL}api/user/post/1", json=post, headers=headers
     )
     print(res.status_code, res.json())
