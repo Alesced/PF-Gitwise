@@ -602,12 +602,12 @@
         },
         "openai": {
             "hashes": [
-                "sha256:54d3457b2c8d7303a1bc002a058de46bdd8f37a8117751c7cf4ed4438051f151",
-                "sha256:787b4c3c8a65895182c58c424f790c25c790cc9a0330e34f73d55b6ee5a00e32"
+                "sha256:5f575967e3a05555825c43829cdcd50be6e49ab6a3e5262f0937a3f791f917f1",
+                "sha256:bfdef37c949f80396c59f2c17e0eda35414979bc07ef3379596a93c9ed044f3a"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==1.100.2"
+            "version": "==1.106.1"
         },
         "packaging": {
             "hashes": [

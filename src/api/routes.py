@@ -15,21 +15,28 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 from api.utils import send_email
-from functools import wraps
+from functools import wraps,  lru_cache
 from datetime import datetime, UTC
-import stripe
-from openai import OpenAI
-import re
-import logging
+import stripe, requests, json, logging, re, hashlib
 
+#configuracion del logger
+logger = logging.getLogger(__name__)
 api = Blueprint('api', __name__)
 bcrypt = Bcrypt()
 # Allow CORS requests to this API
 CORS(api)
 
+# Configuración de DeepSeek
+DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+
+# Función de caché
+@lru_cache(maxsize=100)
+def get_search_cache_key(user_request, user_tags, post_count):
+    key_str = f"{user_request}:{user_tags}:{post_count}"
+    return hashlib.md5(key_str.encode()).hexdigest()
+
 # -------------------------Decorator Administrator------------------------
-
-
 def admin_required(fn):
     """
     Versión simplificada que no inyecta el admin
@@ -53,6 +60,303 @@ def admin_required(fn):
             return jsonify({"error": "Error de autorización", "details": str(e)}), 401
 
     return wrapper
+# -------------------------Functions for Smart Search------------------------
+def validate_response_format(response_text):
+    """
+    Valida que la respuesta de la API tenga el formato esperado
+    """
+    # Verifica que contenga los campos esenciales
+    required_patterns = [
+        r"RANK_POSITION:\s*\d+",
+        r"POST_ID:\s*\d+",
+        r"JUSTIFICATION:",
+        r"RELEVANCE:",
+        r"FIT_SCORE:\s*\d+"
+    ]
+
+    return all(re.search(pattern, response_text) for pattern in required_patterns)
+
+
+def parse_ai_response(response_text):
+    """
+    Parsea la respuesta de la API y extrae la información estructurada
+    """
+    # Expresión regular para capturar todos los posts en la respuesta
+    pattern = re.compile(
+        r"RANK_POSITION:\s*(\d+)\s*"
+        r"POST_ID:\s*(\d+)\s*"
+        r'JUSTIFICATION:\s*"([^"]+)"\s*'
+        r'RELEVANCE:\s*"([^"]+)"\s*'
+        r'FIT_SCORE:\s*(\d+)',
+        re.MULTILINE | re.DOTALL
+    )
+
+    results = []
+    matches = pattern.findall(response_text)
+
+    for match in matches:
+        rank, post_id, justification, relevance, score = match
+        results.append({
+            "rank_position": int(rank),
+            "post_id": int(post_id),
+            "justification": justification.strip(),
+            "relevance": relevance.strip(),
+            "fit_score": int(score)
+        })
+
+    # Ordenar por posición en el ranking
+    results.sort(key=lambda x: x["rank_position"])
+    return results
+
+
+def extract_keywords(user_request):
+    """
+    Extrae palabras clave importantes de la solicitud del usuario
+    """
+    # Palabras comunes a ignorar (stop words)
+    stop_words = {
+        "the", "a", "an", "and", "or", "but", "in", "on", "at", "to",
+        "for", "of", "with", "by", "is", "are", "was", "were", "be", "been",
+        "this", "that", "these", "those", "i", "you", "he", "she", "it", "we",
+        "they", "my", "your", "his", "her", "its", "our", "their", "what",
+        "which", "who", "whom", "where", "when", "why", "how", "can", "could",
+        "would", "should", "may", "might", "must", "will", "shall", "about"
+    }
+
+    # Convertir a minúsculas y dividir en palabras
+    words = user_request.lower().split()
+
+    # Filtrar palabras relevantes (eliminar stop words y palabras muy cortas)
+    keywords = [
+        word for word in words
+        if word not in stop_words and len(word) > 2 and word.isalpha()
+    ]
+
+    return set(keywords)
+
+
+def parse_post_list(post_results_list):
+    """
+    Convierte la cadena de texto de posts en una lista de diccionarios
+    """
+    posts = []
+    lines = post_results_list.strip().split('\n')
+
+    for line in lines:
+        # El formato esperado es: "ID: X | Title: Y | Description: Z"
+        parts = line.split('|')
+        if len(parts) < 3:
+            continue
+
+        # Extraer ID
+        id_part = parts[0].strip()
+        id_match = re.search(r'ID:\s*(\d+)', id_part)
+        if not id_match:
+            continue
+
+        # Extraer título
+        title_part = parts[1].strip()
+        title_match = re.search(r'Title:\s*(.+)', title_part)
+
+        # Extraer descripción
+        desc_part = parts[2].strip() if len(parts) > 2 else ""
+        desc_match = re.search(r'Description:\s*(.+)', desc_part)
+
+        posts.append({
+            'id': id_match.group(1),
+            'title': title_match.group(1) if title_match else "[Untitled]",
+            'description': desc_match.group(1) if desc_match else ""
+        })
+
+    return posts
+
+
+def calculate_relevance_score(post, keywords):
+    """
+    Calcula un puntaje de relevancia entre un post y las palabras clave
+    """
+    # Combinar título y descripción para el análisis
+    content = f"{post.get('title', '')} {post.get('description', '')}".lower()
+
+    score = 0
+
+    # Ponderar coincidencias en el título más que en la descripción
+    title = post.get('title', '').lower()
+    for keyword in keywords:
+        # Coincidencia exacta en el título
+        if f" {keyword} " in f" {title} ":
+            score += 3
+        # Coincidencia parcial en el título
+        elif keyword in title:
+            score += 2
+        # Coincidencia exacta en el contenido
+        elif f" {keyword} " in f" {content} ":
+            score += 2
+        # Coincidencia parcial en el contenido
+        elif keyword in content:
+            score += 1
+
+    return score
+
+
+def filter_posts_by_keywords(user_request, post_results_list):
+    """
+    Filtrado inicial por palabras clave para reducir el conjunto de posts
+    """
+    keywords = extract_keywords(user_request)
+    posts = parse_post_list(post_results_list)
+
+    # Si no hay palabras clave relevantes, devolver todos los posts
+    if not keywords:
+        return posts[:20]  # Limitar a 20 posts como máximo
+
+    filtered_posts = []
+    for post in posts:
+        score = calculate_relevance_score(post, keywords)
+        # Umbral mínimo de relevancia
+        if score >= 2:  # Ajusta este valor según necesites
+            filtered_posts.append((score, post))
+
+    # Ordenar por puntaje (mayor a menor)
+    filtered_posts.sort(key=lambda x: x[0], reverse=True)
+
+    # Devolver solo los posts, sin los puntajes
+    return [post for score, post in filtered_posts[:20]]  # Máximo 20 posts
+
+
+def hybrid_search(user_request, post_results_list, user_tags=None):
+    """
+    Sistema híbrido que primero filtra con algoritmo simple y luego usa IA
+    para rankear solo los posts más relevantes
+    """
+    # Primero filtramos con un algoritmo simple basado en palabras clave
+    filtered_posts = filter_posts_by_keywords(user_request, post_results_list)
+
+    # Si no encontramos posts relevantes con el filtrado simple
+    if not filtered_posts:
+        # Podemos optar por devolver resultados vacíos o usar IA con todos los posts
+        return {
+            "results": [],
+            "dev_debug": {
+                "status": "No relevant posts found in initial filtering",
+                "filtered_count": 0
+            }
+        }
+
+    # Preparamos la lista reducida para la IA
+    reduced_list = "\n".join([
+        f"ID: {post['id']} | Title: {post['title']} | Description: {post['description']}"
+        for post in filtered_posts
+    ])
+
+    # Llamamos a la IA solo con los posts pre-filtrados
+    ai_response = AI_search(user_request, reduced_list, user_tags)
+
+    # Añadimos información de debug sobre el filtrado
+    if "dev_debug" in ai_response:
+        ai_response["dev_debug"]["initial_filtered_count"] = len(
+            filtered_posts)
+        ai_response["dev_debug"]["initial_filtering"] = "Applied"
+
+    return ai_response
+
+# -----------------------------Defs for DeepSeek API-------------------------
+def AI_search(user_request, post_results_list, user_tags=None):
+    prompt = f"""
+Eres un asistente especializado en analizar y clasificar proyectos de código abierto. Tu tarea es rankear posts de proyectos basándote en qué tan bien coinciden con la solicitud del usuario.
+
+### Instrucciones:
+1. Evalúa cada post según su relevancia para la solicitud del usuario
+2. Asigna a cada post:
+   - Una posición en el ranking (comenzando en 1)
+   - Su ID de post
+   - Una justificación específica
+   - Una etiqueta de relevancia
+   - Un puntaje de ajuste (FIT_SCORE) de 0 a 100
+
+### Solicitud del usuario:
+{user_request}
+
+### Etiquetas de perfil (opcional):
+{user_tags or 'No proporcionadas'}
+
+### Posts candidatos:
+{post_results_list}
+
+### Formato de respuesta (para cada post):
+RANK_POSITION: [número]
+POST_ID: [id]
+JUSTIFICATION: "[justificación específica]"
+RELEVANCE: "[etiqueta de relevancia]"
+FIT_SCORE: [puntaje]
+
+Solo responde con el formato especificado, sin comentarios adicionales.
+"""
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": "deepseek-coder",  # Modelo especializado en código
+            "messages": [
+                {"role": "system", "content": "Eres un experto en análisis de proyectos de código abierto y matching de necesidades de desarrolladores."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3,
+            "max_tokens": 2000
+        }
+
+        response = requests.post(
+            DEEPSEEK_API_URL, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+
+        result_text = response.json()["choices"][0]["message"]["content"]
+
+        # El resto del procesamiento permanece igual
+        if validate_response_format(result_text):
+            results = parse_ai_response(result_text)
+            debug_note = "✅ Analizado correctamente con DeepSeek"
+        else:
+            results = []
+            debug_note = "⚠️ Formato de respuesta inesperado"
+
+        # Calculamos tokens y costos estimados (DeepSeek es más económico)
+        input_tokens = len(prompt) / 4  # Estimación aproximada
+        output_tokens = len(result_text) / 4
+
+        # Precios de DeepSeek (ejemplo, verificar precios actuales)
+        input_cost_per_token = 0.0000005  # $0.50 por millón de tokens
+        output_cost_per_token = 0.0000015  # $1.50 por millón de tokens
+
+        estimated_cost = (input_tokens * input_cost_per_token) + \
+            (output_tokens * output_cost_per_token)
+
+        return {
+            "results": results,
+            "dev_debug": {
+                "input_tokens": int(input_tokens),
+                "output_tokens": int(output_tokens),
+                "total_tokens": int(input_tokens + output_tokens),
+                "estimated_cost": f"${estimated_cost:.6f}",
+                "model": "deepseek-coder",
+                "raw_output": result_text,
+                "status": debug_note
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error en API de DeepSeek: {str(e)}")
+        return {
+            "results": [],
+            "dev_debug": {
+                "error": str(e),
+                "status": "Error de API DeepSeek"
+            }
+        }
+
 
 # ------------------------Routes for Hello World------------------------
 
@@ -262,35 +566,48 @@ def handle_new_post(user_id):
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Smart Search------------------------
-
-
 @api.route('/smart-search', methods=['POST'])
 @jwt_required()
 def smart_search():
     try:
         data = request.get_json()
         user_request = data.get("user_request")
-        # opcional, ya tenemos info de opcional en la def al final de routes.py
         user_tags = data.get("user_tags")
 
         if not user_request:
             return jsonify({"error": "User request is required"}), 400
 
-        # para que traiga los posts candidatos
+        # Obtener todos los posts
         posts = Post.query.all()
+        post_count = len(posts)
+        
+        # Generar clave de caché
+        cache_key = get_search_cache_key(user_request, str(user_tags), post_count)
+        
+        # Verificar si existe en caché
+        if hasattr(api, 'search_cache'):
+            cached_result = api.search_cache.get(cache_key)
+            if cached_result:
+                return jsonify(cached_result), 200
+        
+        # Si no está en caché, procesar normalmente
         post_results_list = "\n".join([
             f"ID: {post.id} | Title: {post.title or '[Untitled]'} | Description: {post.description}"
             for post in posts
         ])
 
-        # para llamar a OpenAI
-        ai_response = AI_search(user_request, post_results_list, user_tags)
+        ai_response = hybrid_search(user_request, post_results_list, user_tags)
+
+        # Almacenar en caché
+        if not hasattr(api, 'search_cache'):
+            api.search_cache = {}
+        api.search_cache[cache_key] = ai_response
 
         return jsonify(ai_response), 200
+
     except Exception as error:
         logger.error(f"API call failed: {error}")
         return jsonify({"error": str(error)}), 500
-
 # ------------------------Routes for comments a post------------------------
 
 
@@ -745,7 +1062,6 @@ def handle_post_like(post_id):
 
 # -----------------------Routes for Likes to Comments-----------------------
 
-
 @api.route('/comments/<int:comment_id>/like', methods=['POST', 'DELETE'])
 @jwt_required()
 def like_comment(comment_id):
@@ -811,7 +1127,6 @@ def like_comment(comment_id):
         return jsonify({"error": "Internal server error"}), 500
 
 # -------------------------Routes for Get all Users (Admin only)------------------------
-
 
 @api.route('/admin/users', methods=['GET'])
 @admin_required
@@ -929,7 +1244,6 @@ def get_all_users():
 
 # ------------------------Routes for Get User by ID (Admin only)------------------------
 
-
 @api.route('/admin/users/<int:user_id>', methods=['GET', 'DELETE'])
 @admin_required
 def admin_manage_user(user_id):
@@ -1013,7 +1327,6 @@ def admin_manage_user(user_id):
         }), 500
 # ----------------------Routes for Get all Post (Admin only)------------------------
 
-
 @api.route('/admin/posts', methods=['GET'])
 @admin_required
 def admin_get_posts():
@@ -1043,7 +1356,6 @@ def admin_get_posts():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Post by ID (Admin only)------------------------
-
 
 @api.route('/admin/posts/<int:post_id>', methods=['GET', 'DELETE'])
 @admin_required
@@ -1084,7 +1396,6 @@ def handle_single_admin_post(post_id):
 
 # ------------------------Routes for Get Comments (Admin only)------------------------
 
-
 @api.route('/admin/comments', methods=['GET'])
 @admin_required
 def admin_get_comments():
@@ -1114,7 +1425,6 @@ def admin_get_comments():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments by ID (Admin only)------------------------
-
 
 @api.route('/admin/comments/<int:comment_id>', methods=['GET', 'DELETE'])
 @admin_required
@@ -1152,7 +1462,6 @@ def handle_single_admin_comment(comment_id):
             return jsonify({"error": str(e)}), 500
 # ---------------------------Routes for Get Dashboard (Admin only)--------------------------
 
-
 @api.route('/admin/dashboard', methods=['GET'])
 @admin_required
 def admin_dashboard():
@@ -1176,8 +1485,6 @@ def admin_dashboard():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 # ------------------------------Routes Stripe Checkout----------------------
-
-
 @api.route('/create-stripe-session', methods=['POST'])
 def create_stripe_session():
     # Log the incoming request to see what the server is receiving.
@@ -1243,159 +1550,7 @@ def create_stripe_session():
         print(f"An unexpected error occurred: {e}")
         return jsonify({'error': str(e)}), 500
 
-
-# -----------------------------Defs for OpenAI API-------------------------
-logger = logging.getLogger(__name__)
-client = OpenAI(api_key=os.getenv("GPTKey"))
-
-
-def parse_ai_response(response_text: str):
-    pattern = re.compile(
-        r"RANK_POSITION:\s*(\d+)\s*"
-        r"POST_ID:\s*(\d+)\s*"
-        r'JUSTIFICATION:\s*"([^"]+)"\s*'
-        r'RELEVANCE:\s*"([^"]+)"\s*'
-        r'FIT_SCORE:\s*(\d+)'
-    )
-
-    results = []
-    for match in pattern.findall(response_text):
-        rank, post_id, justification, relevance, score = match
-        results.append({
-            "rank_position": int(rank),
-            "post_id": int(post_id),
-            "justification": justification.strip(),
-            "relevance": relevance.strip(),
-            "fit_score": int(score)
-        })
-
-    results.sort(key=lambda x: x["rank_position"])
-    return results
-
-
-def validate_response_format(response_text):
-    return "RANK_POSITION" in response_text and "FIT_SCORE" in response_text
-
-
-def AI_search(user_request, post_results_list, user_tags=None):
-    prompt = f"""
-You are an assistant tasked with ranking a list of open-source project posts based on how well they match a user’s search request and optional profile tags. You will receive:
-
-- A short user request
-- Optional profile tags
-- A list of candidate posts (each with an ID, title, and description)
-
----
-
-## Your task is to:
-
-1. Evaluate each post for how well it matches the user’s request and tags.
-2. Assign each post:
-    - A ranking position (starting at 1)
-    - Its post ID
-    - A justification for why it belongs in that position
-    - A relevance label from the list below
-    - A FIT_SCORE from 0 to 100 that reflects how well it fits (use the full range, do not inflate)
-
-## Relevance labels:
-
-- Exceptional match – fits the request closely, ideal candidate
-- Strong match – meets core needs, clear and useful
-- Moderate match – helpful, but missing key elements
-- Mild match – loosely related, likely not sufficient
-- Low match – barely relevant, should only be shown as fallback
-
-## Format (repeat for each post):
-
-RANK_POSITION: {{number}}  
-POST_ID: {{id}}  
-JUSTIFICATION: "{{reason the post is in this position}}"  
-RELEVANCE: "{{one of the labels}}"  
-FIT_SCORE: {{score}}
-
-The JUSTIFICATION must refer to specific aspects of the user’s request, profile tags (if available), and the project post. Write in second person, directly addressing the user’s need — e.g., “You need a repo for a desktop app for tracking vacation days that’s beginner-friendly, uses mainly HTML, JS, CSS, and Python...”. Do not use vague phrases like “closely matches” or “relevant.” Be specific and concise. Explain exactly what part of the user’s need is met, and how.
-
----
-
-### User Request:
-"{user_request}"
-
-### Profile Tags:
-{user_tags or 'No tags provided'}
-
-### Candidate Posts:
-{post_results_list}
-
----
-
-### Response Instructions:
-Only use the format provided. No extra commentary.
-"""
-
-    try:
-        logger.info(f"Sending request to OpenAI for input: {user_request}")
-
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You’re a data analyst, senior programmer, and coding teacher. Your job is to retrieve and rank the most relevant GitHub project posts from our database based on the user’s needs and tags."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            max_tokens=650,
-            temperature=0.3
-        )
-
-        result_text = response.choices[0].message.content
-
-        usage = response.usage
-        input_tokens = usage.prompt_tokens
-        output_tokens = usage.completion_tokens
-        total_tokens = usage.total_tokens
-
-        input_rate = 0.0015 / 1000
-        output_rate = 0.002 / 1000
-        estimated_cost = (input_tokens * input_rate) + \
-            (output_tokens * output_rate)
-
-        if validate_response_format(result_text):
-            results = parse_ai_response(result_text)
-            debug_note = "✅ Parsed successfully."
-        else:
-            results = []
-            debug_note = "⚠️ Format validation failed — skipping parsing."
-
-        return {
-            "results": results,
-            "dev_debug": {
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "total_tokens": total_tokens,
-                "estimated_cost": f"${estimated_cost:.5f}",
-                "budget_pct_used": f"{(estimated_cost / 5) * 100:.2f}%",
-                "raw_output": result_text,
-                "status": debug_note
-            }
-        }
-
-    except Exception as e:
-        logger.error(f"API call failed: {e}")
-        return {
-            "results": [],
-            "dev_debug": {
-                "error": str(e),
-                "status": "❌ API error"
-            }
-        }
-
 # -----------------------------Se añadio Delete Comments -------------------------
-
-
 @api.route('/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(comment_id):
