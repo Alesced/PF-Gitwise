@@ -24,7 +24,7 @@ const SmartSearch = () => {
         }
         setOgPost(foundPost);
     };
-    
+
     const renderCard = (post) => {
         if (!post) return null;
 
@@ -59,7 +59,7 @@ const SmartSearch = () => {
             toast.error("Please ask a question, so we can help you find what you need :)");
             return;
         }
-        
+
         setLoading(true);
         setResults([]);
         setDebug(null);
@@ -72,29 +72,29 @@ const SmartSearch = () => {
                     "Content-Type": "application/json",
                     ...(token && { "Authorization": `Bearer ${token}` })
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     user_request: userRequest,
                     user_tags: store.user?.stack || null
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const data = await response.json();
-            
+
             // Verificar si la respuesta tiene la estructura esperada
             if (data.results) {
                 setResults(data.results);
             } else {
                 setResults([]);
             }
-            
+
             if (data.dev_debug) {
                 setDebug(data.dev_debug);
             }
-            
+
         } catch (error) {
             console.error("Smart search failed", error);
             setError("Something went wrong with smart search");
@@ -170,15 +170,15 @@ const SmartSearch = () => {
                                     <div className="d-flex flex-wrap align-items-center gap-2 mt-auto">
                                         <span className="badge bg-secondary">{result.relevance}</span>
                                         <span className="badge bg-info">Score: {result.fit_score}</span>
-                                        <button 
-                                            className="btn btn-gitwise btn-sm" 
+                                        <button
+                                            className="btn btn-gitwise btn-sm"
                                             onClick={() => fetchOgPost(result.post_id)}
                                         >
                                             View Post
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 {OgPost?.id == result.post_id && (
                                     <motion.div
                                         className="mt-3"
@@ -201,14 +201,19 @@ const SmartSearch = () => {
                     No results found. Try different keywords or check your search query.
                 </div>
             )}
-
-            {debug && (
-                <details className="mt-4 w-100 px-md-5">
-                    <summary className="cursor-pointer text-white">Dev Debug Info</summary>
-                    <pre className="whitespace-pre-wrap bg-dark p-3 rounded mt-2 text-white">
-                        {JSON.stringify(debug, null, 2)}
-                    </pre>
-                </details>
+            {process.env.NODE_ENV === 'development' && debug && (
+                <div className="dev-debug-panel bg-dark p-3 rounded mt-3">
+                    <h6 className="text-info">🧪 Info de Desarrollo</h6>
+                    <div className="small">
+                        <div>Costo: {debug.estimated_cost}</div>
+                        <div>Tokens: {debug.total_tokens}</div>
+                        <div>Modelo: {debug.model}</div>
+                        <div>Estado: {debug.status}</div>
+                        {debug.initial_filtered_count && (
+                            <div>Posts filtrados: {debug.initial_filtered_count}</div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -17,9 +17,14 @@ import os
 from api.utils import send_email
 from functools import wraps,  lru_cache
 from datetime import datetime, UTC
-import stripe, requests, json, logging, re, hashlib
+import stripe
+import requests
+import json
+import logging
+import re
+import hashlib
 
-#configuracion del logger
+# configuracion del logger
 logger = logging.getLogger(__name__)
 api = Blueprint('api', __name__)
 bcrypt = Bcrypt()
@@ -31,12 +36,16 @@ DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 # Función de caché
+
+
 @lru_cache(maxsize=100)
 def get_search_cache_key(user_request, user_tags, post_count):
     key_str = f"{user_request}:{user_tags}:{post_count}"
     return hashlib.md5(key_str.encode()).hexdigest()
 
 # -------------------------Decorator Administrator------------------------
+
+
 def admin_required(fn):
     """
     Versión simplificada que no inyecta el admin
@@ -61,6 +70,8 @@ def admin_required(fn):
 
     return wrapper
 # -------------------------Functions for Smart Search------------------------
+
+
 def validate_response_format(response_text):
     """
     Valida que la respuesta de la API tenga el formato esperado
@@ -261,6 +272,8 @@ def hybrid_search(user_request, post_results_list, user_tags=None):
     return ai_response
 
 # -----------------------------Defs for DeepSeek API-------------------------
+
+
 def AI_search(user_request, post_results_list, user_tags=None):
     prompt = f"""
 Eres un asistente especializado en analizar y clasificar proyectos de código abierto. Tu tarea es rankear posts de proyectos basándote en qué tan bien coinciden con la solicitud del usuario.
@@ -300,13 +313,21 @@ Solo responde con el formato especificado, sin comentarios adicionales.
         }
 
         payload = {
-            "model": "deepseek-coder",  # Modelo especializado en código
+            "model": "deepseek-coder",
             "messages": [
-                {"role": "system", "content": "Eres un experto en análisis de proyectos de código abierto y matching de necesidades de desarrolladores."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "Analiza y rankea proyectos de código abierto para developers."  # Más corto
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
             ],
-            "temperature": 0.3,
-            "max_tokens": 2000
+            "temperature": 0.2,      # Reducido para más consistencia
+            "max_tokens": 350,       # Reducido basado en análisis real
+            "top_p": 0.9,            # Añadido para mejor control
+            "frequency_penalty": 0.1  # Reduce repeticiones
         }
 
         response = requests.post(
@@ -566,6 +587,8 @@ def handle_new_post(user_id):
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Smart Search------------------------
+
+
 @api.route('/smart-search', methods=['POST'])
 @jwt_required()
 def smart_search():
@@ -580,16 +603,17 @@ def smart_search():
         # Obtener todos los posts
         posts = Post.query.all()
         post_count = len(posts)
-        
+
         # Generar clave de caché
-        cache_key = get_search_cache_key(user_request, str(user_tags), post_count)
-        
+        cache_key = get_search_cache_key(
+            user_request, str(user_tags), post_count)
+
         # Verificar si existe en caché
         if hasattr(api, 'search_cache'):
             cached_result = api.search_cache.get(cache_key)
             if cached_result:
                 return jsonify(cached_result), 200
-        
+
         # Si no está en caché, procesar normalmente
         post_results_list = "\n".join([
             f"ID: {post.id} | Title: {post.title or '[Untitled]'} | Description: {post.description}"
@@ -960,7 +984,6 @@ def get_user_post(user_id):
     }), 200
 
 # ------------------------Routes GET and POST Favorites by users------------------------
-# SE MODIFICO ESTA RUTA
 
 
 @api.route('/favorites', methods=['POST', 'GET'])
@@ -1062,6 +1085,7 @@ def handle_post_like(post_id):
 
 # -----------------------Routes for Likes to Comments-----------------------
 
+
 @api.route('/comments/<int:comment_id>/like', methods=['POST', 'DELETE'])
 @jwt_required()
 def like_comment(comment_id):
@@ -1127,6 +1151,7 @@ def like_comment(comment_id):
         return jsonify({"error": "Internal server error"}), 500
 
 # -------------------------Routes for Get all Users (Admin only)------------------------
+
 
 @api.route('/admin/users', methods=['GET'])
 @admin_required
@@ -1244,6 +1269,7 @@ def get_all_users():
 
 # ------------------------Routes for Get User by ID (Admin only)------------------------
 
+
 @api.route('/admin/users/<int:user_id>', methods=['GET', 'DELETE'])
 @admin_required
 def admin_manage_user(user_id):
@@ -1327,6 +1353,7 @@ def admin_manage_user(user_id):
         }), 500
 # ----------------------Routes for Get all Post (Admin only)------------------------
 
+
 @api.route('/admin/posts', methods=['GET'])
 @admin_required
 def admin_get_posts():
@@ -1356,6 +1383,7 @@ def admin_get_posts():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Post by ID (Admin only)------------------------
+
 
 @api.route('/admin/posts/<int:post_id>', methods=['GET', 'DELETE'])
 @admin_required
@@ -1396,6 +1424,7 @@ def handle_single_admin_post(post_id):
 
 # ------------------------Routes for Get Comments (Admin only)------------------------
 
+
 @api.route('/admin/comments', methods=['GET'])
 @admin_required
 def admin_get_comments():
@@ -1425,6 +1454,7 @@ def admin_get_comments():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments by ID (Admin only)------------------------
+
 
 @api.route('/admin/comments/<int:comment_id>', methods=['GET', 'DELETE'])
 @admin_required
@@ -1462,6 +1492,7 @@ def handle_single_admin_comment(comment_id):
             return jsonify({"error": str(e)}), 500
 # ---------------------------Routes for Get Dashboard (Admin only)--------------------------
 
+
 @api.route('/admin/dashboard', methods=['GET'])
 @admin_required
 def admin_dashboard():
@@ -1485,6 +1516,8 @@ def admin_dashboard():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 # ------------------------------Routes Stripe Checkout----------------------
+
+
 @api.route('/create-stripe-session', methods=['POST'])
 def create_stripe_session():
     # Log the incoming request to see what the server is receiving.
@@ -1551,6 +1584,8 @@ def create_stripe_session():
         return jsonify({'error': str(e)}), 500
 
 # -----------------------------Se añadio Delete Comments -------------------------
+
+
 @api.route('/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(comment_id):
