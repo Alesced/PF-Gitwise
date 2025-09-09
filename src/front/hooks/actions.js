@@ -404,3 +404,36 @@ export const toggleFavorite = async (dispatch, store, postId) => {
     toast.error(error.message || "Failed to update favorite status.");
   }
 };
+
+//----------------------------Acciones del administrador--------------------------
+export const adminDeletePost = async (dispatch, token, postId) => {
+  try {
+    await fetchWithAuth(
+      `${BASE_URL}/api/admin/posts/${postId}`,
+      "DELETE",
+      null,
+      token
+    );
+    dispatch({ type: "delete_post", payload: postId });
+    toast.success("Post deleted successfully by admin!");
+  } catch (error) {
+    console.error("Error deleting post as admin:", error);
+    toast.error("Failed to delete post as admin.");
+    throw error;
+  }
+};
+
+export const fetchAdminPosts = async (dispatch, token) => {
+  try {
+    const data = await fetchWithAuth(
+      `${BASE_URL}/api/admin/posts`,
+      "GET",
+      null,
+      token
+    );
+    dispatch({ type: "set_posts", payload: data.posts });
+  } catch (error) {
+    console.error("Error fetching admin posts:", error);
+    toast.error("Failed to load posts for administration.");
+  }
+};

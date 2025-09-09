@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 # Configuración
-BASE_URL = "https://musical-spoon-5grwqxxxrjxj3v6jg-3001.app.github.dev"
+BASE_URL = "https://vigilant-space-doodle-jj7x5qqq7wqq2547q-3001.app.github.dev"
 
 # CREDENCIALES - ¡YA ACTUALIZADAS!
 USER_EMAIL = "nuevo_usuario@example.com"

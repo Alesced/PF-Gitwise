@@ -20,7 +20,6 @@ export const LikeButton = ({ postId }) => {
   const audioRef = useRef(null);
 
   // Verificamos si el usuario ha dado "me gusta" y contamos los likes del post.
-  // Es más simple y claro calcular estos valores directamente sin useMemo para un MVP.
   const likesForPost = store.allLikes.filter(like => like.post_id === postId);
   const isLiked = likesForPost.some(like => like.user_id === store.user?.id);
   const likeCount = likesForPost.length;

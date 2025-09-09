@@ -71,6 +71,8 @@ export default function useGlobalReducer() {
     createPost: (userId, body) => globalActions.createPost(dispatch, store.token, userId, body), // Nueva acción agregada
     deletePostApi: (postId) => globalActions.deletePost(dispatch, store.token, postId), // Nueva acción agregada y renombrada para evitar conflicto
     editPostApi: (postId, body) => globalActions.editPost(dispatch, store.token, postId, body), // Nueva acción agregada y renombrada para evitar conflicto
+    adminDeletePost: (postId) => globalActions.adminDeletePost(dispatch, store.token, postId),
+    fetchAdminPosts: () => globalActions.fetchAdminPosts(dispatch, store.token),
 
     // Acciones de API que usan la lógica definida en actions.js
     // Ahora las acciones de comentarios también están disponibles

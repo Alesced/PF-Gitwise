@@ -73,7 +73,9 @@ export const FavoriteButton = ({ postId, whiteText = false, count: countProp = 0
         <button
             ref={buttonRef}
             disabled={!store.token}
-            className={`btn btn-sm border rounded d-flex align-items-center ${whiteText ? "text-white" : ""}`}
+            className={`btn btn-sm border rounded d-flex align-items-center justify-content-center ${whiteText ? "text-white" : ""}`}
+            // 👇 Y se añade un estilo para un tamaño fijo y cuadrado
+            style={{ width: "41px", height: "32px" }}
             onClick={toggleFavorite}
         >
             {isFavorite ? (
@@ -82,7 +84,6 @@ export const FavoriteButton = ({ postId, whiteText = false, count: countProp = 0
                         color: "#ffc107",
                         transition: "transform 0.3s ease",
                     }}
-                    className="me-1"
                 />
             ) : (
                 <FaRegBookmark
@@ -90,10 +91,8 @@ export const FavoriteButton = ({ postId, whiteText = false, count: countProp = 0
                         color: whiteText ? "#fff" : "#999",
                         transition: "transform 0.3s ease",
                     }}
-                    className="me-1"
                 />
             )}
-            <span>{countProp}</span>
         </button>
     );
 };
