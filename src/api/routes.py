@@ -432,11 +432,8 @@ def register_user():
     db.session.add(new_user)
     db.session.commit()
 
-    access_token = create_access_token(identity=new_user.id)
-
     return jsonify({
         "message": "User registered successfully",
-        "token": access_token,
         "user": {
             "id": new_user.id,
             "email": new_user.email,

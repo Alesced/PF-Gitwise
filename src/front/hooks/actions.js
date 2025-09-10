@@ -65,11 +65,8 @@ export const login = async (dispatch, body) => {
 
 export const signup = async (dispatch, body) => {
   try {
-    const data = await fetchWithAuth(`${BASE_URL}/api/register`, "POST", body);
-    dispatch({
-      type: "set_user",
-      payload: { token: data.token, user: data.user },
-    });
+    await fetchWithAuth(`${BASE_URL}/api/register`, "POST", body);
+    
     toast.success("Registration successful!");
     return true;
   } catch (error) {
