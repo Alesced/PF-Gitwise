@@ -13,7 +13,6 @@ USER_PASSWORD = "123456"
 USER_ID_TO_POST = 4
 # =======================================================================
 
-
 # Headers para las peticiones
 headers = {
     "Content-Type": "application/json"
@@ -21,7 +20,6 @@ headers = {
 
 # Lista completa de 20 posts
 posts = [
-    # --- Tus 12 Posts Originales ---
     {
         "title": "Turn GitHub into your todo list",
         "description": "Use GitHub issues as a personal task manager. This repo by @azu supports tags, automations, and full integration with Actions. Easy to customize. JS-based.",
@@ -106,7 +104,6 @@ posts = [
         "stack": "JAVASCRIPT",
         "level": "STUDENT"
     },
-    # --- 8 Posts Adicionales ---
     {
         "title": "Modern SQL Client for the Terminal",
         "description": "A powerful and intuitive terminal-based SQL client by @dbcli. Supports auto-completion and syntax highlighting for PostgreSQL, MySQL, and more. A must-have for backend devs.",

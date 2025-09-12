@@ -432,11 +432,8 @@ def register_user():
     db.session.add(new_user)
     db.session.commit()
 
-    access_token = create_access_token(identity=new_user.id)
-
     return jsonify({
         "message": "User registered successfully",
-        "token": access_token,
         "user": {
             "id": new_user.id,
             "email": new_user.email,
@@ -1383,8 +1380,6 @@ def admin_get_posts():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Post by ID (Admin only)------------------------
-
-
 @api.route('/admin/posts/<int:post_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_post(post_id):
@@ -1423,8 +1418,6 @@ def handle_single_admin_post(post_id):
             return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments (Admin only)------------------------
-
-
 @api.route('/admin/comments', methods=['GET'])
 @admin_required
 def admin_get_comments():
@@ -1454,8 +1447,6 @@ def admin_get_comments():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments by ID (Admin only)------------------------
-
-
 @api.route('/admin/comments/<int:comment_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_comment(comment_id):

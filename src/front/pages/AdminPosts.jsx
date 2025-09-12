@@ -1,5 +1,3 @@
-// File: src/front/pages/AdminPosts.jsx
-
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
@@ -11,19 +9,17 @@ export const AdminPosts = () => {
   const [search, setSearch] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [postToDelete, setPostToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const { store, actions } = useGlobalReducer();
-  const { allPosts: posts } = store; // Usar los posts del store global
+  const { allPosts: posts } = store;
 
   const navigate = useNavigate()
   const postsPerPage = 7
 
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
-  const token = localStorage.getItem("token")
-
-  // Cargar los posts usando la acción global
+  // Cargar los posts de administración
   useEffect(() => {
-    actions.fetchAllPosts();
-  }, []); // El array de dependencias vacío asegura que se ejecute solo una vez
+    actions.fetchAdminPosts(); // Usar la acción específica de admin
+  }, []);
 
   const filtered = posts.filter(post => {
     return (
@@ -41,9 +37,18 @@ export const AdminPosts = () => {
 
   const handleDelete = async () => {
     if (postToDelete) {
-      await actions.deletePost(postToDelete); // Llama a la acción que se comunica con la API
-      setPostToDelete(null);
-      // El reducer ya se encarga de actualizar el `store.allPosts`, por lo que la UI se actualizará automáticamente.
+      setIsDeleting(true);
+      try {
+        await actions.adminDeletePost(postToDelete); // Usar la acción de admin
+        setPostToDelete(null);
+        toast.success("Project deleted successfully!");
+        // Recargar los posts después de eliminar
+        actions.fetchAdminPosts();
+      } catch (error) {
+        toast.error("Failed to delete project: " + error.message);
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -140,6 +145,7 @@ export const AdminPosts = () => {
                   <button
                     className="btn btn-sm btn-outline-danger"
                     onClick={() => setPostToDelete(post.id)}
+                    disabled={isDeleting}
                   >
                     🗑️ Delete
                   </button>
@@ -183,17 +189,26 @@ export const AdminPosts = () => {
                   type="button"
                   className="btn-close"
                   onClick={() => setPostToDelete(null)}
+                  disabled={isDeleting}
                 />
               </div>
               <div className="modal-body">
                 <p>This action cannot be undone.</p>
               </div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setPostToDelete(null)}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setPostToDelete(null)}
+                  disabled={isDeleting}
+                >
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={handleDelete}>
-                  Delete
+                <button 
+                  className="btn btn-danger" 
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
@@ -202,4 +217,4 @@ export const AdminPosts = () => {
       )}
     </div>
   )
-} 
+}
