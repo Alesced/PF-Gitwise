@@ -100,7 +100,7 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         allFavorites: store.allFavorites.filter(
-          (fav) => fav.id !== action.payload
+          (fav) => fav.post_id !== action.payload
         ),
       };
 

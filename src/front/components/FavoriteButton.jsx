@@ -14,12 +14,12 @@ const clickSoundFile = "/sounds/pop.mp3";
  * @param {number} count - El número de favoritos del post.
  */
 export const FavoriteButton = ({ postId, whiteText = false, count: countProp = 0 }) => {
-  // Obtenemos el store y las acciones de nuestro hook global
+    // Obtenemos el store y las acciones de nuestro hook global
     const { store, actions } = useGlobalReducer();
-  
-  // Referencia para el elemento del botón, utilizada para la animación
+
+    // Referencia para el elemento del botón, utilizada para la animación
     const buttonRef = useRef(null);
-  // Referencia para el objeto de audio, para evitar que se recree en cada render
+    // Referencia para el objeto de audio, para evitar que se recree en cada render
     const audioRef = useRef(null);
 
     // Corregimos esta línea para que verifique tanto el post_id como el user_id.
@@ -28,43 +28,43 @@ export const FavoriteButton = ({ postId, whiteText = false, count: countProp = 0
     );
 
     useEffect(() => {
-    // Inicializar el objeto de audio una sola vez al montar el componente
+        // Inicializar el objeto de audio una sola vez al montar el componente
         if (!audioRef.current) {
             audioRef.current = new Audio(clickSoundFile);
         }
     }, []);
 
-  /**
-   * Dispara la animación de "pop" en el botón.
-   */
+    /**
+     * Dispara la animación de "pop" en el botón.
+     */
     const triggerPop = () => {
-    // Se asegura de que la referencia existe antes de usarla
+        // Se asegura de que la referencia existe antes de usarla
         if (buttonRef.current) {
             buttonRef.current.classList.add("pop-animation");
             setTimeout(() => buttonRef.current.classList.remove("pop-animation"), 300);
         }
     };
 
-  /**
-   * Maneja la lógica para agregar o quitar el post de favoritos.
-   */
+    /**
+     * Maneja la lógica para agregar o quitar el post de favoritos.
+     */
     const toggleFavorite = async () => {
-    // Si el usuario no está autenticado, muestra una advertencia y sale de la función.
+        // Si el usuario no está autenticado, muestra una advertencia y sale de la función.
         if (!store.token) {
             toast.warn("You must be logged in to toggle favorites.");
             return;
         }
 
         try {
-      // Llama a la acción global para manejar la lógica de la API
+            // Llama a la acción global para manejar la lógica de la API
             await actions.toggleFavorite(postId);
 
-      // Si la acción es exitosa, activamos la animación y el sonido.
+            // Si la acción es exitosa, activamos la animación y el sonido.
             triggerPop();
             audioRef.current?.play().catch(e => console.warn("Failed to play audio", e));
         } catch (err) {
             console.error("Failed to toggle favorites:", err);
-      // La acción ya debería manejar el toast, pero lo mantenemos aquí como fallback
+            // La acción ya debería manejar el toast, pero lo mantenemos aquí como fallback
             toast.error(err.message || "Failed to toggle favorite. Please try again.");
         }
     };

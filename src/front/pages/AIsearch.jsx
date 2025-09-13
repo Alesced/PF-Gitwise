@@ -11,7 +11,7 @@ import { CommentSection } from "../components/CommentSection";
 
 export const AIsearch = () => {
   // Usamos el store global para acceder a los posts y el dispatch para las acciones
-  const { store, dispatch } = useGlobalReducer();
+  const { store, actions } = useGlobalReducer();
   const [currentPage, setCurrentPage] = useState(1);
   const [stackFilter, setStackFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
@@ -26,6 +26,20 @@ export const AIsearch = () => {
 
   // Si el token no existe, navegamos al login
   if (!store.token) return <Navigate to="/login" replace />;
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      await actions.fetchAllPosts();
+    };
+    fetchInitialData();
+  }, []);
+
+  // Cargar favoritos cuando el token esté disponible
+  useEffect(() => {
+    if (store.token) {
+      actions.fetchAllFavorites();
+    }
+  }, [store.token]);
 
   // Lógica de filtrado de posts en el frontend
   const filteredPosts = posts.filter(post => {
