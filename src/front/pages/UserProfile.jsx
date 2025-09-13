@@ -13,17 +13,34 @@ import { FaRegComment } from "react-icons/fa";
 const STACKS = ["HTML", "CSS", "JAVASCRIPT", "PYTHON", "SQL"];
 const LEVELS = ["student", "junior_dev", "mid_dev", "senior_dev"];
 
-// Función para formatear los valores para visualización
+// Función para formatear los valores para visualización (¡FALTABA!)
 const formatValue = (value) => {
   if (!value) return '';
 
-  if (value === "JAVASCRIPT") return "JavaScript";
-  if (value === "student") return "Student";
-  if (value === "junior_dev") return "Junior Dev";
-  if (value === "mid_dev") return "Mid Dev";
-  if (value === "senior_dev") return "Senior Dev";
+  if (value === "JAVASCRIPT" || value === "javascript") return "JavaScript";
+  if (value === "STUDENT" || value === "student") return "Student";
+  if (value === "JUNIOR_DEV" || value === "junior_dev") return "Junior Dev";
+  if (value === "MID_DEV" || value === "mid_dev") return "Mid Dev";
+  if (value === "SENIOR_DEV" || value === "senior_dev") return "Senior Dev";
+  if (value === "HTML") return "HTML";
+  if (value === "CSS") return "CSS";
+  if (value === "PYTHON") return "Python";
+  if (value === "SQL") return "SQL";
 
   return value;
+};
+
+// Función para convertir valores UI a formato backend (MEJORADA)
+const toBackendFormat = (value) => {
+  if (!value) return '';
+
+  const mapping = {
+    "HTML": "HTML", "CSS": "CSS", "JAVASCRIPT": "JAVASCRIPT",
+    "PYTHON": "PYTHON", "SQL": "SQL", "student": "STUDENT",
+    "junior_dev": "JUNIOR_DEV", "mid_dev": "MID_DEV", "senior_dev": "SENIOR_DEV"
+  };
+
+  return mapping[value] || value.toUpperCase();
 };
 
 export const UserProfile = () => {
@@ -101,14 +118,13 @@ export const UserProfile = () => {
     }
 
     try {
-      // Llamamos a la acción 'createPost' con los parámetros correctos
       const success = await actions.createPost(store.user.id, {
         title,
         description,
         repo_URL: github,
         image_URL: "https://via.placeholder.com/300",
-        stack,
-        level,
+        stack: toBackendFormat(stack),
+        level: toBackendFormat(level),
       });
 
       if (success) {
@@ -150,9 +166,24 @@ export const UserProfile = () => {
   };
 
   const saveEdit = async (id) => {
-    // Llamamos a la acción 'editPostAPI'
-    await actions.editPostApi(id, formData);
-    cancelEdit();
+    // Preparar los datos convirtiendo los valores al formato del backend
+    const formattedData = {
+      title: formData.title,
+      description: formData.description,
+      repo_URL: formData.repo_URL,
+      image_URL: formData.image_URL || "https://via.placeholder.com/300",
+      stack: toBackendFormat(formData.stack),
+      level: toBackendFormat(formData.level)
+    };
+
+    try {
+      console.log("Sending to backend:", formattedData);
+      await actions.editPostApi(id, formattedData);
+      cancelEdit();
+    } catch (error) {
+      console.error("Error saving edit:", error);
+      toast.error("Failed to update post: " + error.message);
+    }
   };
 
   const renderCard = (item, editable = false) => {
@@ -296,12 +327,20 @@ export const UserProfile = () => {
 
                 <select className="form-select mb-2" value={newProject.stack} onChange={e => setNewProject({ ...newProject, stack: e.target.value })}>
                   <option value="">Select Stack</option>
-                  {STACKS.map((stack, i) => <option key={i} value={stack}>{formatValue(stack)}</option>)}
+                  {STACKS.map((stack, i) => (
+                    <option key={i} value={stack}>
+                      {formatValue(stack)}
+                    </option>
+                  ))}
                 </select>
 
                 <select className="form-select mb-3" value={newProject.level} onChange={e => setNewProject({ ...newProject, level: e.target.value })}>
                   <option value="">Select Level</option>
-                  {LEVELS.map((level, i) => <option key={i} value={level}>{formatValue(level)}</option>)}
+                  {LEVELS.map((level, i) => (
+                    <option key={i} value={level}>
+                      {formatValue(level)}
+                    </option>
+                  ))}
                 </select>
 
                 <div className="d-flex justify-content-between">
