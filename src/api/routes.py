@@ -991,23 +991,31 @@ def handle_favorites():
     if request.method == 'GET':
         favorites = Favorites.query.filter_by(user_id=user_id).all()
 
-        # Nueva lista para almacenar los datos combinados
-        combined_favorites = []
+        # Crear una lista con la estructura que espera el frontend
+        favorites_data = []
         for fav in favorites:
             post = Post.query.get(fav.post_id)
             if post:
-                # Obtenemos los datos del post
-                post_data = post.serialize()
+                # Usar la estructura de favorito que espera el frontend
+                favorite_data = {
+                    "id": fav.id,
+                    "post_id": fav.post_id,
+                    "user_id": fav.user_id,
+                    # Campos del post - asegurar formato correcto
+                    "title": post.title or "Untitled Project",
+                    "description": post.description or "No description available",
+                    "repo_URL": post.repo_URL,
+                    "image_URL": post.image_URL,
+                    # Convertir Enum a string para el frontend
+                    "stack": post.stack.name if post.stack else None,
+                    "level": post.level.name if post.level else None,
+                    "favorite_id": fav.id
+                }
+                favorites_data.append(favorite_data)
 
-                # Añadimos el 'id' de la relación de favorito al diccionario del post
-                post_data['favorite_id'] = fav.id
+        return jsonify({"favorites": favorites_data}), 200
 
-                combined_favorites.append(post_data)
-
-        # Devolvemos la lista de posts con el 'favorite_id' incluido
-        return jsonify({"favorites": combined_favorites}), 200
-
-    if request.method == 'POST':
+    elif request.method == 'POST':
         # Agregar un nuevo favorito
         data = request.get_json()
         post_id = data.get('post_id')
@@ -1018,6 +1026,7 @@ def handle_favorites():
         # Verificar si el post ya es favorito del usuario
         existing_favorite = Favorites.query.filter_by(
             user_id=user_id, post_id=post_id).first()
+
         if existing_favorite:
             return jsonify({"error": "Post already in favorites"}), 409
 
@@ -1025,8 +1034,29 @@ def handle_favorites():
         db.session.add(new_favorite)
         db.session.commit()
 
-        return jsonify({"message": "Favorite added", "favorite": new_favorite.serialize()}), 201
+        # Obtener el post completo para incluirlo en la respuesta
+        post = Post.query.get(post_id)
+        if not post:
+            return jsonify({"error": "Post not found"}), 404
 
+        # Crear la respuesta con la estructura que espera el frontend
+        response_data = {
+            "id": new_favorite.id,
+            "post_id": new_favorite.post_id,
+            "user_id": new_favorite.user_id,
+            "title": post.title or "Untitled Project",
+            "description": post.description or "No description available",
+            "repo_URL": post.repo_URL,
+            "image_URL": post.image_URL,
+            "stack": post.stack.name if post.stack else None,
+            "level": post.level.name if post.level else None,
+            "favorite_id": new_favorite.id
+        }
+
+        return jsonify({
+            "message": "Favorite added",
+            "favorite": response_data
+        }), 201
 # ------------------------Routes for Delete Favorites by id------------------------
 
 
@@ -1039,14 +1069,19 @@ def delete_favorite(favorite_id):
     if not favorite:
         return jsonify({"error": "Favorite not found"}), 404
 
-    # Verificar que el usuario del token es el dueño del favorito
     if favorite.user_id != int(user_id):
         return jsonify({"error": "Unauthorized"}), 403
+
+    # Guardar el post_id antes de eliminar
+    post_id = favorite.post_id
 
     db.session.delete(favorite)
     db.session.commit()
 
-    return jsonify({"message": "Favorite deleted"}), 200
+    return jsonify({
+        "message": "Favorite deleted",
+        "post_id": post_id  # Incluir el post_id en la respuesta
+    }), 200
 # ------------------------Routes for likes to Posts--------------------------
 
 
@@ -1380,6 +1415,8 @@ def admin_get_posts():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Post by ID (Admin only)------------------------
+
+
 @api.route('/admin/posts/<int:post_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_post(post_id):
@@ -1418,6 +1455,8 @@ def handle_single_admin_post(post_id):
             return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments (Admin only)------------------------
+
+
 @api.route('/admin/comments', methods=['GET'])
 @admin_required
 def admin_get_comments():
@@ -1447,6 +1486,8 @@ def admin_get_comments():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------Routes for Get Comments by ID (Admin only)------------------------
+
+
 @api.route('/admin/comments/<int:comment_id>', methods=['GET', 'DELETE'])
 @admin_required
 def handle_single_admin_comment(comment_id):

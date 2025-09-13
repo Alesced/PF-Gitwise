@@ -66,7 +66,7 @@ export const login = async (dispatch, body) => {
 export const signup = async (dispatch, body) => {
   try {
     await fetchWithAuth(`${BASE_URL}/api/register`, "POST", body);
-    
+
     toast.success("Registration successful!");
     return true;
   } catch (error) {
@@ -109,14 +109,22 @@ export const fetchMorePosts = async (dispatch, page, perPage = 6) => {
 
 export const fetchAllFavorites = async (dispatch, token) => {
   try {
-    // Esta ruta requiere autenticación para saber de qué usuario son los favoritos.
     const data = await fetchWithAuth(
       `${BASE_URL}/api/favorites`,
       "GET",
       null,
       token
     );
-    dispatch({ type: "set_favorite", payload: data.favorites });
+
+    // ✅ Asegúrate de que los favoritos tengan la estructura correcta
+    const formattedFavorites = data.favorites.map((fav) => ({
+      id: fav.id, // ID del favorito en la base de datos
+      post_id: fav.post_id, // ID del post
+      user_id: fav.user_id, // ID del usuario
+      // ... cualquier otra propiedad que necesites
+    }));
+
+    dispatch({ type: "set_favorite", payload: formattedFavorites });
   } catch (error) {
     console.error("Error fetching favorites:", error);
     toast.error("Failed to load favorites.");
@@ -199,7 +207,7 @@ export const loadComments = async (dispatch, postId, token) => {
       `${BASE_URL}/api/post/${postId}/comments`,
       "GET",
       null,
-      token 
+      token
     );
     dispatch({ type: "set_comments", payload: data.comments });
   } catch (error) {
@@ -238,9 +246,9 @@ export const toggleCommentLike = async (dispatch, store, commentId) => {
   }
 
   try {
-    const comment = store.allComments.find(c => c.id === commentId);
+    const comment = store.allComments.find((c) => c.id === commentId);
     const hasLiked = comment?.has_liked; // Usa la propiedad has_liked directamente
-    
+
     const method = hasLiked ? "DELETE" : "POST";
 
     const data = await fetchWithAuth(
@@ -256,31 +264,30 @@ export const toggleCommentLike = async (dispatch, store, commentId) => {
       payload: {
         commentId,
         likeCount: data.like_count,
-        hasLiked: data.has_liked
-      }
+        hasLiked: data.has_liked,
+      },
     });
-
   } catch (error) {
     console.error("Error toggling comment like:", error);
-    
+
     // Si es error 400 (like ya existe), sincronizar el estado
     if (error.message.includes("already liked")) {
       dispatch({
         type: "update_comment_likes",
         payload: {
           commentId,
-          hasLiked: true
-        }
+          hasLiked: true,
+        },
       });
-    } 
+    }
     // Si es error 404 (like no existe), sincronizar el estado
     else if (error.message.includes("not liked")) {
       dispatch({
         type: "update_comment_likes",
         payload: {
           commentId,
-          hasLiked: false
-        }
+          hasLiked: false,
+        },
       });
     } else {
       throw new Error("Failed to update comment like status.");
@@ -358,19 +365,13 @@ export const toggleFavorite = async (dispatch, store, postId) => {
   let method, url, body;
 
   if (isFavorited) {
-    // --- Lógica para ELIMINAR ---
-    const favoriteId = favoriteInStore.favorite_id;
-    if (!favoriteId) {
-      console.error("Favorite ID not found in store.");
-      return toast.error(
-        "An internal error occurred. Please refresh the page."
-      );
-    }
+    // Usar el ID del favorito (favorite_id) para eliminar
+    const favoriteId = favoriteInStore.id;
     method = "DELETE";
     url = `${BASE_URL}/api/favorites/${favoriteId}`;
     body = null;
   } else {
-    // --- Lógica para AGREGAR ---
+    // Lógica para agregar
     method = "POST";
     url = `${BASE_URL}/api/favorites`;
     body = { post_id: postId };
@@ -380,28 +381,20 @@ export const toggleFavorite = async (dispatch, store, postId) => {
     const responseData = await fetchWithAuth(url, method, body, token);
 
     if (isFavorited) {
-      // ✨ CORRECCIÓN: Despachamos la acción con el 'postId' para que el reducer pueda encontrar y eliminar el post fácilmente.
-      dispatch({ type: "delete_favorite", payload: postId });
+      // El backend ahora devuelve el post_id en la respuesta
+      const deletedPostId = responseData.post_id;
+      dispatch({ type: "delete_favorite", payload: deletedPostId });
       toast.success("Post removed from favorites!");
     } else {
-      const postToAdd = store.allPosts.find((p) => p.id === postId);
-      if (postToAdd) {
-        const newFavoriteItem = {
-          ...postToAdd,
-          favorite_id: responseData.favorite.id,
-          post_id: postId,
-          user_id: store.user.id,
-        };
-        dispatch({ type: "add_favorite", payload: newFavoriteItem });
-        toast.success("Post added to favorites!");
-      }
+      // El backend devuelve el favorito creado en responseData.favorite
+      dispatch({ type: "add_favorite", payload: responseData.favorite });
+      toast.success("Post added to favorites!");
     }
   } catch (error) {
     console.error("Error toggling favorite:", error);
     toast.error(error.message || "Failed to update favorite status.");
   }
 };
-
 //----------------------------Acciones del administrador--------------------------
 export const adminDeletePost = async (dispatch, token, postId) => {
   try {

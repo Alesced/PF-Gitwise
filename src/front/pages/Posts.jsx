@@ -43,6 +43,13 @@ export const Posts = () => {
     fetchInitialData();
   }, []);
 
+  // Cargar favoritos cuando el token esté disponible
+  useEffect(() => {
+    if (store.token) {
+      actions.fetchAllFavorites();
+    }
+  }, [store.token]);
+
   const filteredPosts = (store.allPosts || []).filter(post => {
     const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          post.description?.toLowerCase().includes(searchTerm.toLowerCase());

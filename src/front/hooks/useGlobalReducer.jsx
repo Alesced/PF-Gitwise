@@ -28,15 +28,25 @@ export function StoreProvider({ children }) {
     }
   }, [store.token, store.user]);
 
-  // Se ejecuta una vez al cargar la aplicación para cargar todos los datos
+  // Se ejecuta una vez al cargar la aplicación para cargar todos los datos públicos
   useEffect(() => {
-    // Si el usuario está logeado, cargamos sus datos específicos
-    if (store.token) {
-      // Puedes agregar la lógica para cargar datos del usuario aquí si lo necesitas
-    }
-    // Cargamos todos los datos públicos para todos los usuarios
     globalActions.fetchAllPosts(dispatch);
   }, []);
+
+  // Nuevo useEffect para cargar favoritos cuando el token esté disponible
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (store.token) {
+        try {
+          await globalActions.fetchAllFavorites(dispatch, store.token);
+        } catch (error) {
+          console.error("Error loading favorites:", error);
+        }
+      }
+    };
+    
+    loadFavorites();
+  }, [store.token]); // Se ejecutará cuando el token cambie
 
   // Proporciona el store y dispatch a los componentes hijos.
   return (
@@ -55,8 +65,8 @@ export default function useGlobalReducer() {
     // Acciones de autenticación
     setAuth: (token, user) => dispatch({ type: 'set_user', payload: { token, user } }),
     login: (body) => globalActions.login(dispatch, body),
-    signup: (body) => globalActions.signup(dispatch, body), // Nueva acción agregada
-    logout: () => globalActions.logout(dispatch), // Corregido: Ahora llama a la función de actions.js
+    signup: (body) => globalActions.signup(dispatch, body),
+    logout: () => globalActions.logout(dispatch),
 
     // Acciones para manejar los estados, que llaman a la lógica del store
     addPost: (post) => dispatch({ type: 'add_post', payload: post }),
@@ -64,18 +74,17 @@ export default function useGlobalReducer() {
     deletePost: (id) => dispatch({ type: 'delete_post', payload: id }),
 
     // Acciones de la API que usan la lógica definida en actions.js
-    fetchAllPosts: () => globalActions.fetchAllPosts(dispatch), // Nueva acción agregada
-    fetchMorePosts: (page, perPage) => globalActions.fetchMorePosts(dispatch, page, perPage), // Nueva acción agregada
-    fetchAllFavorites: () => globalActions.fetchAllFavorites(dispatch, store.token), // Nueva acción agregada
-    fetchUserPosts: (userId) => globalActions.fetchUserPosts(dispatch, store.token, userId), // Nueva acción agregada
-    createPost: (userId, body) => globalActions.createPost(dispatch, store.token, userId, body), // Nueva acción agregada
-    deletePostApi: (postId) => globalActions.deletePost(dispatch, store.token, postId), // Nueva acción agregada y renombrada para evitar conflicto
-    editPostApi: (postId, body) => globalActions.editPost(dispatch, store.token, postId, body), // Nueva acción agregada y renombrada para evitar conflicto
+    fetchAllPosts: () => globalActions.fetchAllPosts(dispatch),
+    fetchMorePosts: (page, perPage) => globalActions.fetchMorePosts(dispatch, page, perPage),
+    fetchAllFavorites: () => globalActions.fetchAllFavorites(dispatch, store.token),
+    fetchUserPosts: (userId) => globalActions.fetchUserPosts(dispatch, store.token, userId),
+    createPost: (userId, body) => globalActions.createPost(dispatch, store.token, userId, body),
+    deletePostApi: (postId) => globalActions.deletePost(dispatch, store.token, postId),
+    editPostApi: (postId, body) => globalActions.editPost(dispatch, store.token, postId, body),
     adminDeletePost: (postId) => globalActions.adminDeletePost(dispatch, store.token, postId),
     fetchAdminPosts: () => globalActions.fetchAdminPosts(dispatch, store.token),
 
     // Acciones de API que usan la lógica definida en actions.js
-    // Ahora las acciones de comentarios también están disponibles
     loadComments: (postId) => globalActions.loadComments(dispatch, postId, store.token),
     addComment: (commentText, postId) => globalActions.addComment(dispatch, store, commentText, postId),
     deleteComment: (commentId) => globalActions.deleteComment(dispatch, store, commentId),
