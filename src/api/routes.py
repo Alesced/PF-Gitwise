@@ -1085,7 +1085,7 @@ def delete_favorite(favorite_id):
 # ------------------------Routes for likes to Posts--------------------------
 
 
-@api.route('post/<int:post_id>/likes', methods=['POST', 'DELETE'])
+@api.route('/post/<int:post_id>/likes', methods=['POST', 'DELETE'])
 @jwt_required()
 def handle_post_like(post_id):
     current_user = int(get_jwt_identity())
