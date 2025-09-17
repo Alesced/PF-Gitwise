@@ -115,16 +115,7 @@ export const fetchAllFavorites = async (dispatch, token) => {
       null,
       token
     );
-
-    // ✅ Asegúrate de que los favoritos tengan la estructura correcta
-    const formattedFavorites = data.favorites.map((fav) => ({
-      id: fav.id, // ID del favorito en la base de datos
-      post_id: fav.post_id, // ID del post
-      user_id: fav.user_id, // ID del usuario
-      // ... cualquier otra propiedad que necesites
-    }));
-
-    dispatch({ type: "set_favorite", payload: formattedFavorites });
+    dispatch({ type: "set_favorite", payload: data.favorites });
   } catch (error) {
     console.error("Error fetching favorites:", error);
     toast.error("Failed to load favorites.");
