@@ -5,7 +5,7 @@ from datetime import datetime
 
 # ======================= CONFIGURACIÓN PRINCIPAL =======================
 # Asegúrate de que tu backend esté corriendo en esta URL
-BASE_URL = "https://fantastic-fiesta-pjwxrpppw6rvh9wg4-3001.app.github.dev"
+BASE_URL = "https://bug-free-halibut-jj7x5qqq7vrwhp79g-3001.app.github.dev"
 
 # Credenciales de un usuario que YA EXISTA en tu base de datos
 USER_EMAIL = "ale_@hotmail.com"
