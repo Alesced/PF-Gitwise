@@ -5,12 +5,12 @@ from datetime import datetime
 
 # ======================= CONFIGURACIÓN PRINCIPAL =======================
 # Asegúrate de que tu backend esté corriendo en esta URL
-BASE_URL = "https://vigilant-space-doodle-jj7x5qqq7wqq2547q-3001.app.github.dev"
+BASE_URL = "https://improved-space-capybara-r46jgppp6vv52g6p-3001.app.github.dev"
 
 # Credenciales de un usuario que YA EXISTA en tu base de datos
-USER_EMAIL = "test@gmail.com"
+USER_EMAIL = "ale_@hotmail.com"
 USER_PASSWORD = "123456"
-USER_ID_TO_POST = 4
+USER_ID_TO_POST = 1
 # =======================================================================
 
 # Headers para las peticiones

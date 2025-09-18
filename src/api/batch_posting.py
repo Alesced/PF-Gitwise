@@ -5,12 +5,12 @@ from datetime import datetime
 
 # ======================= CONFIGURACIÓN PRINCIPAL =======================
 # Asegúrate de que tu backend esté corriendo en esta URL
-BASE_URL = "https://vigilant-space-doodle-jj7x5qqq7wqq2547q-3001.app.github.dev"
+BASE_URL = "https://improved-space-capybara-r46jgppp6vv52g6p-3001.app.github.dev"
 
 # Credenciales de un usuario que YA EXISTA en tu base de datos
-USER_EMAIL = "test@gmail.com"
+USER_EMAIL = "ale_@hotmail.com"
 USER_PASSWORD = "123456"
-USER_ID_TO_POST = 4
+USER_ID_TO_POST = 1
 # =======================================================================
 
 
@@ -160,10 +160,11 @@ posts = [
         "title": "Manage Your Dotfiles Like a Pro",
         "description": "Dotbot by @anishathalye is a tool that bootstraps your dotfiles (configuration files like .bashrc, .vimrc). It makes setting up a new machine fast and repeatable. For advanced CLI users.",
         "repo_URL": "https://github.com/anishathalye/dotbot",
-        "stack": "HTML", 
+        "stack": "HTML",
         "level": "SENIOR_DEV"
     }
 ]
+
 
 def login_and_get_token():
     """Hace login y obtiene el token y el ID del usuario."""
@@ -193,12 +194,13 @@ def login_and_get_token():
         print(f"❌ Error inesperado durante login: {e}")
         return None, None
 
+
 def create_post(post_data, token, user_id):
     """Intenta crear un post con el token y user_id proporcionados."""
     post_headers = headers.copy()
     post_headers["Authorization"] = f"Bearer {token}"
     url = f"{BASE_URL}/api/user/post/{user_id}"
-    
+
     try:
         print(f"    🚀 Enviando a: {url}")
         response = requests.post(
@@ -212,11 +214,13 @@ def create_post(post_data, token, user_id):
             print("    ✅ Post creado exitosamente!")
             return True
         else:
-            print(f"    ⚠️  Error {response.status_code}: {response.text[:100]}...")
+            print(
+                f"    ⚠️  Error {response.status_code}: {response.text[:100]}...")
             return False
     except Exception as e:
         print(f"    🌐 Error de conexión: {e}")
         return False
+
 
 def create_all_posts():
     """Función principal para crear todos los posts."""
@@ -228,7 +232,8 @@ def create_all_posts():
     # Usar el ID de la configuración, pero verificar que el login fue exitoso.
     target_user_id = USER_ID_TO_POST
 
-    print(f"\n🚀 Iniciando creación de {len(posts)} posts para el usuario con ID: {target_user_id}...\n")
+    print(
+        f"\n🚀 Iniciando creación de {len(posts)} posts para el usuario con ID: {target_user_id}...\n")
     successful_posts, failed_posts = 0, 0
 
     for i, post in enumerate(posts):
@@ -237,7 +242,7 @@ def create_all_posts():
             successful_posts += 1
         else:
             failed_posts += 1
-        time.sleep(1) # Pausa para no saturar el servidor
+        time.sleep(1)  # Pausa para no saturar el servidor
 
     print(f"\n{'='*60}\n📊 RESUMEN FINAL\n{'='*60}")
     print(f"✅ Posts exitosos: {successful_posts}")
@@ -246,12 +251,14 @@ def create_all_posts():
         print(f"🎯 Tasa de éxito: {(successful_posts / len(posts) * 100):.1f}%")
     print(f"{'='*60}")
 
+
 if __name__ == "__main__":
     print("🐍 Script de creación de posts")
     print(f"⏰ Hora de inicio: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"🌐 URL base: {BASE_URL}")
     print(f"👤 Usuario: {USER_EMAIL}")
-    
+
     create_all_posts()
-    
-    print(f"\n⏰ Hora de finalización: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    print(
+        f"\n⏰ Hora de finalización: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

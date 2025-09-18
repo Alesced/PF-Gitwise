@@ -25,6 +25,7 @@ python-dotenv = "*"
 aiopen = "*"
 stripe = "*"
 openai = "*"
+requests = "*"
 
 [requires]
 python_version = "3.13"
