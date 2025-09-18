@@ -1,37 +1,67 @@
-// Import necessary hooks and components from react-router-dom and other libraries.
-import { Link, useParams } from "react-router-dom";  // To use link for navigation and useParams to get URL parameters
-import PropTypes from "prop-types";  // To define prop types for this component
-import rigoImageUrl from "../assets/img/rigo-baby.jpg"  // Import an image asset
-import useGlobalReducer from "../hooks/useGlobalReducer";  // Import a custom hook for accessing the global state
+// File: src/front/pages/Single.jsx
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { CommentSection } from "../components/CommentSection";
+import { LikeButton } from "../components/LikeButton";
+import { FavoriteButton } from "../components/FavoriteButton";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
-// Define and export the Single component which displays individual item details.
-export const Single = props => {
-  // Access the global state using the custom hook.
-  const { store } = useGlobalReducer()
+export const Single = () => {
+  const { store } = useGlobalReducer();
+  const { theId } = useParams();
+  const navigate = useNavigate();
 
-  // Retrieve the 'theId' URL parameter using useParams hook.
-  const { theId } = useParams()
-  const singleTodo = store.todos.find(todo => todo.id === parseInt(theId));
+  const post = store?.todos?.find(p => p.id === parseInt(theId)) || {
+    id: theId,
+    title: "Project Not Found",
+    description: "No description available.",
+    stack: "Unknown",
+    level: "Unknown",
+    github: "#"
+  };
 
   return (
-    <div className="container text-center">
-      {/* Display the title of the todo element dynamically retrieved from the store using theId. */}
-      <h1 className="display-4">Todo: {singleTodo?.title}</h1>
-      <hr className="my-4" />  {/* A horizontal rule for visual separation. */}
+    <div
+      className="min-vh-100 py-5 px-3 px-md-5"
+      style={{ backgroundColor: "#0d0d0d" }}
+    >
+      <div className="container">
+        <div className="card bg-black text-white shadow p-4 border-0">
+          <h2 className="mb-3" style={{ color: "#2563eb" }}>{post.title}</h2>
+          <p>{post.description}</p>
 
-      {/* A Link component acts as an anchor tag but is used for client-side routing to prevent page reloads. */}
-      <Link to="/">
-        <span className="btn btn-primary btn-lg" href="#" role="button">
-          Back home
-        </span>
-      </Link>
+          <div className="mb-3">
+            <span className="badge bg-secondary me-2">{post.stack}</span>
+            <span className="badge bg-info">{post.level}</span>
+          </div>
+
+          <div className="d-flex align-items-center gap-2 mb-3">
+            <a
+              href={post.github}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-sm"
+              style={{ backgroundColor: "#2563eb", color: "white" }}
+            >
+              View GitHub
+            </a>
+            <LikeButton postId={post.id} />
+            <FavoriteButton postId={post.id} />
+          </div>
+
+          <div className="d-flex gap-2 mt-3">
+            <button onClick={() => navigate(-1)} className="btn btn-outline-light btn-sm">
+              ← Go Back
+            </button>
+            <Link to="/posts" className="btn btn-outline-primary btn-sm">
+              See All Posts
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <CommentSection postId={theId} currentUser={store?.user?.username || "guest"} />
+        </div>
+      </div>
     </div>
   );
-};
-
-// Use PropTypes to validate the props passed to this component, ensuring reliable behavior.
-Single.propTypes = {
-  // Although 'match' prop is defined here, it is not used in the component.
-  // Consider removing or using it as needed.
-  match: PropTypes.object
 };

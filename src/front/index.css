@@ -1,0 +1,266 @@
+/* ------------------ ESTILO GENERAL ------------------ */
+body {
+  background-color: black;
+  color: #ffffff;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.section-title {
+  color: #ffffff;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+}
+
+.section-subtitle {
+  color: #c9d1d9;
+  font-size: 0.9rem;
+}
+
+/* ------------------ PLANES ------------------ */
+.plan-title-1 {
+  color: #0ac9ef;
+}
+
+.plan-title-2 {
+  color: #fec024;
+}
+
+.plan-card {
+  background-color: #212529;
+  color: #c9d1d9;
+  border: 1px solid white;
+  border-radius: 8px;
+  padding: 2rem;
+  min-height: 100%;
+}
+
+.plan-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+}
+
+.plan-features li {
+  margin-bottom: 0.5rem;
+  color: #c9d1d9;
+  font-size: 0.95rem;
+}
+
+.plan-price {
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  color: #7b5bff; /* morado de marca */
+}
+
+.plan-button {
+  width: 100%;
+}
+
+/* ------------------ BOTONES ------------------ */
+.btn-action {
+  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
+.btn-view-details {
+  border: 1px solid #7b5bff;
+  color: #7b5bff;
+  background-color: transparent;
+}
+
+.btn-view-details:hover {
+  background-color: #7b5bff;
+  color: white;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 6px;
+  transition: transform 0.2s ease;
+}
+
+.btn-icon:hover {
+  transform: scale(1.15);
+}
+
+.btn-icon .text-danger,
+.btn-icon .text-warning {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+}
+
+.btn-gitwise {
+  background-color: #7b5bff;
+  color: white;
+  border: none;
+  transition: 0.3s;
+}
+
+.btn-gitwise:hover {
+  background-color: #5f3fff;
+  color: white;
+}
+
+/* ------------------ NUEVA LANDING (github style) ------------------ */
+.hero-bg {
+  background: linear-gradient(to bottom, #0d1117, #161b22);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 1rem;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #8b949e;
+  max-width: 700px;
+  margin: 1rem auto;
+}
+
+.cta-btn {
+  background-color: #7b5bff;
+  border: none;
+  padding: 12px 24px;
+  font-weight: bold;
+  border-radius: 6px;
+  color: white;
+  transition: background 0.3s ease;
+  text-decoration: none;
+}
+
+.cta-btn:hover {
+  background-color: #5f3fff;
+}
+
+.icon-box {
+  background-color: #21262d;
+  border-radius: 12px;
+  padding: 2rem 1rem;
+  height: 100%;
+  transition: transform 0.2s ease;
+  color: white;
+}
+
+.icon-box:hover {
+  transform: translateY(-5px);
+}
+
+.support-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  color: #c9d1d9;
+}
+
+/* ------------------ FAVORITE ANIMATION ------------------ */
+.pop-animation {
+  transform: scale(1.3);
+  transition: transform 0.3s ease;
+}
+/*----smart search----*/
+.wise {
+  color: #4e46c4;
+}
+.s-search-btn {
+  background-color: #7b5bff;
+  color: rgb(255, 255, 255);
+  font-weight: 500;
+  transition: 0.8s;
+}
+.s-search-btn:hover {
+  transform: scale(0.9);
+  /* transform: scale(1.1); */
+  box-shadow: 0 0 3px #724ac5, 0 0 10px #724ac5,
+    0 0 20px rgba(115, 74, 197, 0.05);
+  cursor: pointer;
+}
+
+/* 
+.sadly-rejected-btn {
+  background-color: #10131a;
+}
+.sadly-rejected-btn:hover {
+  transform: scale(0.9);
+  box-shadow: 0 0 8px #724ac5, 0 0 18px #724ac5,
+    0 0 30px rgba(115, 74, 197, 0.4);
+} */
+/* ------------------ RESPONSIVE ------------------ */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  .icon-box {
+    padding: 1.2rem;
+  }
+  .cta-btn {
+    width: 100%;
+    display: block;
+    margin-bottom: 1rem;
+  }
+}
+
+
+/* ------------------ Hover del commentSection 27/7 ------------------ */
+.list-group-item:hover {
+  background-color: #1e1e2f !important;
+  transition: background-color 0.3s ease;
+}
+
+.comment-section-anim {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+}
+
+.comment-section-anim.open {
+  max-height: 600px;
+  opacity: 1;
+}
+
+.icon-box {
+  height: auto !important;
+}
+
+.row > .col {
+  height: auto !important;
+}
+
+/* ------------------ STRIPE CHECKOUT ------------------ */
+.donation-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.donation-center h2 {
+  font-weight: bold;
+}
+
+.border-purple {
+  border-color: #7b5bff !important;
+}
