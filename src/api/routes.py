@@ -1549,36 +1549,28 @@ def admin_dashboard():
         return jsonify({"error": str(e)}), 500
 # ------------------------------Routes Stripe Checkout----------------------
 
-
 @api.route('/create-stripe-session', methods=['POST'])
 def create_stripe_session():
-    # Log the incoming request to see what the server is receiving.
     print("Received request for Stripe session creation.")
     try:
         data = request.get_json()
         print(f"Received data: {data}")
 
-        # Check if the required 'amount' is present.
         if 'amount' not in data:
             print("Error: Missing 'amount' in request data.")
             return jsonify({'error': 'Missing required data: amount'}), 400
 
         amount = data['amount']
+        
+        # Cambio: Usar URL de producción como valor por defecto
+        frontend_url = data.get('frontend_url', os.environ.get('VITE_FRONTEND_URL', 'http://localhost:3000'))
 
-        # Get 'frontend_url' if it exists in the data, otherwise use a default.
-        # This makes the field optional in the request.
-        frontend_url = data.get('frontend_url', 'http://localhost:3000')
-
-        # Add 'https://' if the URL doesn't have a scheme.
         if not frontend_url.startswith('http'):
             frontend_url = 'https://' + frontend_url
 
-        # Convert amount to an integer to ensure it's in the correct format.
-        # This is a common point of failure.
         amount_int = int(amount)
 
-        print(
-            f"Creating Stripe session with amount: {amount_int} and frontend_url: {frontend_url}")
+        print(f"Creating Stripe session with amount: {amount_int} and frontend_url: {frontend_url}")
 
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -1595,7 +1587,6 @@ def create_stripe_session():
             mode='payment',
             success_url=f'{frontend_url}/donation-success',
             cancel_url=f'{frontend_url}/donation-cancel',
-            # Add metadata to the Stripe session
             metadata=data.get('metadata', {})
         )
 
@@ -1607,11 +1598,9 @@ def create_stripe_session():
         }), 200
 
     except ValueError:
-        # Handle the case where the amount isn't a valid number.
         print("Error: 'amount' is not a valid number.")
         return jsonify({'error': 'Invalid amount provided'}), 400
     except Exception as e:
-        # Log the specific exception to help with debugging.
         print(f"An unexpected error occurred: {e}")
         return jsonify({'error': str(e)}), 500
 

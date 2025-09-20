@@ -1,16 +1,17 @@
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe('pk_test_51RnmUFFYN6tLpF6krG0ijTd317Me09EBq0wApfnSnTBWdGzibJnhdcWkzFPKmLl8qbqEHSFQ86CyN7RWiWD8eaWv00yY5lFqfy');
-
 export const handleStripeCheckout = async (amount = 10) => {
   try {
+    // Usa la variable de entorno para la URL del frontend
+    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+    
+    console.log("Frontend URL:", frontendUrl);
+
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/create-stripe-session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        amount: amount * 100, // Convierte dólares a centavos
+        amount: amount * 100,
         currency: 'usd',
-        frontend_url: window.location.origin 
+        frontend_url: frontendUrl  
       }),
     });
 
