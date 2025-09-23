@@ -2,14 +2,13 @@ import requests
 import json
 import time
 from datetime import datetime
+import os 
 
 # ======================= CONFIGURACIÓN PRINCIPAL =======================
-# Asegúrate de que tu backend esté corriendo en esta URL
-BASE_URL = "https://bug-free-broccoli-5grwqxxxr6qxc7wv5-3001.app.github.dev"
-
-# Credenciales de un usuario que YA EXISTA en tu base de datos
-USER_EMAIL = "ale_@hotmail.com"
-USER_PASSWORD = "123456"
+# Credenciales de un usuario que YA EXISTA en tu base de datos"
+BASE_URL = os.getenv("SEED_BASE_URL", "http://localhost:3001")
+USER_EMAIL = os.getenv("SEED_USER_EMAIL")
+USER_PASSWORD = os.getenv("SEED_USER_PASSWORD")
 USER_ID_TO_POST = 1
 # =======================================================================
 
@@ -159,11 +158,85 @@ posts = [
         "repo_URL": "https://github.com/anishathalye/dotbot",
         "stack": "HTML", 
         "level": "SENIOR_DEV"
+    },{
+        "title": "Elegant State Management in React",
+        "description": "Zustand by @pmndrs is a small, fast, and scalable state-management solution. It uses a minimalistic API and is perfect for projects where Redux feels like overkill. Great for junior devs.",
+        "repo_URL": "https://github.com/pmndrs/zustand",
+        "stack": "JAVASCRIPT",
+        "level": "JUNIOR_DEV"
+    },
+    {
+        "title": "The Supabase Stack: Open Source Firebase Alternative",
+        "description": "Supabase provides a Postgres database, Authentication, instant APIs, and storage. Built with open source tools, it's a powerful backend for any project. Mid-level friendly.",
+        "repo_URL": "https://github.com/supabase/supabase",
+        "stack": "SQL",
+        "level": "MID_DEV"
+    },
+    {
+        "title": "Containerize Your Apps with Docker",
+        "description": "The official Docker documentation and getting-started guide. Learn how to package your applications into containers for easy deployment and scaling. Essential for all modern developers.",
+        "repo_URL": "https://github.com/docker/getting-started",
+        "stack": "PYTHON",
+        "level": "JUNIOR_DEV"
+    },
+    {
+        "title": "Type-Safe APIs with tRPC",
+        "description": "tRPC allows you to build end-to-end typesafe APIs without schemas or code generation. It provides incredible developer experience and autocompletion. For TypeScript enthusiasts.",
+        "repo_URL": "https://github.com/trpc/trpc",
+        "stack": "JAVASCRIPT",
+        "level": "MID_DEV"
+    },
+    {
+        "title": "Automate Your Workflow with GitHub Actions",
+        "description": "A curated list of awesome actions to automate your CI/CD pipelines, testing, and deployment. Maintained by @sdras. A goldmine for senior developers looking to optimize.",
+        "repo_URL": "https://github.com/sdras/awesome-actions",
+        "stack": "HTML",
+        "level": "SENIOR_DEV"
+    },
+    {
+        "title": "Lint Your Python Code with Ruff",
+        "description": "Ruff is an extremely fast Python linter, written in Rust. It can replace Flake8, isort, and dozens of other tools, offering a massive performance boost. A must-have for Python projects.",
+        "repo_URL": "https://github.com/astral-sh/ruff",
+        "stack": "PYTHON",
+        "level": "MID_DEV"
+    },
+    {
+        "title": "Beautiful, Animated Charts with Chart.js",
+        "description": "Simple yet flexible JavaScript charting for designers & developers. @chartjs makes it easy to visualize data in your frontend applications. Perfect for students.",
+        "repo_URL": "https://github.com/chartjs/Chart.js",
+        "stack": "JAVASCRIPT",
+        "level": "STUDENT"
+    },
+    {
+        "title": "Next-gen CSS utility framework",
+        "description": "Tailwind CSS is a utility-first CSS framework for rapidly building custom user interfaces. This repo by @tailwindlabs is one of the most popular in modern web dev.",
+        "repo_URL": "https://github.com/tailwindlabs/tailwindcss",
+        "stack": "CSS",
+        "level": "JUNIOR_DEV"
+    },
+    {
+        "title": "Build Cross-Platform Desktop Apps",
+        "description": "Tauri by @tauri-apps is a framework for building tiny, blazing fast binaries for all major desktop platforms. Uses web technologies for the UI. An alternative to Electron.",
+        "repo_URL": "https://github.com/tauri-apps/tauri",
+        "stack": "HTML",
+        "level": "MID_DEV"
+    },
+    {
+        "title": "The Go Programming Language",
+        "description": "The official repository for the Go language compiler and libraries. A great starting point for senior developers wanting to learn a new, powerful language for backend systems.",
+        "repo_URL": "https://github.com/golang/go",
+        "stack": "HTML",
+        "level": "SENIOR_DEV"
     }
 ]
 
+
 def login_and_get_token():
     """Hace login y obtiene el token y el ID del usuario."""
+    if not USER_EMAIL or not USER_PASSWORD:
+        print("❌ Faltan las variables de entorno SEED_USER_EMAIL o SEED_USER_PASSWORD.")
+        return None, None
+
     login_data = {"email": USER_EMAIL, "password": USER_PASSWORD}
     try:
         print("🔐  Intentando login...")
@@ -190,30 +263,33 @@ def login_and_get_token():
         print(f"❌ Error inesperado durante login: {e}")
         return None, None
 
+
 def create_post(post_data, token, user_id):
     """Intenta crear un post con el token y user_id proporcionados."""
     post_headers = headers.copy()
     post_headers["Authorization"] = f"Bearer {token}"
     url = f"{BASE_URL}/api/user/post/{user_id}"
-    
+
     try:
-        print(f"    🚀 Enviando a: {url}")
+        print(f"   🚀 Enviando a: {url}")
         response = requests.post(
             url,
             json=post_data,
             headers=post_headers,
             timeout=30
         )
-        print(f"    📋 Código de respuesta: {response.status_code}")
+        print(f"   📋 Código de respuesta: {response.status_code}")
         if response.status_code == 201:
-            print("    ✅ Post creado exitosamente!")
+            print("   ✅ Post creado exitosamente!")
             return True
         else:
-            print(f"    ⚠️  Error {response.status_code}: {response.text[:100]}...")
+            print(
+                f"   ⚠️  Error {response.status_code}: {response.text[:100]}...")
             return False
     except Exception as e:
-        print(f"    🌐 Error de conexión: {e}")
+        print(f"   🌐 Error de conexión: {e}")
         return False
+
 
 def create_all_posts():
     """Función principal para crear todos los posts."""
@@ -222,10 +298,10 @@ def create_all_posts():
         print("\n❌ No se pudo obtener token. Abortando.")
         return
 
-    # Usar el ID de la configuración, pero verificar que el login fue exitoso.
     target_user_id = USER_ID_TO_POST
 
-    print(f"\n🚀 Iniciando creación de {len(posts)} posts para el usuario con ID: {target_user_id}...\n")
+    print(
+        f"\n🚀 Iniciando creación de {len(posts)} posts para el usuario con ID: {target_user_id}...\n")
     successful_posts, failed_posts = 0, 0
 
     for i, post in enumerate(posts):
@@ -234,7 +310,7 @@ def create_all_posts():
             successful_posts += 1
         else:
             failed_posts += 1
-        time.sleep(1) # Pausa para no saturar el servidor
+        time.sleep(1)
 
     print(f"\n{'='*60}\n📊 RESUMEN FINAL\n{'='*60}")
     print(f"✅ Posts exitosos: {successful_posts}")
@@ -243,12 +319,17 @@ def create_all_posts():
         print(f"🎯 Tasa de éxito: {(successful_posts / len(posts) * 100):.1f}%")
     print(f"{'='*60}")
 
+
 if __name__ == "__main__":
     print("🐍 Script de creación de posts")
     print(f"⏰ Hora de inicio: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"🌐 URL base: {BASE_URL}")
     print(f"👤 Usuario: {USER_EMAIL}")
-    
+
     create_all_posts()
-    
-    print(f"\n⏰ Hora de finalización: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    print(
+        f"\n⏰ Hora de finalización: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+
